@@ -1,0 +1,156 @@
+{
+  "id": "",
+  "name": "MÁY PHÂN TÍCH HUYẾT HỌC",
+  "slug": "",
+  "sku": "",
+  "model": "MEDONIC M-SERIES M32B",
+  "brand": "Boule Medical AB",
+  "brandSlug": "",
+  "category": "",
+  "categorySlug": "",
+  "group": "medical",
+  "origin": "Thụy Điển",
+  "manufacturingYear": 2026,
+  "manufacturingYearNote": "2026 trở về sau",
+  "condition": "Mới 100%",
+  "warranty": "Bảo hành tất cả bộ phận của van cắt đóng trong 03 năm.",
+  "shortDescription": "Máy phân tích huyết học 3 thành phần bạch cầu – 22 thông số.",
+  "description": "Máy phân tích huyết học model MEDONIC M-SERIES M32B, hãng Boule Medical AB, xuất xứ Thụy Điển.",
+  "priceMode": "",
+  "priceVnd": 145000000,
+  "priceBand": "",
+  "featured": null,
+  "availability": "",
+  "image": "",
+  "imagePosition": "",
+  "specialties": [],
+  "specialtySlugs": [],
+  "applications": [],
+  "applicationSlugs": [],
+  "specs": [],
+  "publishStatus": "draft",
+  "seoTitle": "",
+  "seoDescription": "",
+  "detail": {
+    "gallery": [],
+    "features": [
+      { "title": "Màn hình cảm ứng", "description": "Tích hợp màn hình cảm ứng lớn, thao tác dễ dàng, chính xác." },
+      { "title": "Công nghệ van cắt đóng", "description": "Giúp phân phối mẫu chính xác và giảm nhu cầu bảo trì bảo dưỡng." },
+      { "title": "Bộ phân liệt động RBC/PLT", "description": "Có bộ phân liệt động RBC/PLT." },
+      { "title": "Dung lượng lưu trữ", "description": "Dung lượng lưu trữ dữ liệu lớn." }
+    ],
+    "configurations": [
+      {
+        "title": "Cấu hình cung cấp",
+        "description": "",
+        "items": [
+          { "name": "Máy chính kèm bộ phụ kiện tiêu chuẩn", "detail": "", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Hóa chất chạy thử", "detail": "01 bộ", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Hóa chất chuẩn", "detail": "01 ống/mức (L/N/H)", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Hướng dẫn sử dụng tiếng Anh và tiếng Việt", "detail": "01 bộ", "quantity": 1, "imageUrl": "", "priceVnd": null }
+        ]
+      },
+      {
+        "title": "Phụ kiện mua trong nước",
+        "description": "",
+        "items": [
+          { "name": "Máy in đen trắng", "detail": "01 bộ", "quantity": 1, "imageUrl": "", "priceVnd": null }
+        ]
+      }
+    ],
+    "specificationGroups": [
+      {
+        "title": "TIÊU CHUẨN VÀ PHÂN LOẠI",
+        "items": [
+          { "label": "Tiêu chuẩn chất lượng", "value": "ISO 13485:2016, EN ISO 13485:2016" },
+          { "label": "Loại trang thiết bị y tế", "value": "Loại B" }
+        ]
+      },
+      {
+        "title": "CÔNG SUẤT",
+        "items": [
+          { "label": "Tốc độ xét nghiệm từ ống mở", "value": "≥ 60 mẫu/h" }
+        ]
+      },
+      {
+        "title": "NGUYÊN LÝ ĐO",
+        "items": [
+          { "label": "Phương pháp đo", "value": "Trở kháng và đo quang hoặc tương đương" }
+        ]
+      },
+      {
+        "title": "THÔNG SỐ XÉT NGHIỆM",
+        "items": [
+          { "label": "Số thông số", "value": "22" },
+          { "label": "Danh sách thông số", "value": "RBC, MCV, HCT, PLT, MPV, HGB, MCH, MCHC, WBC, RDW%, LYM, MID, GRAN, LYM%, MID%, GRAN%, RDW, PCT, PDW%, PDW, P-LCR, P-LCC" }
+        ]
+      },
+      {
+        "title": "ĐỘ CHÍNH XÁC VÀ ĐỘ LẶP LẠI",
+        "items": [
+          { "label": "RBC", "value": "Độ tương quan ≥ 0.98; nhiễm chéo mẫu ≤ 1%; độ lặp lại ≤ 1.8; độ tái lặp ≤ 2.5%" },
+          { "label": "MCV", "value": "Độ tương quan ≥ 0.98; độ lặp lại ≤ 1.5; độ tái lặp ≤ 2.5%" },
+          { "label": "HGB", "value": "Độ tương quan ≥ 0.98; nhiễm chéo mẫu ≤ 1%; độ lặp lại ≤ 1.5; độ tái lặp ≤ 2.5%" },
+          { "label": "PLT", "value": "Độ tương quan ≥ 0.95; nhiễm chéo mẫu ≤ 1%; độ lặp lại ≤ 5.2%; độ tái lặp ≤ 7%" },
+          { "label": "WBC", "value": "Độ tương quan ≥ 0.97; nhiễm chéo mẫu ≤ 0.5%; độ lặp lại ≤ 3.5; độ tái lặp ≤ 4%" }
+        ]
+      },
+      {
+        "title": "QUẢN LÝ MẪU",
+        "items": [
+          { "label": "Thể tích hút mẫu từ ống mở", "value": "≤ 110 μl" },
+          { "label": "Chế độ pha loãng ngoài", "value": "Tỉ lệ khoảng 1:200 đến 1:300 với thể tích tối thiểu 20 μl" },
+          { "label": "Độ chuẩn xác bộ pha", "value": "CV ≤ 0.9%" },
+          { "label": "Bộ phân liệt động RBC/PLT", "value": "Có (in vị trí)" },
+          { "label": "Hệ thống chia", "value": "Van chia kín hoặc tương đương" }
+        ]
+      },
+      {
+        "title": "QUẢN LÝ HÓA CHẤT",
+        "items": [
+          { "label": "Số hóa chất sử dụng", "value": "02 loại hóa chất" },
+          { "label": "Quản lý hóa chất", "value": "RFID" }
+        ]
+      },
+      {
+        "title": "KIỂM SOÁT CHẤT LƯỢNG",
+        "items": [
+          { "label": "Chương trình kiểm tra / điều chỉnh", "value": "Có" },
+          { "label": "Khả năng QC", "value": "Có; Mean, SD, CV, Levey-Jennings và Xb" },
+          { "label": "Cảnh báo thông số bất thường", "value": "Có" }
+        ]
+      },
+      {
+        "title": "HIỂN THỊ VÀ GIAO TIẾP",
+        "items": [
+          { "label": "Màn hình", "value": "Cảm ứng TFT 7 inch" },
+          { "label": "Độ sâu màu", "value": "24 bit" },
+          { "label": "Độ phân giải", "value": "800 x 480 pixel" },
+          { "label": "Bàn phím ảo", "value": "Có" },
+          { "label": "USB phía trước", "value": "1 cổng" },
+          { "label": "USB phía sau", "value": "4 cổng" },
+          { "label": "Mạng LAN", "value": "1 cổng" },
+          { "label": "Kết nối máy đọc mã vạch và RFID", "value": "Có cổng USB" }
+        ]
+      },
+      {
+        "title": "LƯU TRỮ VÀ KÍCH THƯỚC",
+        "items": [
+          { "label": "Dung lượng bộ nhớ", "value": "Lên đến 50.000 mẫu" },
+          { "label": "Kích thước", "value": "395 x 295 x 475 mm" },
+          { "label": "Trọng lượng", "value": "≤18 kg" }
+        ]
+      }
+    ],
+    "applications": [],
+    "documents": [],
+    "documentSourceNote": "Nguồn nêu đầy đủ giấy tờ khám bảo hiểm và hậu kiểm nhưng không có tên file cụ thể.",
+    "warranty": { "period": "", "coverage": "Bảo hành tất cả bộ phận của van cắt đóng trong 03 năm.", "installation": "", "technicalSupport": "" },
+    "seo": { "title": "", "description": "", "slug": "", "ogImage": "" },
+    "sourceNotes": [
+      "Thời hạn 03 năm chỉ áp dụng cho tất cả bộ phận của van cắt đóng; không diễn giải thành bảo hành toàn bộ máy.",
+      "Không có chuyên khoa, ứng dụng, ảnh hoặc tài liệu dạng file trong nguồn."
+    ]
+  },
+  "action": "draft"
+}

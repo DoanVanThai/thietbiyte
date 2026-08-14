@@ -1,0 +1,159 @@
+{
+  "id": "",
+  "name": "Hệ thống X-quang chẩn đoán và phụ kiện đi kèm",
+  "slug": "",
+  "sku": "",
+  "sourceCode": "Picke 1800 DR/400",
+  "model": "Picke 1800 DR/400",
+  "brand": "Volition",
+  "brandSlug": "",
+  "category": "",
+  "categorySlug": "",
+  "group": "medical",
+  "origin": "Trung Quốc",
+  "manufacturingYear": 2026,
+  "manufacturingYearNote": "Sản xuất năm 2026",
+  "condition": "Mới 100%",
+  "warranty": "",
+  "shortDescription": "",
+  "description": "Hệ thống X-quang chẩn đoán và phụ kiện đi kèm gồm máy X-quang cao tần và tấm cảm biến nhận ảnh X-quang y tế DR.",
+  "priceMode": "",
+  "priceVnd": 500000000,
+  "priceBand": "",
+  "featured": null,
+  "availability": "",
+  "image": "",
+  "imagePosition": "",
+  "specialties": [],
+  "specialtySlugs": [],
+  "applications": [],
+  "applicationSlugs": [],
+  "specs": [],
+  "publishStatus": "draft",
+  "seoTitle": "",
+  "seoDescription": "",
+  "detail": {
+    "gallery": [],
+    "features": [],
+    "configurations": [
+      {
+        "title": "Máy X-quang cao tần",
+        "description": "Model Picke 1800 DR/400; bảo hành 4 năm.",
+        "items": [
+          { "name": "Máy phát cao tần DTXR-50", "detail": "3 pha 380V", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Bóng tia X E7239X", "detail": "", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Bàn chụp SYC-2", "detail": "", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Cột bóng ZJ-1", "detail": "", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Bộ chuẩn trực XSQ-1", "detail": "", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Giá chụp phổi SYJ-1", "detail": "", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Hộp điều khiển từ xa", "detail": "Điều khiển cột bóng và giá chụp phổi từ xa", "quantity": 1, "imageUrl": "", "priceVnd": null }
+        ]
+      },
+      {
+        "title": "Tấm cảm biến nhận ảnh X-quang y tế (DR)",
+        "description": "Model Venu 1717X; hãng IRAY; xuất xứ Trung Quốc; bảo hành 3 năm.",
+        "items": [
+          { "name": "Tấm cảm biến Venu 1717X", "detail": "Hàng mới 100%", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Hộp nguồn", "detail": "Phụ kiện", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Dây nguồn AC", "detail": "Phụ kiện", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Cáp mạng LAN", "detail": "Phụ kiện", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Cáp đồng bộ", "detail": "Phụ kiện", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Dây nối đất", "detail": "Phụ kiện", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Giấy chứng nhận", "detail": "Phụ kiện", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Thẻ bảo hành", "detail": "Phụ kiện", "quantity": 1, "imageUrl": "", "priceVnd": null }
+        ]
+      }
+    ],
+    "specificationGroups": [
+      {
+        "title": "CHỨNG NHẬN VÀ PHÂN LOẠI",
+        "items": [
+          { "label": "Máy X-quang cao tần", "value": "ISO 13485; phân loại C" },
+          { "label": "Tấm cảm biến Venu 1717X", "value": "ISO, CE" }
+        ]
+      },
+      {
+        "title": "MÁY PHÁT CAO TẦN DTXR-50",
+        "items": [
+          { "label": "Nguồn điện", "value": "3 pha 380V" },
+          { "label": "Công suất", "value": "32kW" },
+          { "label": "Dòng điện ống", "value": "10 ~ 400mA" },
+          { "label": "Dải mAs", "value": "0.1mAs ~ 630mAs" },
+          { "label": "Điện áp ống", "value": "40 ~ 125KVP" },
+          { "label": "Chẩn đoán và bảo trì từ xa", "value": "Có thể kết nối trực tiếp với cáp mạng" }
+        ]
+      },
+      {
+        "title": "BÓNG TIA X E7239X",
+        "items": [
+          { "label": "Tiêu cự kép", "value": "1.0mm/2.0mm" },
+          { "label": "Công suất", "value": "21/42.5kW" },
+          { "label": "Dòng điện tối đa", "value": "570mA" },
+          { "label": "Điện áp tối đa", "value": ">125KVP" }
+        ]
+      },
+      {
+        "title": "BÀN CHỤP SYC-2",
+        "items": [
+          { "label": "Chuyển động dọc tấm DR", "value": "1000mm" },
+          { "label": "Chuyển động bên", "value": "100 mm" },
+          { "label": "Lưới lọc rung", "value": "JPI Hàn Quốc" },
+          { "label": "Điều khiển chuyển động cơ học", "value": "Khóa điện từ, thủ công" }
+        ]
+      },
+      {
+        "title": "CỘT BÓNG ZJ-1",
+        "items": [
+          { "label": "Di chuyển lên xuống", "value": "Không dưới 900mm" },
+          { "label": "Chuyển động ngang", "value": "Không nhỏ hơn 1800mm" }
+        ]
+      },
+      {
+        "title": "BỘ CHUẨN TRỰC XSQ-1",
+        "items": [
+          { "label": "Kích thước", "value": "270x225x250 mm" },
+          { "label": "Điện áp", "value": "24 VAC" },
+          { "label": "Công suất", "value": "150 W" },
+          { "label": "Đèn", "value": "Vonfram halogen, tự tắt sau 30s" }
+        ]
+      },
+      {
+        "title": "GIÁ CHỤP PHỔI SYJ-1",
+        "items": [
+          { "label": "Chuyển động dọc tấm DR", "value": "Không dưới 900mm" },
+          { "label": "Lưới rung", "value": "JPI Hàn Quốc" }
+        ]
+      },
+      {
+        "title": "TẤM CẢM BIẾN VENU 1717X",
+        "items": [
+          { "label": "Công nghệ", "value": "a-Si TFT, chất nhấp nháy CsI:Tl" },
+          { "label": "Độ phân giải", "value": "3072x3072" },
+          { "label": "Kích thước điểm ảnh", "value": "139 µm" },
+          { "label": "Vùng nhận tia", "value": "427x427 mm (17x17 inch)" },
+          { "label": "Độ phân giải không gian", "value": "3.6 lp/mm" },
+          { "label": "Thang xám", "value": "16 bits" },
+          { "label": "Kết nối", "value": "Gigabit Ethernet" },
+          { "label": "Thời gian chụp", "value": "3s" },
+          { "label": "Chế độ AED", "value": "Phát hiện liều chiếu tự động toàn trường" },
+          { "label": "Kích thước", "value": "460x460x15 mm" },
+          { "label": "Trọng lượng", "value": "4.0 kg" },
+          { "label": "Nhiệt độ hoạt động", "value": "5-350C" },
+          { "label": "Độ ẩm hoạt động", "value": "30-80% RH" },
+          { "label": "Nhiệt độ bảo quản", "value": "-10-550C" },
+          { "label": "Độ ẩm bảo quản", "value": "10-90% RH" }
+        ]
+      }
+    ],
+    "applications": [],
+    "documents": [],
+    "documentSourceNote": "Máy X-quang: đăng ký tài liệu, hướng dẫn sử dụng, chứng nhận sản phẩm; nguồn còn nêu giấy lưu hành, CO, CQ, tờ khai hải quan, hóa đơn tài chính và giấy tờ liên quan nhưng không có file cụ thể.",
+    "warranty": { "period": "", "coverage": "", "installation": "", "technicalSupport": "" },
+    "seo": { "title": "", "description": "", "slug": "", "ogImage": "" },
+    "sourceNotes": [
+      "Hệ thống có hai thành phần với thời hạn bảo hành khác nhau: máy X-quang cao tần 4 năm và tấm cảm biến Venu 1717X 3 năm; warranty cấp sản phẩm để trống để không gộp sai.",
+      "Không có chuyên khoa, ứng dụng, ảnh hoặc tài liệu dạng file trong nguồn."
+    ]
+  },
+  "action": "draft"
+}

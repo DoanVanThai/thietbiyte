@@ -1,0 +1,24 @@
+{
+  "quoteNumber": "1368/BG/2026",
+  "quoteDate": "2026-08-08",
+  "customer": "QUÝ KHÁCH HÀNG",
+  "currency": "VND",
+  "pricesIncludeVat": true,
+  "deliveryAndInstallationIncluded": true,
+  "deliveryTime": "Từ 1 đến 8 tuần kể từ khi hai bên ký hợp đồng và đặt cọc 50%",
+  "paymentTerms": "Đặt cọc 50%; giá trị còn lại thanh toán ngay sau khi hai bên ký biên bản bàn giao máy",
+  "validity": "Có hiệu lực đến khi có báo giá mới",
+  "productFiles": [
+    "chison-sonoport-8.json",
+    "volition-picke-1800-dr-400.json",
+    "boule-medonic-m-series-m32b.json",
+    "mindray-bs-240e.json",
+    "contec-bc400.json",
+    "wondfo-fs113.json",
+    "xuzhou-hengjia-hj-60-hd720.json",
+    "sonoscape-hd-350.json",
+    "sonoscape-x2200.json",
+    "zerone-zero-150.json",
+    "zerone-zero-80.json"
+  ]
+}

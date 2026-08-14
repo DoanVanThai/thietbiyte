@@ -1,0 +1,79 @@
+{
+  "id": "",
+  "name": "MÁY MIỄN DỊCH HUỲNH QUANG",
+  "slug": "",
+  "sku": "",
+  "model": "FS113",
+  "brand": "Wondfo",
+  "brandSlug": "",
+  "category": "",
+  "categorySlug": "",
+  "group": "medical",
+  "origin": "Lắp ráp tại Trung Quốc – Công nghệ Mỹ",
+  "manufacturingYear": 2025,
+  "manufacturingYearNote": "2025 trở về sau",
+  "condition": "Mới 100%",
+  "warranty": "2 năm, 1 đổi 1 trong 2 năm",
+  "shortDescription": "Máy miễn dịch huỳnh quang model FS113.",
+  "description": "Thiết bị nhỏ, gọn nhẹ, dễ dàng thao tác; thời gian xét nghiệm nhanh; cho kết quả chính xác với phương pháp miễn dịch huỳnh quang, độ nhạy cao; có độ lặp lại tốt, ổn định.",
+  "priceMode": "",
+  "priceVnd": 25000000,
+  "priceBand": "",
+  "featured": null,
+  "availability": "",
+  "image": "",
+  "imagePosition": "",
+  "specialties": [],
+  "specialtySlugs": [],
+  "applications": [],
+  "applicationSlugs": [],
+  "specs": [],
+  "publishStatus": "draft",
+  "seoTitle": "",
+  "seoDescription": "",
+  "detail": {
+    "gallery": [],
+    "features": [
+      { "title": "Thiết kế", "description": "Thiết bị nhỏ, gọn nhẹ, dễ dàng thao tác." },
+      { "title": "Thời gian xét nghiệm", "description": "Thời gian xét nghiệm nhanh." },
+      { "title": "Phương pháp miễn dịch huỳnh quang", "description": "Cho kết quả chính xác với phương pháp miễn dịch huỳnh quang, độ nhạy cao." },
+      { "title": "Độ lặp lại", "description": "Máy miễn dịch huỳnh quang Finecare có độ lặp lại tốt, ổn định." }
+    ],
+    "configurations": [],
+    "specificationGroups": [
+      {
+        "title": "CHỨNG CHỈ",
+        "items": [
+          { "label": "Chứng chỉ", "value": "ISO13485, IS9001, CE" }
+        ]
+      },
+      {
+        "title": "ĐẶC ĐIỂM VÀ THÔNG SỐ KỸ THUẬT",
+        "items": [
+          { "label": "Phương pháp", "value": "Gel card miễn dịch huỳnh quang FIA cho kết quả định lượng chính xác, tin cậy chỉ trong vài phút" },
+          { "label": "Mẫu", "value": "Máu, nước tiểu" },
+          { "label": "Card", "value": "Bền, ổn định; có thể bảo quản ở nhiệt độ phòng 4 - 30 oC" },
+          { "label": "Thời gian cho kết quả", "value": "Từ 3 đến 15 phút tùy loại test" },
+          { "label": "Lượng mẫu", "value": "Ít, lấy mẫu đơn giản" },
+          { "label": "Màn hình", "value": "LCD cảm ứng, 8inch" },
+          { "label": "Máy in nhiệt", "value": "Tích hợp theo máy" },
+          { "label": "Kích thước máy", "value": "270 x 238 x 146mm" },
+          { "label": "Trọng lượng", "value": "2.8 kg" },
+          { "label": "Nguồn điện", "value": "100-240V/50Hz" },
+          { "label": "Bộ nhớ", "value": "10.000 kết quả" },
+          { "label": "Kết nối", "value": "USB, RS232" }
+        ]
+      }
+    ],
+    "applications": [],
+    "documents": [],
+    "documentSourceNote": "",
+    "warranty": { "period": "2 năm", "coverage": "1 đổi 1 trong 2 năm", "installation": "", "technicalSupport": "" },
+    "seo": { "title": "", "description": "", "slug": "", "ogImage": "" },
+    "sourceNotes": [
+      "Giữ nguyên chuỗi chứng chỉ IS9001 theo nguồn; không tự sửa thành ISO 9001.",
+      "Nguồn không cung cấp cấu hình phụ kiện, chuyên khoa, ứng dụng, ảnh hoặc tài liệu dạng file."
+    ]
+  },
+  "action": "draft"
+}

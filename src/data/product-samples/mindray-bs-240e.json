@@ -1,0 +1,77 @@
+{
+  "id": "",
+  "name": "MÁY XÉT NGHIỆM SINH HÓA TỰ ĐỘNG (240 TEST/H)",
+  "slug": "",
+  "sku": "",
+  "model": "BS-240E",
+  "brand": "Mindray",
+  "brandSlug": "",
+  "category": "",
+  "categorySlug": "",
+  "group": "medical",
+  "origin": "Trung Quốc",
+  "manufacturingYear": 2026,
+  "manufacturingYearNote": "2026 trở về sau",
+  "condition": "Mới 100%",
+  "warranty": "12 tháng",
+  "shortDescription": "Máy xét nghiệm sinh hóa tự động 240 test/h.",
+  "description": "Máy xét nghiệm sinh hóa tự động model BS-240E, hãng Mindray, xuất xứ Trung Quốc.",
+  "priceMode": "",
+  "priceVnd": 290000000,
+  "priceBand": "",
+  "featured": null,
+  "availability": "",
+  "image": "",
+  "imagePosition": "",
+  "specialties": [],
+  "specialtySlugs": [],
+  "applications": [],
+  "applicationSlugs": [],
+  "specs": [],
+  "publishStatus": "draft",
+  "seoTitle": "",
+  "seoDescription": "",
+  "detail": {
+    "gallery": [],
+    "features": [],
+    "configurations": [
+      {
+        "title": "Cấu hình cung cấp",
+        "description": "",
+        "items": [
+          { "name": "Thân máy chính BS-240E", "detail": "01 cái", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Can nhựa", "detail": "01 cái", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Dây nguồn", "detail": "01 cái", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Kim hút Mẫu & Hóa chất", "detail": "Tích hợp sẵn; 01 cái", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Kim trộn", "detail": "Tích hợp sẵn; 01 cái", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Bộ kim rửa cuvet", "detail": "Tích hợp sẵn; 01 bộ", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Bóng đèn Halogen Tungsten", "detail": "Tích hợp sẵn; 01 cái", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Bộ cuvet phản ứng", "detail": "01 bộ", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Phần mềm điều khiển BS-240E", "detail": "01 cái", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Chai dung dịch rửa", "detail": "02 chai", "quantity": 2, "imageUrl": "", "priceVnd": null },
+          { "name": "Bộ phụ kiện tiêu chuẩn kèm theo", "detail": "01 bộ", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Sách hướng dẫn sử dụng Tiếng Anh", "detail": "01 quyển", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Sách hướng dẫn sử dụng Tiếng Việt", "detail": "01 quyển", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Bộ máy tính", "detail": "01 bộ", "quantity": 1, "imageUrl": "", "priceVnd": null },
+          { "name": "Máy in đen trắng", "detail": "01 cái", "quantity": 1, "imageUrl": "", "priceVnd": null }
+        ]
+      }
+    ],
+    "specificationGroups": [
+      {
+        "title": "TIÊU CHUẨN",
+        "items": [
+          { "label": "Tiêu chuẩn", "value": "ISO 9001; ISO 13485; CE" },
+          { "label": "Công suất theo tên sản phẩm", "value": "240 test/h" }
+        ]
+      }
+    ],
+    "applications": [],
+    "documents": [],
+    "documentSourceNote": "Nguồn nêu đầy đủ giấy tờ khám bảo hiểm và hậu kiểm nhưng không có tên file cụ thể.",
+    "warranty": { "period": "12 tháng", "coverage": "", "installation": "", "technicalSupport": "" },
+    "seo": { "title": "", "description": "", "slug": "", "ogImage": "" },
+    "sourceNotes": ["Không có chuyên khoa, ứng dụng, ảnh hoặc tài liệu dạng file trong nguồn."]
+  },
+  "action": "draft"
+}

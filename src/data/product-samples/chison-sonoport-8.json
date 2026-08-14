@@ -1,0 +1,404 @@
+{
+  "id": "",
+  "name": "MÁY SIÊU ÂM CAO CẤP CHISON SONOPORT 8",
+  "slug": "may-sieu-am-cao-cap-chison-sonoport-8",
+  "sku": "",
+  "model": "SonoPort 8",
+  "brand": "CHISON",
+  "brandSlug": "",
+  "category": "Máy siêu âm",
+  "categorySlug": "",
+  "group": "medical",
+  "origin": "Trung Quốc – Công nghệ Đức",
+  "manufacturingYear": 2026,
+  "manufacturingYearNote": "2026 trở về sau",
+  "condition": "Mới 100%",
+  "warranty": "",
+  "shortDescription": "Máy siêu âm SonoPort 8 là hệ thống siêu âm cao cấp của CHISON, nổi bật với tính di động và nền tảng chẩn đoán được hỗ trợ bởi trí tuệ nhân tạo.",
+  "description": "Máy siêu âm SonoPort 8 cách mạng hóa hệ thống siêu âm bàn đẩy thông qua tính di động vượt trội và trí thông minh chuyên biệt.\n\nNền tảng chẩn đoán được hỗ trợ bởi trí tuệ nhân tạo này được thiết kế để giải phóng siêu âm khỏi phòng thí nghiệm, cung cấp dịch vụ chăm sóc bệnh nhân một cách thông minh, tức thì, ở bất cứ nơi nào cần.\n\nMáy mới 100%, năm sản xuất từ 2026 trở về sau, đầy đủ các giấy tờ nguồn gốc đăng ký bảo hiểm.",
+  "priceMode": "REQUEST_QUOTE",
+  "priceVnd": 430000000,
+  "priceBand": "",
+  "featured": null,
+  "availability": "",
+  "image": "",
+  "imagePosition": "",
+  "specialties": [],
+  "specialtySlugs": [],
+  "applications": [],
+  "applicationSlugs": [],
+  "specs": [],
+  "publishStatus": "draft",
+  "seoTitle": "Máy siêu âm CHISON SonoPort 8 | Thiên Lộc",
+  "seoDescription": "Máy siêu âm cao cấp CHISON SonoPort 8 với AI, Shear Wave Elastography, MVI, SonoAI-OB, Doppler và các công nghệ hình ảnh nâng cao.",
+  "detail": {
+    "gallery": [],
+    "features": [
+      {
+        "title": "Shear Wave Elastography",
+        "description": "Tạo ảnh sóng biến dạng điểm P-SWE và sóng biến dạng bề mặt 2D-SWE. Cung cấp nhiều thông số phân tích định lượng như giá trị vận tốc, mô đun Young."
+      },
+      {
+        "title": "MVI",
+        "description": "Áp dụng thuật toán kiểm tra lưu lượng máu, cải thiện độ nhạy đối với vận tốc thấp và các mạch máu nhỏ, cung cấp thêm thông tin lưu lượng máu cho lâm sàng."
+      },
+      {
+        "title": "Doppler thông minh",
+        "description": "Tự động điều chỉnh ROI, hướng PFR trong Color Mode và PW Mode."
+      },
+      {
+        "title": "Tự động phát hiện tổn thương vú",
+        "description": "Tự động phát hiện tổn thương vú và cung cấp kích thước."
+      },
+      {
+        "title": "SonoAI-OB",
+        "description": "Tự động đo các chỉ số BPD, HC, AC, FL và NT."
+      },
+      {
+        "title": "Strain and Strain Ratio",
+        "description": "Phương pháp không xâm nhập hỗ trợ đánh giá chức năng cơ tim, phân biệt chuyển động chủ động và thụ động của cơ tim và hỗ trợ đánh giá các thành phần chức năng cơ tim."
+      },
+      {
+        "title": "Stress Echo",
+        "description": "Hỗ trợ xác nhận hoặc loại trừ sự hiện diện của bệnh động mạch vành."
+      },
+      {
+        "title": "Tối ưu hóa hình ảnh",
+        "description": "Hỗ trợ Q-image, X-contrast, Q-beam và Q-flow."
+      }
+    ],
+    "configurations": [
+      {
+        "title": "Máy chính",
+        "description": "",
+        "items": [
+          {
+            "name": "SonoPort 8",
+            "detail": "Máy siêu âm cao cấp",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          },
+          {
+            "name": "Màn hình chính",
+            "detail": "Độ phân giải cao, 23,8 inch",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          },
+          {
+            "name": "Màn hình cảm ứng",
+            "detail": "15,6 inch, độ phân giải cao",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          }
+        ]
+      },
+      {
+        "title": "Đầu dò",
+        "description": "",
+        "items": [
+          {
+            "name": "Đầu dò Convex",
+            "detail": "Tổng quát",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          },
+          {
+            "name": "Đầu dò Linear",
+            "detail": "Phẳng",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          },
+          {
+            "name": "Đầu dò 4D",
+            "detail": "Khối",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          }
+        ]
+      },
+      {
+        "title": "Phụ kiện",
+        "description": "",
+        "items": [
+          {
+            "name": "Card kết nối",
+            "detail": "Phụ kiện chuẩn kèm theo",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          },
+          {
+            "name": "Dây điện nguồn",
+            "detail": "Phụ kiện chuẩn kèm theo",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          },
+          {
+            "name": "Dây kết nối",
+            "detail": "Phụ kiện chuẩn kèm theo",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          }
+        ]
+      },
+      {
+        "title": "Phần mềm",
+        "description": "",
+        "items": [
+          {
+            "name": "Phần mềm chuyển ảnh",
+            "detail": "Phần mềm kèm theo",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": null
+          }
+        ]
+      },
+      {
+        "title": "Option mua thêm",
+        "description": "",
+        "items": [
+          {
+            "name": "Đầu dò âm đạo",
+            "detail": "Đầu dò mua thêm",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": 40000000
+          },
+          {
+            "name": "Đầu dò tim",
+            "detail": "Đầu dò mua thêm",
+            "quantity": 1,
+            "imageUrl": "",
+            "priceVnd": 50000000
+          }
+        ]
+      }
+    ],
+    "specificationGroups": [
+      {
+        "title": "MÀN HÌNH",
+        "items": [
+          { "label": "Màn hình chính", "value": "23,8 inch, độ phân giải cao" },
+          { "label": "Màn hình cảm ứng", "value": "15,6 inch, độ phân giải cao" }
+        ]
+      },
+      {
+        "title": "CHẾ ĐỘ HÌNH ẢNH",
+        "items": [
+          { "label": "B", "value": "Có" },
+          { "label": "FHI", "value": "Có" },
+          { "label": "M", "value": "Có" },
+          { "label": "Giải phẫu M", "value": "Có" },
+          { "label": "Màu M", "value": "Có" },
+          { "label": "CFM", "value": "Có" },
+          { "label": "PDI/DPDI", "value": "Có" },
+          { "label": "PW", "value": "Có" },
+          { "label": "CW", "value": "Có" },
+          { "label": "TDI", "value": "Có" },
+          { "label": "TDI + PW", "value": "Có" },
+          { "label": "TDI + M", "value": "Có" }
+        ]
+      },
+      {
+        "title": "GIẢI PHẪU M-MODE LINEAR",
+        "items": [
+          { "label": "Hiển thị đường mẫu đồng thời", "value": "3 đường" },
+          { "label": "Góc đường mẫu", "value": "Có thể điều chỉnh" },
+          { "label": "Vị trí đường mẫu", "value": "Có thể điều chỉnh" }
+        ]
+      },
+      {
+        "title": "SHEAR WAVE ELASTOGRAPHY",
+        "items": [
+          { "label": "P-SWE", "value": "Có" },
+          { "label": "2D-SWE", "value": "Có" },
+          { "label": "Phân tích giá trị vận tốc", "value": "Có" },
+          { "label": "Phân tích mô đun Young", "value": "Có" }
+        ]
+      },
+      {
+        "title": "MVI",
+        "items": [
+          { "label": "MVI", "value": "Có" },
+          { "label": "Khảo sát lưu lượng máu vận tốc thấp", "value": "Có" },
+          { "label": "Hỗ trợ khảo sát mạch máu nhỏ", "value": "Có" }
+        ]
+      },
+      {
+        "title": "DOPPLER THÔNG MINH",
+        "items": [
+          { "label": "Tự động điều chỉnh ROI", "value": "Có" },
+          { "label": "Điều chỉnh hướng PFR", "value": "Có" },
+          { "label": "Color Mode", "value": "Có" },
+          { "label": "PW Mode", "value": "Có" }
+        ]
+      },
+      {
+        "title": "HỖ TRỢ TỰ ĐỘNG",
+        "items": [
+          { "label": "Tự động phát hiện tổn thương vú", "value": "Có" },
+          { "label": "Cung cấp kích thước tổn thương", "value": "Có" },
+          { "label": "SonoAI-OB", "value": "Có" },
+          { "label": "BPD", "value": "Tự động đo" },
+          { "label": "HC", "value": "Tự động đo" },
+          { "label": "AC", "value": "Tự động đo" },
+          { "label": "FL", "value": "Tự động đo" },
+          { "label": "NT", "value": "Tự động đo" }
+        ]
+      },
+      {
+        "title": "TIM MẠCH",
+        "items": [
+          { "label": "Strain", "value": "Có" },
+          { "label": "Strain Ratio", "value": "Có" },
+          { "label": "Stress Echo", "value": "Có" }
+        ]
+      },
+      {
+        "title": "XỬ LÝ HÌNH ẢNH",
+        "items": [
+          { "label": "Q-image", "value": "Có" },
+          { "label": "X-contrast", "value": "Có" },
+          { "label": "Q-beam", "value": "Có" },
+          { "label": "Q-flow", "value": "Có" }
+        ]
+      },
+      {
+        "title": "GÓI ĐO LƯỜNG VÀ TÍNH TOÁN",
+        "items": [
+          { "label": "Tổng quát", "value": "Có" },
+          { "label": "Sản phụ khoa", "value": "Có" },
+          { "label": "Tim mạch", "value": "Có" },
+          { "label": "Mạch máu", "value": "Có" },
+          { "label": "URO", "value": "Có" },
+          { "label": "Bộ phận nhỏ", "value": "Có" },
+          { "label": "Nhi khoa", "value": "Có" },
+          { "label": "Động mạch cảnh", "value": "Có" },
+          { "label": "Bụng", "value": "Có" },
+          { "label": "TCD", "value": "Có" }
+        ]
+      },
+      {
+        "title": "THU PHÓNG",
+        "items": [
+          { "label": "Thu phóng độ phân giải cao", "value": "Có" },
+          { "label": "Thu phóng thời gian thực", "value": "Có" },
+          { "label": "Thu phóng cố định", "value": "Có" },
+          { "label": "Thu phóng trong hình (PIP)", "value": "Có" },
+          { "label": "Thu phóng lia máy", "value": "Có" }
+        ]
+      },
+      {
+        "title": "CÀI ĐẶT SẴN TÙY CHỈNH",
+        "items": [
+          { "label": "Cài đặt trước có thể tùy chỉnh", "value": "Có" },
+          { "label": "Tham số do người dùng xác định cho các đầu dò và loại kiểm tra khác nhau", "value": "Có" }
+        ]
+      },
+      {
+        "title": "TẠO ẢNH TOÀN CẢNH",
+        "items": [
+          { "label": "Toàn cảnh hình ảnh B Mode", "value": "Có" },
+          { "label": "Toàn cảnh hình ảnh Color Mode (CFM/PDI)", "value": "Có" },
+          { "label": "Đầu dò hỗ trợ Color Mode Panorama", "value": "Linear" }
+        ]
+      },
+      {
+        "title": "HƯỚNG DẪN SINH THIẾT",
+        "items": [
+          { "label": "Hiệu chuẩn góc đường sinh thiết", "value": "Có" },
+          { "label": "Hiệu chuẩn bù góc đường sinh thiết", "value": "Có" },
+          { "label": "Lưu trữ tham số hiệu chuẩn đường sinh thiết", "value": "Có" },
+          { "label": "Tải mặc định", "value": "Có" }
+        ]
+      },
+      {
+        "title": "SONO-DROP",
+        "items": [
+          { "label": "Truyền hình ảnh không dây tại chỗ", "value": "Có" },
+          { "label": "Chuyển hình ảnh lâm sàng sang thiết bị thông minh", "value": "Có" },
+          { "label": "Kết nối bằng QR Code", "value": "Có" },
+          { "label": "Chuyển hình ảnh qua Wi-Fi", "value": "Có" },
+          { "label": "Chuyển clip qua Wi-Fi", "value": "Có" }
+        ]
+      },
+      {
+        "title": "SONO-ĐỒNG BỘ",
+        "items": [
+          { "label": "Đồng bộ hình ảnh màn hình chính", "value": "Có" },
+          { "label": "Đồng bộ hình ảnh camera thời gian thực", "value": "Có" },
+          { "label": "Đồng bộ âm thanh từ xa", "value": "Có" },
+          { "label": "Đồng bộ nhiều thiết bị cùng lúc", "value": "Có" }
+        ]
+      },
+      {
+        "title": "USB",
+        "items": [
+          { "label": "USB-A", "value": "4 cổng" },
+          { "label": "USB-C", "value": "4 cổng" }
+        ]
+      },
+      {
+        "title": "CỔNG XUẤT VIDEO",
+        "items": [
+          { "label": "Tổng số cổng xuất video", "value": "4" },
+          { "label": "S-Video Out", "value": "1" },
+          { "label": "HDMI", "value": "1" },
+          { "label": "VGA Out", "value": "1" },
+          { "label": "Video Out", "value": "1" }
+        ]
+      },
+      {
+        "title": "ÂM THANH",
+        "items": [
+          { "label": "Âm thanh vào", "value": "Có" },
+          { "label": "Âm thanh ra", "value": "Có" }
+        ]
+      },
+      {
+        "title": "KẾT NỐI KHÁC",
+        "items": [
+          { "label": "Remote Control", "value": "1" },
+          { "label": "Ethernet", "value": "1" },
+          { "label": "Cổng in video", "value": "1" }
+        ]
+      }
+    ],
+    "applications": [],
+    "documents": [],
+    "documentSourceNote": "Đầy đủ các giấy tờ nguồn gốc đăng ký bảo hiểm.",
+    "warranty": {
+      "period": "",
+      "coverage": "",
+      "installation": "",
+      "technicalSupport": ""
+    },
+    "seo": {
+      "title": "Máy siêu âm CHISON SonoPort 8 | Thiên Lộc",
+      "description": "Máy siêu âm cao cấp CHISON SonoPort 8 với AI, Shear Wave Elastography, MVI, SonoAI-OB, Doppler và các công nghệ hình ảnh nâng cao.",
+      "slug": "may-sieu-am-chison-sonoport-8",
+      "ogImage": ""
+    },
+    "sourceNotes": [
+      "Nguồn ghi cấu hình máy chính gồm 2 đầu dò nhưng liệt kê Đầu dò Convex, Đầu dò Linear và Đầu dò 4D. Chưa xác định đầu dò nào thuộc cấu hình chính.",
+      "Nguồn liệt kê Ethernet hai lần; dữ liệu chỉ giữ một mục Ethernet để tránh trùng.",
+      "Không có dữ liệu chuyên khoa cụ thể nên specialties để trống.",
+      "Không có mục ứng dụng được xác nhận; các gói đo lường và tính toán không được chuyển thành ứng dụng.",
+      "Không có ảnh sản phẩm trong nguồn nên gallery, image và ảnh chia sẻ để trống.",
+      "Giá máy chính 430.000.000 VNĐ được bổ sung từ Bảng báo giá số 1368/BG/2026; giá hai option mua thêm được giữ riêng trong cấu hình.",
+      "Không có tên file hoặc loại tài liệu cụ thể nên documents để trống.",
+      "Không có dữ liệu bảo hành, lắp đặt và hỗ trợ kỹ thuật nên các trường tương ứng để trống.",
+      "Nguồn cung cấp hai slug khác nhau ở phần thông tin cơ bản và SEO; dữ liệu giữ nguyên cả hai, không tự chọn thay thế."
+    ]
+  },
+  "action": "draft"
+}

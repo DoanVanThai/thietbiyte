@@ -1,0 +1,59 @@
+{
+  "id": "",
+  "name": "Dao mổ điện kèm phụ kiện (Cắt Polyp dạ dày)",
+  "slug": "",
+  "sku": "",
+  "model": "ZERO-150",
+  "brand": "Zerone",
+  "brandSlug": "",
+  "category": "",
+  "categorySlug": "",
+  "group": "medical",
+  "origin": "Hàn Quốc",
+  "manufacturingYear": 2025,
+  "manufacturingYearNote": "2025 trở về sau",
+  "condition": "Mới 100%",
+  "warranty": "12 tháng",
+  "shortDescription": "Dao mổ điện kèm phụ kiện dùng cắt Polyp dạ dày.",
+  "description": "Dao mổ điện kèm phụ kiện, model ZERO-150, hãng Zerone, xuất xứ Hàn Quốc.",
+  "priceMode": "",
+  "priceVnd": null,
+  "sourcePriceText": "32.00.000",
+  "priceBand": "",
+  "featured": null,
+  "availability": "",
+  "image": "",
+  "imagePosition": "",
+  "specialties": [],
+  "specialtySlugs": [],
+  "applications": [],
+  "applicationSlugs": [],
+  "specs": [],
+  "publishStatus": "draft",
+  "seoTitle": "",
+  "seoDescription": "",
+  "detail": {
+    "gallery": [],
+    "features": [],
+    "configurations": [
+      {
+        "title": "Cấu hình cung cấp",
+        "description": "",
+        "items": [
+          { "name": "Máy chính kèm phụ kiện", "detail": "", "quantity": 1, "imageUrl": "", "priceVnd": null }
+        ]
+      }
+    ],
+    "specificationGroups": [],
+    "applications": [],
+    "documents": [],
+    "documentSourceNote": "Nguồn nêu đầy đủ các giấy tờ liên quan và nguồn gốc nhưng không có tên file cụ thể.",
+    "warranty": { "period": "12 tháng", "coverage": "", "installation": "", "technicalSupport": "" },
+    "seo": { "title": "", "description": "", "slug": "", "ogImage": "" },
+    "sourceNotes": [
+      "Giá trong nguồn được ghi là 32.00.000, không đúng định dạng phân cách hàng nghìn; priceVnd để null để không tự đoán.",
+      "Nguồn không cung cấp chuyên khoa, ứng dụng, ảnh, thông số kỹ thuật chi tiết hoặc tài liệu dạng file."
+    ]
+  },
+  "action": "draft"
+}
