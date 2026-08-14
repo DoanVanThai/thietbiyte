@@ -71,7 +71,12 @@ const productSources = products.map((product) => {
               <article class="quote-line-item" data-quote-item>
                 <header><strong>Sản phẩm <span data-quote-item-number>1</span></strong><button type="button" data-remove-quote-item hidden><i class="ph ph-trash" aria-hidden="true"></i>Xóa</button></header>
                 <div class="quote-form-grid">
-                  <label class="span-2"><span>Sản phẩm</span><select name="productId" data-quote-product data-native-select>{products.map((product) => <option value={product.id} selected={product.id === selectedProduct.id}>{product.name} · {product.model}</option>)}</select></label>
+                  <label class="span-2"><span>Sản phẩm</span><span class="quote-product-combobox" data-quote-product-combobox>
+                    <input type="search" value={`${selectedProduct.name} · ${selectedProduct.model}`} autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" placeholder="Tìm theo tên, model hoặc mã sản phẩm..." data-quote-product-search />
+                    <input type="hidden" name="productId" value={selectedProduct.id} data-quote-product />
+                    <div class="quote-product-options" role="listbox" data-quote-product-options hidden></div>
+                    <p class="quote-product-empty" role="status" data-quote-product-empty hidden>Không tìm thấy sản phẩm phù hợp.</p>
+                  </span></label>
                   <label><span>Số lượng</span><input name="quantity" type="number" min="1" max="999" value="1" required /></label>
                   <label><span>Đơn giá (VNĐ)</span><input name="unitPrice" type="number" min="0" step="1000" value={selectedProduct.priceVnd || 0} required inputmode="numeric" /></label>
                   <div class="quote-inline-images span-2" data-quote-images></div>

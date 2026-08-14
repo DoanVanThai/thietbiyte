@@ -2,9 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("quote product rows keep a native select that remains interactive after cloning", async () => {
-  const page = await readFile(new URL("../../src/pages/admin/bao-gia.astro", import.meta.url), "utf8");
-  assert.match(page, /<select name="productId" data-quote-product data-native-select>/);
+test("quote product rows use an independent searchable combobox", async () => {
+  const [page, script] = await Promise.all([
+    readFile(new URL("../../src/pages/admin/bao-gia.astro", import.meta.url), "utf8"),
+    readFile(new URL("../../src/scripts/admin-quote-pdf.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(page, /data-quote-product-combobox/);
+  assert.match(page, /data-quote-product-search/);
+  assert.match(script, /renderProductOptions/);
+  assert.match(script, /chooseProduct/);
 });
 
 test("quote builder exposes purposeful loading and entry states", async () => {

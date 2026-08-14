@@ -13,6 +13,9 @@ if (root) {
   let products: ProductSource[] = [];
   try { products = JSON.parse(document.querySelector("#quote-product-data")?.textContent || "[]") as ProductSource[]; } catch { products = []; }
 
+  const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi").trim();
+  const productLabel = (product: ProductSource) => `${product.name} · ${product.model}`;
+
   const descriptionLines = (item: HTMLElement) => {
     const lines = item.querySelector<HTMLTextAreaElement>("[data-quote-description]")?.value.split("\n").map((line) => line.trim()).filter(Boolean) || [];
     return [...new Set(lines)];
@@ -96,13 +99,50 @@ if (root) {
   const hydrateItem = (item: HTMLElement, productId: string) => {
     const product = products.find((entry) => entry.id === productId);
     if (!product) return;
-    const select = item.querySelector<HTMLSelectElement>("[data-quote-product]");
+    const productInput = item.querySelector<HTMLInputElement>("[data-quote-product]");
+    const productSearch = item.querySelector<HTMLInputElement>("[data-quote-product-search]");
     const description = item.querySelector<HTMLTextAreaElement>("[data-quote-description]");
     const price = item.querySelector<HTMLInputElement>('[name="unitPrice"]');
-    if (select) select.value = product.id;
+    if (productInput) productInput.value = product.id;
+    if (productSearch) {
+      productSearch.value = productLabel(product);
+      delete productSearch.dataset.editing;
+    }
     if (description) description.value = product.description;
     if (price) price.value = String(product.price || 0);
     renderImageManager(item, product.images);
+  };
+  const closeProductOptions = (item: HTMLElement) => {
+    const search = item.querySelector<HTMLInputElement>("[data-quote-product-search]");
+    const options = item.querySelector<HTMLElement>("[data-quote-product-options]");
+    const empty = item.querySelector<HTMLElement>("[data-quote-product-empty]");
+    if (options) options.hidden = true;
+    if (empty) empty.hidden = true;
+    search?.setAttribute("aria-expanded", "false");
+  };
+  const renderProductOptions = (item: HTMLElement, query = "") => {
+    const options = item.querySelector<HTMLElement>("[data-quote-product-options]");
+    const empty = item.querySelector<HTMLElement>("[data-quote-product-empty]");
+    const search = item.querySelector<HTMLInputElement>("[data-quote-product-search]");
+    const selected = item.querySelector<HTMLInputElement>("[data-quote-product]")?.value || "";
+    if (!options || !search) return;
+    const matching = products.filter((product) => !query || normalize(`${product.name} ${product.model}`).includes(normalize(query)));
+    options.replaceChildren();
+    matching.forEach((product) => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "quote-product-option";
+      option.dataset.quoteProductOption = product.id;
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", String(product.id === selected));
+      const name = document.createElement("strong"); name.textContent = product.name;
+      const meta = document.createElement("small"); meta.textContent = product.model;
+      option.append(name, meta);
+      options.append(option);
+    });
+    options.hidden = matching.length === 0;
+    if (empty) empty.hidden = matching.length > 0;
+    search.setAttribute("aria-expanded", "true");
   };
   const syncItems = () => {
     const items = Array.from(root.querySelectorAll<HTMLElement>("[data-quote-item]"));
@@ -115,14 +155,33 @@ if (root) {
     const summary = root.querySelector<HTMLElement>("[data-quote-product-summary]");
     if (summary) summary.textContent = `${items.length} sản phẩm`;
   };
-  itemsRoot?.addEventListener("change", (event) => {
-    const select = (event.target as Element).closest<HTMLSelectElement>("[data-quote-product]");
-    const item = select?.closest<HTMLElement>("[data-quote-item]");
-    if (!select || !item) return;
-    hydrateItem(item, select.value);
-    if (item === itemsRoot.firstElementChild) {
-      const url = new URL(window.location.href); url.searchParams.set("product", select.value); history.replaceState({}, "", url);
+  const chooseProduct = (item: HTMLElement, productId: string) => {
+    hydrateItem(item, productId);
+    closeProductOptions(item);
+    if (item === itemsRoot?.firstElementChild) {
+      const url = new URL(window.location.href); url.searchParams.set("product", productId); history.replaceState({}, "", url);
     }
+  };
+  itemsRoot?.addEventListener("focusin", (event) => {
+    const search = (event.target as Element).closest<HTMLInputElement>("[data-quote-product-search]");
+    const item = search?.closest<HTMLElement>("[data-quote-item]");
+    if (!search || !item) return;
+    search.dataset.editing = "true";
+    search.select();
+    renderProductOptions(item);
+  });
+  itemsRoot?.addEventListener("input", (event) => {
+    const search = (event.target as Element).closest<HTMLInputElement>("[data-quote-product-search]");
+    const item = search?.closest<HTMLElement>("[data-quote-item]");
+    if (search && item) renderProductOptions(item, search.value);
+  });
+  itemsRoot?.addEventListener("focusout", (event) => {
+    const search = (event.target as Element).closest<HTMLInputElement>("[data-quote-product-search]");
+    const item = search?.closest<HTMLElement>("[data-quote-item]");
+    if (!search || !item) return;
+    window.setTimeout(() => {
+      if (!item.querySelector<HTMLElement>("[data-quote-product-combobox]")?.contains(document.activeElement)) closeProductOptions(item);
+    }, 0);
   });
   itemsRoot?.addEventListener("change", async (event) => {
     const input = (event.target as Element).closest<HTMLInputElement>("[data-quote-image-upload]");
@@ -154,6 +213,12 @@ if (root) {
     const description = (event.target as Element).closest("[data-quote-description]"); const item = description?.closest<HTMLElement>("[data-quote-item]"); if (item) refreshImageAnchors(item);
   });
   itemsRoot?.addEventListener("click", (event) => {
+    const productOption = (event.target as Element).closest<HTMLButtonElement>("[data-quote-product-option]");
+    if (productOption) {
+      const item = productOption.closest<HTMLElement>("[data-quote-item]");
+      if (item && productOption.dataset.quoteProductOption) chooseProduct(item, productOption.dataset.quoteProductOption);
+      return;
+    }
     const removeImage = (event.target as Element).closest<HTMLButtonElement>("[data-remove-quote-image]");
     if (removeImage) { const item = removeImage.closest<HTMLElement>("[data-quote-item]"); removeImage.closest("[data-quote-image-card]")?.remove(); if (item) syncImageEmptyState(item); return; }
     const remove = (event.target as Element).closest<HTMLButtonElement>("[data-remove-quote-item]");
@@ -165,7 +230,7 @@ if (root) {
     const source = itemsRoot?.querySelector<HTMLElement>("[data-quote-item]");
     if (!source || !itemsRoot || itemsRoot.children.length >= 20) return;
     const clone = source.cloneNode(true) as HTMLElement;
-    const selectedIds = new Set(Array.from(itemsRoot.querySelectorAll<HTMLSelectElement>("[data-quote-product]")).map((select) => select.value));
+    const selectedIds = new Set(Array.from(itemsRoot.querySelectorAll<HTMLInputElement>("[data-quote-product]")).map((input) => input.value));
     const next = products.find((product) => !selectedIds.has(product.id)) || products[0];
     clone.querySelector<HTMLInputElement>('[name="quantity"]')!.value = "1";
     clone.classList.add("is-entering");
@@ -174,7 +239,9 @@ if (root) {
     syncItems();
     clone.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     clone.addEventListener("animationend", () => clone.classList.remove("is-entering"), { once: true });
-    window.requestAnimationFrame(() => clone.querySelector<HTMLSelectElement>("[data-quote-product]")?.focus({ preventScroll: true }));
+    window.requestAnimationFrame(() => {
+      clone.querySelector<HTMLInputElement>("[data-quote-product-search]")?.focus({ preventScroll: true });
+    });
   });
   syncItems();
 
@@ -236,7 +303,7 @@ if (root) {
     }
   });
   root.querySelectorAll<HTMLElement>("[data-quote-item]").forEach((item) => {
-    const productId = item.querySelector<HTMLSelectElement>("[data-quote-product]")?.value; if (productId) hydrateItem(item, productId);
+    const productId = item.querySelector<HTMLInputElement>("[data-quote-product]")?.value; if (productId) hydrateItem(item, productId);
   });
 }
 };
