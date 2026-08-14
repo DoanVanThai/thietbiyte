@@ -298,7 +298,7 @@ confirmDelete?.addEventListener("click", async () => {
   confirmDelete.setAttribute("aria-busy", "true");
   const originalLabel = confirmDelete.textContent || "Xóa sản phẩm";
   confirmDelete.textContent = "Đang xóa…";
-  const summary = await mutateProducts(targets.map((target) => target.id), (id) => fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method: "DELETE" }));
+  const summary = await mutateProducts(targets.map((target) => target.id), (id) => fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete" }) }));
   confirmDelete.disabled = false;
   confirmDelete.removeAttribute("aria-busy");
   confirmDelete.textContent = originalLabel;

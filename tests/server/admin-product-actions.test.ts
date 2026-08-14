@@ -31,7 +31,9 @@ test("product deletion is permission-gated and confirmed in the UI", async () =>
   assert.match(page, /data-row-delete/);
   assert.match(page, /data-bulk-delete/);
   assert.match(page, /data-delete-dialog/);
-  assert.match(script, /method: "DELETE"/);
+  assert.match(script, /method: "POST"/);
+  assert.match(script, /action: "delete"/);
   assert.match(endpoint, /requirePermission\(context, "product\.delete"\)/);
+  assert.match(endpoint, /export const POST/);
   assert.match(endpoint, /PRODUCT_IN_USE/);
 });

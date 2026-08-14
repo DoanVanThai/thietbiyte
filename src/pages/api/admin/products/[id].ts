@@ -28,7 +28,7 @@ export const PATCH: APIRoute = async (context) => {
   catch (error) { return Response.json({ error: error instanceof Error && error.message.includes("UNIQUE") ? "Slug hoặc SKU đã tồn tại." : "Không thể cập nhật sản phẩm." }, { status: 409 }); }
 };
 
-export const DELETE: APIRoute = async (context) => {
+const removeProduct: APIRoute = async (context) => {
   const actor = requirePermission(context, "product.delete");
   if (isResponse(actor)) return actor;
   const id = context.params.id || "";
@@ -43,4 +43,12 @@ export const DELETE: APIRoute = async (context) => {
     if (code === "P2003") return Response.json({ code: "PRODUCT_IN_USE", error: "Sản phẩm đang được dùng trong yêu cầu báo giá. Hãy lưu trữ sản phẩm thay vì xóa." }, { status: 409, headers: { "Cache-Control": "no-store" } });
     return Response.json({ error: "Không thể xóa sản phẩm. Vui lòng thử lại." }, { status: 500, headers: { "Cache-Control": "no-store" } });
   }
+};
+
+export const DELETE = removeProduct;
+
+export const POST: APIRoute = async (context) => {
+  const body = await context.request.json().catch(() => null) as { action?: string } | null;
+  if (body?.action !== "delete") return Response.json({ error: "Thao tác sản phẩm không hợp lệ." }, { status: 400, headers: { "Cache-Control": "no-store" } });
+  return removeProduct(context);
 };
