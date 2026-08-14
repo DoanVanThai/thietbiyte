@@ -191,11 +191,15 @@ if (root) {
     if (!input || !item || !file) return;
     const validationError = validateAdminImage(file);
     if (validationError) { if (feedback) feedback.textContent = validationError; input.value = ""; return; }
-    input.disabled = true; if (feedback) feedback.textContent = "Đang tải ảnh minh họa…";
+    const uploadAction = input.closest<HTMLElement>("label");
+    input.disabled = true; uploadAction?.classList.add("is-uploading"); uploadAction?.setAttribute("aria-busy", "true"); if (feedback) feedback.textContent = `Đang tải ${file.name}…`;
     try {
       const formData = new FormData(); formData.append("file", file);
-      const response = await fetch("/api/admin/upload", { method: "POST", body: formData }); const uploaded = await response.json();
-      if (!response.ok) throw new Error(uploaded.error || "Không thể tải ảnh.");
+      const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const raw = await response.text();
+      let uploaded: { url?: string; error?: string } = {};
+      try { uploaded = JSON.parse(raw) as typeof uploaded; } catch { uploaded = {}; }
+      if (!response.ok || !uploaded.url) throw new Error(uploaded.error || raw || "Không thể tải ảnh.");
       if (input.dataset.uploadMode === "replace") {
         const card = input.closest<HTMLElement>("[data-quote-image-card]");
         if (card) {
@@ -210,7 +214,7 @@ if (root) {
       }
       syncImageEmptyState(item); if (feedback) feedback.textContent = "Ảnh đã được thêm vào báo giá. Hãy chọn mục đặt ảnh.";
     } catch (error) { if (feedback) feedback.textContent = error instanceof Error ? error.message : "Không thể tải ảnh."; }
-    finally { input.disabled = false; input.value = ""; }
+    finally { input.disabled = false; input.value = ""; uploadAction?.classList.remove("is-uploading"); uploadAction?.removeAttribute("aria-busy"); }
   });
   itemsRoot?.addEventListener("focusout", (event) => {
     const description = (event.target as Element).closest("[data-quote-description]"); const item = description?.closest<HTMLElement>("[data-quote-item]"); if (item) refreshImageAnchors(item);

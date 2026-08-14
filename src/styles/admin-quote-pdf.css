@@ -339,6 +339,7 @@
 }
 
 .quote-image-file-action { position: relative; overflow: hidden; touch-action: manipulation; }
+.quote-image-add.is-uploading, .quote-image-file-action.is-uploading { opacity: .6; cursor: wait; }
 
 .quote-image-add input,
 .quote-image-file-action input {

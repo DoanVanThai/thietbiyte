@@ -26,6 +26,19 @@ test("upload API decodes HEIC HEIF and AVIF as images instead of storing raw fil
   assert.match(api, /\.webp\(\{ quality: 82/);
 });
 
+test("Astro delegates proxied multipart Origin checks to the forwarded-aware middleware", async () => {
+  const [config, middleware, quoteUpload] = await Promise.all([
+    read("astro.config.mjs"),
+    read("src/middleware.ts"),
+    read("src/scripts/admin-quote-pdf.ts"),
+  ]);
+  assert.match(config, /security:\s*\{ checkOrigin: false \}/);
+  assert.match(middleware, /isBrowserForm && !origin/);
+  assert.match(middleware, /resolveCsrfOrigin/);
+  assert.match(quoteUpload, /const raw = await response\.text\(\)/);
+  assert.match(quoteUpload, /!response\.ok \|\| !uploaded\.url/);
+});
+
 test("admin mobile upload controls use full touch targets and 16px form controls", async () => {
   const [products, quote, operations, siteContent, admin] = await Promise.all([
     read("src/styles/admin-products.css"),
