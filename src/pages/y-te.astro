@@ -1,0 +1,152 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import MedicalProductSection from "@/components/MedicalProductSection.astro";
+import ResponsiveImage from "@/components/ResponsiveImage.astro";
+import {
+  medicalCategoryFeature,
+  medicalCategoryGroups,
+  medicalSpecialties,
+} from "@/data/medical";
+import { productService } from "@/server/services/product-service";
+import { getEntities } from "@/lib/content-repository";
+import "@/styles/catalog.css";
+import "@/styles/medical.css";
+
+const medicalProducts = (await productService.listPublicCatalog()).filter((product) => product.group === "medical");
+const medicalPopularProducts = [...medicalProducts].sort((a, b) => b.featured - a.featured).slice(0, 4);
+const specialtyEntities = getEntities("specialty");
+const medicalSpecialtyItems = specialtyEntities.map((entity) => {
+  const fallback = medicalSpecialties.find((item) => item.slug === entity.slug);
+  return { slug: entity.slug, title: entity.name, description: entity.description, image: entity.image || fallback?.image || "/images/project-handover-placeholder.webp" };
+});
+const medicalCategoryEntities = getEntities("category").filter((entity) => (entity.type || entity.data?.type || "medical") === "medical");
+const medicalCategoryGroupsDynamic = medicalCategoryEntities.length ? [{ title: "Danh mục thiết bị", items: medicalCategoryEntities.map((entity) => ({ label: entity.name, href: `/danh-muc/${entity.slug}`, description: entity.description })) }] : medicalCategoryGroups;
+const searchSuggestions = [...new Set([
+  ...medicalProducts.flatMap((product) => [product.name, product.model, product.brand, product.category]),
+  ...medicalSpecialtyItems.map((specialty) => specialty.title),
+])];
+---
+
+<BaseLayout
+  title="Thiết bị Y tế | THIÊN LỘC GROUP"
+  description="Khám phá thiết bị y tế theo chuyên khoa, nhu cầu sử dụng và danh mục sản phẩm."
+>
+  <Header />
+  <main id="main-content" class="medical-discovery-page">
+    <section class="medical-landing-hero" aria-labelledby="medical-page-title">
+      <div class="container">
+        <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Thiết bị Y tế" }]} />
+        <div class="medical-hero-layout">
+          <div class="medical-hero-copy">
+            <h1 id="medical-page-title">Thiết bị Y tế</h1>
+            <p>Tìm thiết bị theo chuyên khoa, nhu cầu sử dụng hoặc nhóm thiết bị phù hợp với cơ sở của bạn.</p>
+            <form class="medical-search" role="search" action="/san-pham" method="get">
+              <label for="medical-search-input">Bạn đang tìm thiết bị gì?</label>
+              <div>
+                <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+                <input type="hidden" name="group" value="medical" />
+                <input
+                  id="medical-search-input"
+                  name="q"
+                  type="search"
+                  list="medical-search-suggestions"
+                  placeholder="Tên thiết bị, ứng dụng, model hoặc hãng..."
+                  autocomplete="off"
+                />
+                <button class="button button-primary" type="submit">Tìm thiết bị</button>
+              </div>
+              <datalist id="medical-search-suggestions">
+                {searchSuggestions.map((suggestion) => <option value={suggestion} />)}
+              </datalist>
+            </form>
+          </div>
+          <figure class="medical-hero-image">
+            <ResponsiveImage src="/images/hero-ultrasound-lab.webp" alt="Ảnh minh họa hệ thống siêu âm trong phòng chẩn đoán" width={1600} height={1067} sourceWidth={1600} sizes="(max-width: 767px) 100vw, 48vw" loading="eager" fetchpriority="high" />
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="medical-flow-section" aria-labelledby="medical-flow-title">
+      <div class="container medical-flow-layout">
+        <div>
+          <h2 id="medical-flow-title">Đi từ nhu cầu đến thiết bị</h2>
+          <p>Không cần bắt đầu bằng tên model.</p>
+        </div>
+        <ol class="medical-flow-list">
+          <li><i class="ph ph-stethoscope" aria-hidden="true"></i><span><strong>Chọn chuyên khoa</strong><small>Xác định bối cảnh sử dụng</small></span></li>
+          <li><i class="ph ph-clipboard-text" aria-hidden="true"></i><span><strong>Xác định nhu cầu</strong><small>Khám, chẩn đoán hoặc điều trị</small></span></li>
+          <li><i class="ph ph-folders" aria-hidden="true"></i><span><strong>Mở danh mục</strong><small>Thu hẹp nhóm thiết bị</small></span></li>
+          <li><i class="ph ph-arrows-left-right" aria-hidden="true"></i><span><strong>So sánh sản phẩm</strong><small>Đối chiếu cấu hình phù hợp</small></span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="medical-categories-section" aria-labelledby="medical-categories-title">
+      <div class="container">
+        <header class="medical-section-heading medical-section-heading-stacked">
+          <div>
+            <h2 id="medical-categories-title">Khám phá nhóm thiết bị</h2>
+            <p>Bắt đầu từ chức năng chuyên môn, sau đó đi sâu vào danh mục và sản phẩm.</p>
+          </div>
+        </header>
+
+        <div class="medical-category-layout">
+          <a class="medical-category-feature" href={medicalCategoryFeature.href}>
+            <ResponsiveImage src={medicalCategoryFeature.image} alt="Ảnh minh họa hệ thống X-quang và chẩn đoán hình ảnh" width={900} height={675} sourceWidth={1400} sizes="(max-width: 767px) 100vw, 46vw" style={`object-position:${medicalCategoryFeature.imagePosition}`} />
+            <span>
+              <strong>{medicalCategoryFeature.title}</strong>
+              <small>{medicalCategoryFeature.description}</small>
+              <b>Xem theo chuyên khoa<i class="ph ph-arrow-right" aria-hidden="true"></i></b>
+            </span>
+          </a>
+
+          <div class="medical-category-groups">
+            {medicalCategoryGroupsDynamic.map((group) => (
+              <section>
+                <h3>{group.title}</h3>
+                <nav aria-label={group.title}>
+                  {group.items.map((item) => (
+                    <a href={item.href}>
+                      <span><strong>{item.label}</strong>{"description" in item && item.description && <small>{item.description}</small>}</span>
+                      <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
+                    </a>
+                  ))}
+                </nav>
+              </section>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <MedicalProductSection
+      title="Thiết bị được quan tâm"
+      description="Các thiết bị phù hợp với nhu cầu chẩn đoán và vận hành phổ biến."
+      products={medicalPopularProducts}
+      viewAllHref="/san-pham?group=medical"
+    />
+
+    <section class="medical-specialties-section" aria-labelledby="medical-specialties-title">
+      <div class="container medical-specialty-layout">
+        <div class="medical-specialty-intro">
+          <h2 id="medical-specialties-title">Tìm theo chuyên khoa</h2>
+          <p>Mỗi chuyên khoa mở ra các nhu cầu, nhóm thiết bị và sản phẩm liên quan.</p>
+          <a class="button button-outline" href="/san-pham?group=medical">Mở toàn bộ thiết bị Y tế</a>
+        </div>
+        <nav class="medical-specialty-index" aria-label="Danh sách chuyên khoa Y tế">
+          {medicalSpecialtyItems.map((specialty) => (
+            <a href={`/chuyen-khoa/${specialty.slug}`}>
+              <span><strong>{specialty.title}</strong><small>{specialty.description}</small></span>
+              <i class="ph ph-arrow-right" aria-hidden="true"></i>
+            </a>
+          ))}
+        </nav>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

@@ -1,0 +1,13 @@
+---
+import CrmShell from "@/components/CrmShell.astro";
+import { customerTypes, leadSources, salesPeople } from "@/data/crm";
+---
+<CrmShell title="Thêm lead" description="Tạo lead mới cho đội Sales." active="leads" section="CRM · Thêm lead">
+  <a class="crm-back-link" href="/admin/crm"><i class="ph ph-arrow-left" aria-hidden="true"></i>Quay lại Leads</a>
+  <header class="crm-page-header"><div><p>CRM</p><h1>Thêm lead</h1><span>Chỉ thu thập dữ liệu cần thiết để Sales bắt đầu liên hệ.</span></div></header>
+  <form class="crm-create-form" data-demo-form>
+    <section><h2>Customer</h2><div class="crm-form-grid"><label><span>Họ và tên</span><input required autocomplete="name" /></label><label><span>Organization</span><input autocomplete="organization" /></label><label><span>Phone</span><input required type="tel" autocomplete="tel" /></label><label><span>Email</span><input type="email" autocomplete="email" /></label><label><span>Customer type</span><select>{customerTypes.map((type) => <option>{type}</option>)}</select></label><label><span>Nguồn</span><select>{leadSources.map((source) => <option>{source}</option>)}</select></label></div></section>
+    <section><h2>Nhu cầu</h2><div class="crm-form-grid"><label class="is-wide"><span>Product interest</span><input required placeholder="Tên sản phẩm hoặc nhóm thiết bị" /></label><label class="is-wide"><span>Customer requirement</span><textarea rows="4" placeholder="Phạm vi sử dụng, thời gian dự kiến, thông tin cần tư vấn..."></textarea></label><label><span>Assigned Sales</span><select>{salesPeople.map((sales) => <option>{sales}</option>)}</select></label><label><span>Follow-up đầu tiên</span><input type="datetime-local" /></label></div></section>
+    <footer><a class="button button-outline" href="/admin/crm">Hủy</a><button class="button button-primary" type="submit">Tạo lead</button></footer>
+  </form>
+</CrmShell>

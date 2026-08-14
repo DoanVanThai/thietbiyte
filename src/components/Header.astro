@@ -1,0 +1,55 @@
+---
+import { getSettings } from "@/lib/content-repository";
+const settings = getSettings();
+const navItems = [
+  ["Sản phẩm", "/san-pham"],
+  ["Y tế", "/y-te"],
+  ["Thú y", "/thu-y"],
+  ["Giải pháp", "/#solutions"],
+  ["Dự án", "/#projects"],
+  ["Dịch vụ kỹ thuật", "/#why-us"],
+  ["Kiến thức", "/#knowledge"],
+];
+
+const currentPath = Astro.url.pathname;
+const productSection = currentPath === "/san-pham" || currentPath.startsWith("/san-pham/") || currentPath === "/tim-kiem" || currentPath === "/so-sanh" || currentPath.startsWith("/yeu-cau-bao-gia") || currentPath.startsWith("/danh-muc/") || currentPath.startsWith("/thuong-hieu/") || currentPath.startsWith("/chuyen-khoa/");
+const isActive = (href: string, index: number) => index === 0 ? productSection : href.startsWith("/#") ? false : currentPath === href;
+---
+
+<div class="header-sentinel" aria-hidden="true" data-header-sentinel></div>
+<header class="site-header" data-site-header>
+  <div class="container header-main">
+    <a class:list={["wordmark", settings.logo && "wordmark-with-logo"]} href="/" aria-label="THIÊN LỘC GROUP - Trang chủ">
+      {settings.logo
+        ? <img class="wordmark-logo" src={settings.logo} alt="" width="112" height="67" />
+        : <><span class="wordmark-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="wordmark-copy"><span>{settings.company.replace(/\s+GROUP$/i, "")}</span><small>GROUP</small></span></>}
+    </a>
+    <nav class="primary-nav" aria-label="Điều hướng chính">
+      {navItems.map(([label, href], index) => (
+        <a class:list={[isActive(href, index) && "is-active"]} href={href} aria-current={isActive(href, index) ? "page" : undefined}>{label}</a>
+      ))}
+    </nav>
+    <div class="header-actions">
+      <button class="header-search-trigger" type="button" data-search-open aria-label="Mở tìm kiếm">
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+      </button>
+      <a class="button button-primary button-sm" href="/yeu-cau-bao-gia?source=global">Yêu cầu báo giá</a>
+    </div>
+    <button class="mobile-search-trigger" type="button" data-search-open aria-label="Mở tìm kiếm">
+      <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+    </button>
+    <button class="mobile-menu-trigger" type="button" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-navigation" data-mobile-menu-open>
+      <i class="ph ph-list" aria-hidden="true"></i>
+    </button>
+    <dialog class="mobile-navigation" id="mobile-navigation" aria-labelledby="mobile-navigation-title" data-mobile-navigation>
+      <div class="mobile-navigation-header">
+        <span class:list={["wordmark", settings.logo && "wordmark-with-logo"]} id="mobile-navigation-title">{settings.logo ? <img class="wordmark-logo" src={settings.logo} alt="" width="112" height="67" /> : <><span class="wordmark-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="wordmark-copy"><span>{settings.company.replace(/\s+GROUP$/i, "")}</span><small>GROUP</small></span></>}</span>
+        <button class="icon-action" type="button" aria-label="Đóng menu" data-mobile-menu-close><i class="ph ph-x" aria-hidden="true"></i></button>
+      </div>
+      <nav aria-label="Điều hướng di động">
+        {navItems.map(([label, href]) => <a href={href}>{label}</a>)}
+        <a class="button button-primary" href="/yeu-cau-bao-gia?source=global">Yêu cầu báo giá</a>
+      </nav>
+    </dialog>
+  </div>
+</header>

@@ -1,0 +1,33 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import AuthShell from "@/components/AuthShell.astro";
+---
+
+<AuthLayout title="Xác minh email | THIÊN LỘC GROUP" description="Xác minh email tài khoản THIÊN LỘC GROUP.">
+  <AuthShell title="Xác minh email của bạn" description="Bước cuối để hoàn tất thiết lập tài khoản.">
+    <div class="auth-state auth-state-panel" data-route-state="form">
+      <div class="auth-state-icon"><i class="ph ph-envelope-simple" aria-hidden="true"></i></div>
+      <h2>Kiểm tra hộp thư</h2>
+      <p>Chúng tôi đã gửi liên kết xác minh nếu địa chỉ email hợp lệ. Liên kết có thời hạn để bảo vệ tài khoản của bạn.</p>
+      <a class="button button-primary" href="/dang-nhap">Về trang đăng nhập</a>
+      <button class="auth-link" type="button" data-resend>Gửi lại email xác minh</button>
+      <p class="resend-status" data-resend-status aria-live="polite"></p>
+    </div>
+
+    <div class="auth-state auth-state-panel" data-route-state="success" data-tone="success" hidden>
+      <div class="auth-state-icon"><i class="ph ph-check" aria-hidden="true"></i></div>
+      <h2>Email đã được xác minh</h2>
+      <p>Tài khoản của bạn đã sẵn sàng. Bạn có thể đăng nhập để tiếp tục.</p>
+      <a class="button button-primary" href="/dang-nhap">Đăng nhập</a>
+    </div>
+
+    <div class="auth-state auth-state-panel" data-route-state="expired" data-tone="danger" hidden>
+      <div class="auth-state-icon"><i class="ph ph-clock-countdown" aria-hidden="true"></i></div>
+      <h2>Liên kết xác minh đã hết hạn</h2>
+      <p>Hãy gửi lại email xác minh để nhận một liên kết mới.</p>
+      <button class="button button-primary" type="button" data-resend>Gửi liên kết mới</button>
+      <a class="auth-link" href="/dang-nhap">Quay lại đăng nhập</a>
+      <p class="resend-status" data-resend-status aria-live="polite"></p>
+    </div>
+  </AuthShell>
+</AuthLayout>

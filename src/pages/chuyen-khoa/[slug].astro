@@ -1,0 +1,12 @@
+---
+import CatalogPage from "@/components/CatalogPage.astro";
+import MedicalSpecialtyPage from "@/components/MedicalSpecialtyPage.astro";
+import { routeConfig } from "@/lib/public-content";
+import { getMedicalSpecialty } from "@/data/medical";
+
+const config = await routeConfig("specialty", Astro.params.slug || "");
+if (!config) return new Response("Không tìm thấy chuyên khoa", { status: 404 });
+const medicalSpecialty = getMedicalSpecialty(config.slug);
+---
+
+{medicalSpecialty ? <MedicalSpecialtyPage specialty={medicalSpecialty} /> : <CatalogPage config={config} />}

@@ -1,0 +1,121 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getSettings } from "@/lib/content-repository";
+import { buildProductQuoteDescription } from "@/server/services/sales-quote-pdf";
+import { productService } from "@/server/services/product-service";
+import "@/styles/admin-quote-pdf.css";
+
+const products = await productService.listAdminCatalog();
+const requestedProductId = Astro.url.searchParams.get("product");
+const selectedProduct = products.find((product) => product.id === requestedProductId) || products[0];
+const settings = getSettings();
+const now = new Date();
+const quoteDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+const quoteNumber = `${String(now.getTime()).slice(-4)}/BG/${now.getFullYear()}`;
+const productSources = products.map((product) => {
+  const mediaImages = (product.detail?.gallery || []).filter((media) => media.type === "image" && media.quoteEnabled && media.src).map((media) => ({
+    url: media.src,
+    caption: media.quoteCaption || media.alt || "Ảnh minh họa",
+    afterText: media.quoteAfterText || "",
+  }));
+  const configurationImages = (product.detail?.configurations || []).flatMap((group) => group.items
+    .filter((item) => item.imageUrl)
+    .map((item) => ({ url: item.imageUrl!, caption: item.name, afterText: `- ${item.name}${item.detail ? `: ${item.detail}` : ""}` })));
+  const images = [...new Map([...mediaImages, ...configurationImages].map((image) => [`${image.url}\u0000${image.afterText}`, image])).values()];
+  return { id: product.id, name: product.name, model: product.model, price: product.priceVnd || 0, description: buildProductQuoteDescription(product), images };
+});
+---
+
+<AdminLayout title="Tạo báo giá PDF | Thiên Lộc Admin" description="Tạo báo giá thiết bị từ dữ liệu sản phẩm và xuất PDF." section="Báo giá PDF">
+  <script id="quote-product-data" type="application/json" is:inline set:html={JSON.stringify(productSources)} />
+  <section class="quote-builder" data-quote-builder aria-labelledby="quote-builder-title">
+    <header class="admin-page-header">
+      <div>
+        <nav aria-label="Đường dẫn"><a href="/admin">Quản trị</a><i class="ph ph-caret-right" aria-hidden="true"></i><span>Báo giá PDF</span></nav>
+        <h1 id="quote-builder-title">Tạo báo giá thiết bị</h1>
+        <p>Thông tin kỹ thuật được lấy từ sản phẩm. Bạn có thể chỉnh nội dung và giá trước khi tải PDF gửi khách hàng.</p>
+      </div>
+      <a class="button button-outline" href="/admin/san-pham"><i class="ph ph-package" aria-hidden="true"></i>Quản lý sản phẩm</a>
+    </header>
+
+    {selectedProduct ? (
+      <form data-quote-form>
+        <div class="quote-builder-main">
+          <section class="quote-form-section" aria-labelledby="quote-document-title">
+            <header><div><h2 id="quote-document-title">Thông tin báo giá</h2><p>Số báo giá có thể sửa theo quy ước nội bộ.</p></div></header>
+            <div class="quote-form-grid">
+              <label><span>Số báo giá</span><input name="quoteNumber" value={quoteNumber} required maxlength="80" /></label>
+              <label><span>Ngày báo giá</span><input name="quoteDate" type="date" value={quoteDate} required /></label>
+              <label><span>Địa điểm lập</span><input name="city" value="Hà Nội" required /></label>
+              <label><span>Website</span><input name="website" value="thienlocgroup.com" /></label>
+              <label class="span-2"><span>Dòng giới thiệu công ty</span><input name="companyTagline" value="Chuyên kinh doanh trang thiết bị y tế, hóa chất và vật tư tiêu hao." /></label>
+              <label class="span-2"><span>Địa chỉ hiển thị đầu trang</span><textarea name="companyAddress" rows="2">{settings.address}</textarea></label>
+            </div>
+          </section>
+
+          <section class="quote-form-section" aria-labelledby="quote-customer-title">
+            <header><div><h2 id="quote-customer-title">Khách hàng</h2><p>Chỉ tên khách hàng hoặc đơn vị là bắt buộc.</p></div></header>
+            <div class="quote-form-grid">
+              <label><span>Người liên hệ</span><input name="customerName" placeholder="Nguyễn Văn An" required /></label>
+              <label><span>Đơn vị</span><input name="customerOrganization" placeholder="Phòng khám / Bệnh viện" /></label>
+              <label class="span-2"><span>Địa chỉ</span><input name="customerAddress" /></label>
+              <label><span>Điện thoại</span><input name="customerPhone" inputmode="tel" /></label>
+              <label><span>Email</span><input name="customerEmail" type="email" /></label>
+              <label class="span-2"><span>Lời mở đầu</span><textarea name="introduction" rows="3" required>THIÊN LỘC GROUP xin hân hạnh gửi đến Quý khách bảng báo giá thiết bị với cấu hình chi tiết như sau:</textarea></label>
+            </div>
+          </section>
+
+          <section class="quote-form-section quote-product-section" aria-labelledby="quote-product-title">
+            <header><div><h2 id="quote-product-title">Sản phẩm và cấu hình</h2><p>Có thể thêm nhiều sản phẩm như mẫu báo giá tổng hợp.</p></div><button class="button button-outline button-sm" type="button" data-add-quote-item><i class="ph ph-plus" aria-hidden="true"></i>Thêm sản phẩm</button></header>
+            <div class="quote-item-list" data-quote-items>
+              <article class="quote-line-item" data-quote-item>
+                <header><strong>Sản phẩm <span data-quote-item-number>1</span></strong><button type="button" data-remove-quote-item hidden><i class="ph ph-trash" aria-hidden="true"></i>Xóa</button></header>
+                <div class="quote-form-grid">
+                  <label class="span-2"><span>Sản phẩm</span><select name="productId" data-quote-product data-native-select>{products.map((product) => <option value={product.id} selected={product.id === selectedProduct.id}>{product.name} · {product.model}</option>)}</select></label>
+                  <label><span>Số lượng</span><input name="quantity" type="number" min="1" max="999" value="1" required /></label>
+                  <label><span>Đơn giá (VNĐ)</span><input name="unitPrice" type="number" min="0" step="1000" value={selectedProduct.priceVnd || 0} required inputmode="numeric" /></label>
+                  <div class="quote-inline-images span-2" data-quote-images></div>
+                  <label class="span-2"><span>Mô tả và cấu hình</span><textarea name="description" rows="18" required data-quote-description>{buildProductQuoteDescription(selectedProduct)}</textarea></label>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="quote-form-section" aria-labelledby="quote-terms-title">
+            <header><div><h2 id="quote-terms-title">Điều khoản thương mại</h2><p>Được trình bày sau tổng giá trị báo giá.</p></div></header>
+            <div class="quote-form-grid">
+              <label class="quote-check span-2"><input name="vatIncluded" type="checkbox" checked /><span>Giá đã bao gồm thuế GTGT</span></label>
+              <label class="span-2"><span>Giao hàng</span><input name="delivery" value="Vận chuyển, lắp đặt tại nơi sử dụng; thời gian giao hàng từ 1 đến 8 tuần kể từ khi ký hợp đồng và nhận đặt cọc." /></label>
+              <label class="span-2"><span>Thanh toán</span><input name="payment" value="Đặt cọc 50%; giá trị còn lại thanh toán sau khi hai bên ký biên bản bàn giao máy." /></label>
+              <label class="span-2"><span>Hiệu lực</span><input name="validity" value="Có hiệu lực 30 ngày kể từ ngày phát hành." /></label>
+              <label class="span-2"><span>Điều khoản bổ sung</span><textarea name="additionalTerms" rows="3" placeholder="Mỗi dòng là một điều khoản."></textarea></label>
+            </div>
+          </section>
+        </div>
+
+        <aside class="quote-builder-side">
+          <section>
+            <span class="quote-side-icon"><i class="ph ph-file-pdf" aria-hidden="true"></i></span>
+            <h2>PDF sẵn sàng gửi khách</h2>
+            <p>Khổ A4, tự xuống trang với cấu hình dài, có tổng giá trị, điều khoản, khu vực ký tên và số trang.</p>
+            <dl>
+              <div><dt>Công ty</dt><dd>{settings.company}</dd></div>
+              <div><dt>Sản phẩm</dt><dd data-quote-product-summary>1 sản phẩm</dd></div>
+              <div><dt>Định dạng</dt><dd>PDF · A4</dd></div>
+            </dl>
+          </section>
+          <p class="quote-builder-feedback" data-quote-feedback role="status" aria-live="polite"></p>
+          <button class="button button-primary button-lg" type="submit" data-quote-download>
+            <i class="ph ph-download-simple" aria-hidden="true" data-quote-download-icon></i>
+            <i class="ph ph-circle-notch quote-download-spinner" aria-hidden="true"></i>
+            <span data-quote-download-label>Tạo và tải PDF</span>
+          </button>
+          <small>PDF chỉ được tạo sau khi dữ liệu hợp lệ. Hoạt động xuất báo giá được ghi vào Audit Log.</small>
+        </aside>
+      </form>
+    ) : (
+      <div class="quote-builder-empty"><i class="ph ph-package" aria-hidden="true"></i><h2>Chưa có sản phẩm</h2><p>Hãy tạo sản phẩm trước khi lập báo giá.</p><a class="button button-primary" href="/admin/san-pham?view=editor&id=new">Thêm sản phẩm</a></div>
+    )}
+  </section>
+  <script>import "@/scripts/admin-quote-pdf";</script>
+</AdminLayout>

@@ -1,0 +1,47 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import AuthShell from "@/components/AuthShell.astro";
+import PasswordField from "@/components/PasswordField.astro";
+---
+
+<AuthLayout title="Đăng nhập | THIÊN LỘC GROUP" description="Đăng nhập tài khoản THIÊN LỘC GROUP.">
+  <AuthShell title="Đăng nhập" description="Truy cập tài khoản và các sản phẩm bạn đã lưu.">
+    <form class="auth-form" data-auth-form="login" novalidate>
+      <div class="auth-form-message" data-login-state="unverified" role="alert" hidden>
+        <i class="ph ph-envelope-simple" aria-hidden="true"></i>
+        <span>Email chưa được xác minh. Vui lòng kiểm tra hộp thư hoặc <a class="auth-link" href="/xac-minh-email">gửi lại email</a>.</span>
+      </div>
+      <div class="auth-form-message" data-login-state="locked" role="alert" hidden>
+        <i class="ph ph-lock" aria-hidden="true"></i>
+        <span>Tài khoản đang tạm khóa để bảo vệ an toàn. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.</span>
+      </div>
+      <div class="auth-form-message" data-form-message role="alert" hidden>
+        <i class="ph ph-warning-circle" aria-hidden="true"></i>
+        <span>Tên đăng nhập hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại hoặc đặt lại mật khẩu.</span>
+      </div>
+
+      <div class="field" data-field>
+        <label for="login-email">Email hoặc tên đăng nhập</label>
+        <input id="login-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Ví dụ: admin" required aria-describedby="login-email-error" aria-errormessage="login-email-error" />
+        <p class="field-error" id="login-email-error" data-field-error aria-live="polite"></p>
+      </div>
+
+      <PasswordField id="login-password" name="password" label="Mật khẩu" autocomplete="current-password" minLength={1} />
+
+      <div class="auth-row">
+        <label class="check-control" for="remember-me">
+          <input id="remember-me" name="remember" type="checkbox" />
+          <span>Ghi nhớ đăng nhập</span>
+        </label>
+        <a class="auth-link" href="/quen-mat-khau">Quên mật khẩu?</a>
+      </div>
+
+      <button class="button button-primary auth-submit" type="submit" aria-busy="false" data-loading-label="Đang đăng nhập">
+        <i class="ph ph-circle-notch button-loader" aria-hidden="true"></i>
+        <span class="button-label">Đăng nhập</span>
+      </button>
+    </form>
+
+    <p class="auth-secondary">Chưa có tài khoản? <a class="auth-link" href="/dang-ky">Tạo tài khoản</a></p>
+  </AuthShell>
+</AuthLayout>

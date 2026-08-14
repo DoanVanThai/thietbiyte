@@ -1,0 +1,15 @@
+---
+interface Props { active: "leads" | "customers" | "quotes" | "activities" | "follow-ups" | "pipeline"; }
+const { active } = Astro.props;
+const items = [
+  ["leads", "Leads", "/admin/crm"],
+  ["customers", "Customers", "/admin/crm/customers"],
+  ["quotes", "Quotes", "/admin/crm/quotes"],
+  ["activities", "Activities", "/admin/crm/activities"],
+  ["follow-ups", "Follow-ups", "/admin/crm/follow-ups"],
+  ["pipeline", "Pipeline", "/admin/crm/pipeline"],
+] as const;
+---
+<nav class="crm-navigation" aria-label="Điều hướng CRM">
+  {items.map(([id, label, href]) => <a href={href} aria-current={active === id ? "page" : undefined}>{label}</a>)}
+</nav>

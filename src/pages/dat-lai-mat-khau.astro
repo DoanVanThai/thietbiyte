@@ -1,0 +1,41 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import AuthShell from "@/components/AuthShell.astro";
+import PasswordField from "@/components/PasswordField.astro";
+---
+
+<AuthLayout title="Đặt lại mật khẩu | THIÊN LỘC GROUP" description="Đặt mật khẩu mới cho tài khoản THIÊN LỘC GROUP.">
+  <AuthShell title="Đặt lại mật khẩu" description="Tạo mật khẩu mới an toàn và dễ nhớ với bạn.">
+    <div class="auth-form-panel" data-form-panel data-route-state="form">
+      <form class="auth-form" data-auth-form="reset" novalidate>
+        <PasswordField id="reset-password" name="password" label="Mật khẩu mới" autocomplete="new-password" requirementsId="reset-password-requirements" />
+        <PasswordField id="reset-confirm-password" name="confirmPassword" label="Xác nhận mật khẩu mới" autocomplete="new-password" confirm />
+        <ul id="reset-password-requirements" class="password-requirements" aria-label="Yêu cầu mật khẩu">
+          <li data-password-rule="length"><i class="ph ph-circle" aria-hidden="true"></i>Ít nhất 10 ký tự</li>
+          <li data-password-rule="letter"><i class="ph ph-circle" aria-hidden="true"></i>Có chữ cái</li>
+          <li data-password-rule="number"><i class="ph ph-circle" aria-hidden="true"></i>Có chữ số</li>
+          <li data-password-rule="symbol"><i class="ph ph-circle" aria-hidden="true"></i>Có ký tự đặc biệt</li>
+        </ul>
+        <button class="button button-primary auth-submit" type="submit" aria-busy="false" data-loading-label="Đang cập nhật mật khẩu">
+          <i class="ph ph-circle-notch button-loader" aria-hidden="true"></i>
+          <span class="button-label">Đổi mật khẩu</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="auth-state auth-state-panel" data-state-success data-route-state="success" data-tone="success" hidden>
+      <div class="auth-state-icon"><i class="ph ph-check" aria-hidden="true"></i></div>
+      <h2>Đổi mật khẩu thành công</h2>
+      <p>Mật khẩu mới đã được cập nhật. Bạn có thể dùng mật khẩu này để đăng nhập.</p>
+      <a class="button button-primary" href="/dang-nhap">Đăng nhập</a>
+    </div>
+
+    <div class="auth-state auth-state-panel" data-route-state="expired" data-tone="danger" hidden>
+      <div class="auth-state-icon"><i class="ph ph-clock-countdown" aria-hidden="true"></i></div>
+      <h2>Liên kết đã hết hạn</h2>
+      <p>Liên kết đặt lại mật khẩu không còn hiệu lực. Hãy yêu cầu một liên kết mới để tiếp tục.</p>
+      <a class="button button-primary" href="/quen-mat-khau">Gửi liên kết mới</a>
+      <a class="auth-link" href="/dang-nhap">Quay lại đăng nhập</a>
+    </div>
+  </AuthShell>
+</AuthLayout>

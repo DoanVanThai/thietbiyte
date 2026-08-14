@@ -1,0 +1,8 @@
+---
+import { getSettings } from "@/lib/content-repository";
+const settings = getSettings();
+---
+<a class="auth-brand" href="/" aria-label="THIÊN LỘC GROUP - Trang chủ">
+  <img class="auth-brand-logo" src={settings.logo || "/images/tl-group-logo.png"} alt="" width="82" height="49" />
+  <span class="auth-brand-copy"><strong>THIÊN LỘC</strong><small>GROUP</small></span>
+</a>

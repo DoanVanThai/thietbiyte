@@ -1,0 +1,8 @@
+---
+import CatalogPage from "@/components/CatalogPage.astro";
+import { routeConfig } from "@/lib/public-content";
+const config = await routeConfig("brand", Astro.params.slug || "");
+if (!config) return new Response("Không tìm thấy thương hiệu", { status: 404 });
+---
+
+<CatalogPage config={config} />

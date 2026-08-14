@@ -1,0 +1,246 @@
+export {};
+
+type ProductSource = { id: string; name: string; model: string; price: number; description: string; images: Array<{ url: string; caption: string; afterText: string }> };
+const initAdminQuotePdf = () => {
+const root = document.querySelector<HTMLElement>("[data-quote-builder]");
+if (root) {
+  if (root.dataset.quoteBuilderReady === "true") return;
+  root.dataset.quoteBuilderReady = "true";
+  const form = root.querySelector<HTMLFormElement>("[data-quote-form]");
+  const itemsRoot = root.querySelector<HTMLElement>("[data-quote-items]");
+  const feedback = root.querySelector<HTMLElement>("[data-quote-feedback]");
+  const button = root.querySelector<HTMLButtonElement>("[data-quote-download]");
+  let products: ProductSource[] = [];
+  try { products = JSON.parse(document.querySelector("#quote-product-data")?.textContent || "[]") as ProductSource[]; } catch { products = []; }
+
+  const descriptionLines = (item: HTMLElement) => {
+    const lines = item.querySelector<HTMLTextAreaElement>("[data-quote-description]")?.value.split("\n").map((line) => line.trim()).filter(Boolean) || [];
+    return [...new Set(lines)];
+  };
+
+  const refreshImageAnchors = (item: HTMLElement) => {
+    const lines = descriptionLines(item);
+    item.querySelectorAll<HTMLSelectElement>("[data-quote-image-anchor]").forEach((select) => {
+      const current = select.value;
+      select.replaceChildren();
+      const fallback = new Option("Cuối phần mô tả", ""); select.add(fallback);
+      lines.forEach((line) => select.add(new Option(line.length > 90 ? `${line.slice(0, 87)}…` : line, line)));
+      select.value = lines.includes(current) ? current : "";
+    });
+  };
+
+  const createImageCard = (item: HTMLElement, image: { url: string; caption: string; afterText: string }) => {
+    const card = document.createElement("article"); card.className = "quote-inline-image"; card.dataset.quoteImageCard = ""; card.dataset.imageUrl = image.url;
+    const toggle = document.createElement("label"); toggle.className = "quote-image-toggle";
+    const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = true; checkbox.dataset.quoteImageEnabled = "";
+    const toggleCopy = document.createElement("span"); toggleCopy.textContent = "Xuất PDF"; toggle.append(checkbox, toggleCopy);
+    const preview = document.createElement("div"); preview.className = "quote-image-preview";
+    const thumbnail = document.createElement("img"); thumbnail.alt = ""; thumbnail.width = 88; thumbnail.height = 70; thumbnail.loading = "lazy"; thumbnail.dataset.quoteImagePreview = "";
+    const previewError = document.createElement("span"); previewError.textContent = "Không tải được ảnh"; previewError.hidden = true;
+    thumbnail.addEventListener("error", () => {
+      const retry = Number(thumbnail.dataset.previewRetry || "0");
+      if (retry < 3) {
+        thumbnail.dataset.previewRetry = String(retry + 1);
+        thumbnail.hidden = true; previewError.textContent = "Đang tải lại ảnh…"; previewError.hidden = false;
+        card.classList.add("is-image-retrying"); card.classList.remove("has-image-error");
+        window.setTimeout(() => {
+          const retryUrl = new URL(card.dataset.imageUrl || image.url, window.location.origin);
+          retryUrl.searchParams.set("quote-preview", `${Date.now()}-${retry + 1}`);
+          thumbnail.src = retryUrl.href;
+        }, [250, 700, 1_400][retry]);
+        return;
+      }
+      thumbnail.hidden = true; previewError.textContent = "Ảnh chưa truy cập được"; previewError.hidden = false;
+      checkbox.checked = false; checkbox.disabled = true;
+      card.classList.remove("is-image-retrying"); card.classList.add("has-image-error");
+    });
+    thumbnail.addEventListener("load", () => {
+      thumbnail.hidden = false; thumbnail.dataset.previewRetry = "0"; previewError.hidden = true;
+      checkbox.disabled = false; card.classList.remove("has-image-error", "is-image-retrying");
+    });
+    thumbnail.src = new URL(image.url, window.location.origin).href;
+    preview.append(thumbnail, previewError);
+    const fields = document.createElement("div"); fields.className = "quote-image-fields";
+    const captionLabel = document.createElement("label"); const captionTitle = document.createElement("span"); captionTitle.textContent = "Chú thích";
+    const caption = document.createElement("input"); caption.type = "text"; caption.value = image.caption; caption.maxLength = 240; caption.dataset.quoteImageCaption = ""; captionLabel.append(captionTitle, caption);
+    const anchorLabel = document.createElement("label"); const anchorTitle = document.createElement("span"); anchorTitle.textContent = "Đặt ảnh sau mục";
+    const anchor = document.createElement("select"); anchor.dataset.quoteImageAnchor = ""; anchorLabel.append(anchorTitle, anchor); fields.append(captionLabel, anchorLabel);
+    const actions = document.createElement("div"); actions.className = "quote-image-actions";
+    const replace = document.createElement("label"); replace.className = "quote-image-file-action"; replace.title = "Đổi ảnh"; replace.innerHTML = '<input type="file" accept="image/png,image/jpeg,image/webp" data-quote-image-upload data-upload-mode="replace"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i><span>Đổi</span>';
+    const remove = document.createElement("button"); remove.type = "button"; remove.dataset.removeQuoteImage = ""; remove.innerHTML = '<i class="ph ph-trash" aria-hidden="true"></i><span>Xóa</span>';
+    actions.append(replace, remove); card.append(toggle, preview, fields, actions);
+    item.querySelector<HTMLElement>("[data-quote-image-list]")?.append(card);
+    refreshImageAnchors(item); anchor.value = descriptionLines(item).includes(image.afterText) ? image.afterText : "";
+    return card;
+  };
+
+  const renderImageManager = (item: HTMLElement, images: ProductSource["images"]) => {
+    const imagesRoot = item.querySelector<HTMLElement>("[data-quote-images]"); if (!imagesRoot) return;
+    imagesRoot.replaceChildren();
+    const heading = document.createElement("div"); heading.className = "quote-inline-images-heading";
+    const copy = document.createElement("div"); const title = document.createElement("strong"); title.textContent = "Ảnh minh họa trong PDF";
+    const help = document.createElement("span"); help.textContent = "Thêm ảnh rồi chọn chính xác mục sẽ đặt ảnh phía sau."; copy.append(title, help);
+    const add = document.createElement("label"); add.className = "button button-outline button-sm quote-image-add"; add.innerHTML = '<input type="file" accept="image/png,image/jpeg,image/webp" data-quote-image-upload data-upload-mode="add"><i class="ph ph-plus" aria-hidden="true"></i>Thêm ảnh';
+    heading.append(copy, add);
+    const list = document.createElement("div"); list.className = "quote-inline-images-list"; list.dataset.quoteImageList = "";
+    const empty = document.createElement("p"); empty.className = "quote-inline-images-empty"; empty.dataset.quoteImagesEmpty = ""; empty.textContent = "Chưa có ảnh. Bạn có thể thêm ảnh trực tiếp cho báo giá này.";
+    imagesRoot.append(heading, list, empty);
+    images.forEach((image) => createImageCard(item, image));
+    empty.hidden = Boolean(images.length);
+  };
+
+  const syncImageEmptyState = (item: HTMLElement) => {
+    const empty = item.querySelector<HTMLElement>("[data-quote-images-empty]"); if (empty) empty.hidden = Boolean(item.querySelector("[data-quote-image-card]"));
+  };
+
+  const hydrateItem = (item: HTMLElement, productId: string) => {
+    const product = products.find((entry) => entry.id === productId);
+    if (!product) return;
+    const select = item.querySelector<HTMLSelectElement>("[data-quote-product]");
+    const description = item.querySelector<HTMLTextAreaElement>("[data-quote-description]");
+    const price = item.querySelector<HTMLInputElement>('[name="unitPrice"]');
+    if (select) select.value = product.id;
+    if (description) description.value = product.description;
+    if (price) price.value = String(product.price || 0);
+    renderImageManager(item, product.images);
+  };
+  const syncItems = () => {
+    const items = Array.from(root.querySelectorAll<HTMLElement>("[data-quote-item]"));
+    items.forEach((item, index) => {
+      const number = item.querySelector<HTMLElement>("[data-quote-item-number]");
+      const remove = item.querySelector<HTMLButtonElement>("[data-remove-quote-item]");
+      if (number) number.textContent = String(index + 1);
+      if (remove) remove.hidden = items.length === 1;
+    });
+    const summary = root.querySelector<HTMLElement>("[data-quote-product-summary]");
+    if (summary) summary.textContent = `${items.length} sản phẩm`;
+  };
+  itemsRoot?.addEventListener("change", (event) => {
+    const select = (event.target as Element).closest<HTMLSelectElement>("[data-quote-product]");
+    const item = select?.closest<HTMLElement>("[data-quote-item]");
+    if (!select || !item) return;
+    hydrateItem(item, select.value);
+    if (item === itemsRoot.firstElementChild) {
+      const url = new URL(window.location.href); url.searchParams.set("product", select.value); history.replaceState({}, "", url);
+    }
+  });
+  itemsRoot?.addEventListener("change", async (event) => {
+    const input = (event.target as Element).closest<HTMLInputElement>("[data-quote-image-upload]");
+    const item = input?.closest<HTMLElement>("[data-quote-item]"); const file = input?.files?.[0];
+    if (!input || !item || !file) return;
+    if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) { if (feedback) feedback.textContent = "Ảnh phải là PNG, JPG hoặc WebP dưới 10 MB."; input.value = ""; return; }
+    input.disabled = true; if (feedback) feedback.textContent = "Đang tải ảnh minh họa…";
+    try {
+      const formData = new FormData(); formData.append("file", file);
+      const response = await fetch("/api/admin/upload", { method: "POST", body: formData }); const uploaded = await response.json();
+      if (!response.ok) throw new Error(uploaded.error || "Không thể tải ảnh.");
+      if (input.dataset.uploadMode === "replace") {
+        const card = input.closest<HTMLElement>("[data-quote-image-card]");
+        if (card) {
+          card.dataset.imageUrl = uploaded.url;
+          const enabled = card.querySelector<HTMLInputElement>("[data-quote-image-enabled]");
+          const preview = card.querySelector<HTMLImageElement>("[data-quote-image-preview]");
+          if (enabled) { enabled.checked = true; enabled.disabled = false; }
+          if (preview) { preview.dataset.previewRetry = "0"; preview.hidden = false; preview.src = new URL(uploaded.url, window.location.origin).href; }
+        }
+      } else {
+        createImageCard(item, { url: uploaded.url, caption: file.name.replace(/\.[^.]+$/, ""), afterText: "" });
+      }
+      syncImageEmptyState(item); if (feedback) feedback.textContent = "Ảnh đã được thêm vào báo giá. Hãy chọn mục đặt ảnh.";
+    } catch (error) { if (feedback) feedback.textContent = error instanceof Error ? error.message : "Không thể tải ảnh."; }
+    finally { input.disabled = false; input.value = ""; }
+  });
+  itemsRoot?.addEventListener("focusout", (event) => {
+    const description = (event.target as Element).closest("[data-quote-description]"); const item = description?.closest<HTMLElement>("[data-quote-item]"); if (item) refreshImageAnchors(item);
+  });
+  itemsRoot?.addEventListener("click", (event) => {
+    const removeImage = (event.target as Element).closest<HTMLButtonElement>("[data-remove-quote-image]");
+    if (removeImage) { const item = removeImage.closest<HTMLElement>("[data-quote-item]"); removeImage.closest("[data-quote-image-card]")?.remove(); if (item) syncImageEmptyState(item); return; }
+    const remove = (event.target as Element).closest<HTMLButtonElement>("[data-remove-quote-item]");
+    if (!remove || root.querySelectorAll("[data-quote-item]").length === 1) return;
+    remove.closest("[data-quote-item]")?.remove();
+    syncItems();
+  });
+  root.querySelector<HTMLButtonElement>("[data-add-quote-item]")?.addEventListener("click", () => {
+    const source = itemsRoot?.querySelector<HTMLElement>("[data-quote-item]");
+    if (!source || !itemsRoot || itemsRoot.children.length >= 20) return;
+    const clone = source.cloneNode(true) as HTMLElement;
+    const selectedIds = new Set(Array.from(itemsRoot.querySelectorAll<HTMLSelectElement>("[data-quote-product]")).map((select) => select.value));
+    const next = products.find((product) => !selectedIds.has(product.id)) || products[0];
+    clone.querySelector<HTMLInputElement>('[name="quantity"]')!.value = "1";
+    clone.classList.add("is-entering");
+    itemsRoot.append(clone);
+    if (next) hydrateItem(clone, next.id);
+    syncItems();
+    clone.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    clone.addEventListener("animationend", () => clone.classList.remove("is-entering"), { once: true });
+    window.requestAnimationFrame(() => clone.querySelector<HTMLSelectElement>("[data-quote-product]")?.focus({ preventScroll: true }));
+  });
+  syncItems();
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    const value = (name: string) => (form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null)?.value.trim() || "";
+    const payload = {
+      quoteNumber: value("quoteNumber"), quoteDate: value("quoteDate"), city: value("city"),
+      companyTagline: value("companyTagline"), companyAddress: value("companyAddress"), website: value("website"),
+      customer: { name: value("customerName"), organization: value("customerOrganization"), address: value("customerAddress"), phone: value("customerPhone"), email: value("customerEmail") },
+      introduction: value("introduction"),
+      items: Array.from(root.querySelectorAll<HTMLElement>("[data-quote-item]")).map((item) => {
+        const itemValue = (name: string) => item.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(`[name="${name}"]`)?.value.trim() || "";
+        return {
+          productId: itemValue("productId"), quantity: Number(itemValue("quantity")), unitPrice: Number(itemValue("unitPrice")), description: itemValue("description"),
+          images: Array.from(item.querySelectorAll<HTMLElement>("[data-quote-image-card]")).filter((card) => card.querySelector<HTMLInputElement>("[data-quote-image-enabled]")?.checked).map((card) => ({
+            url: card.dataset.imageUrl || "",
+            caption: card.querySelector<HTMLInputElement>("[data-quote-image-caption]")?.value.trim() || "Ảnh minh họa",
+            afterText: card.querySelector<HTMLSelectElement>("[data-quote-image-anchor]")?.value || "",
+          })).filter((image) => image.url),
+        };
+      }),
+      vatIncluded: Boolean((form.elements.namedItem("vatIncluded") as HTMLInputElement | null)?.checked),
+      delivery: value("delivery"), payment: value("payment"), validity: value("validity"), additionalTerms: value("additionalTerms"),
+    };
+    if (button) {
+      button.disabled = true;
+      button.classList.add("is-loading");
+      button.setAttribute("aria-busy", "true");
+      const label = button.querySelector<HTMLElement>("[data-quote-download-label]");
+      if (label) label.textContent = "Đang tạo PDF…";
+    }
+    if (feedback) feedback.textContent = "Đang dàn trang và tạo PDF…";
+    try {
+      const response = await fetch("/api/admin/quote-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || "Không thể tạo PDF.");
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") || "";
+      const name = disposition.match(/filename="([^"]+)"/)?.[1] || "bao-gia.pdf";
+      const url = URL.createObjectURL(blob);
+      const download = document.createElement("a");
+      download.href = url; download.download = name; document.body.append(download); download.click(); download.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2_000);
+      if (feedback) feedback.textContent = "Đã tạo PDF báo giá.";
+    } catch (error) {
+      if (feedback) feedback.textContent = error instanceof Error ? error.message : "Không thể tạo PDF.";
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.classList.remove("is-loading");
+        button.removeAttribute("aria-busy");
+        const label = button.querySelector<HTMLElement>("[data-quote-download-label]");
+        if (label) label.textContent = "Tạo và tải PDF";
+      }
+    }
+  });
+  root.querySelectorAll<HTMLElement>("[data-quote-item]").forEach((item) => {
+    const productId = item.querySelector<HTMLSelectElement>("[data-quote-product]")?.value; if (productId) hydrateItem(item, productId);
+  });
+}
+};
+
+document.addEventListener("astro:page-load", initAdminQuotePdf);
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initAdminQuotePdf, { once: true });
+else initAdminQuotePdf();

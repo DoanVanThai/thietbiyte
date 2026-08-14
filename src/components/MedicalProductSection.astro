@@ -1,0 +1,48 @@
+---
+import CatalogProductCard from "@/components/CatalogProductCard.astro";
+import type { CatalogProduct } from "@/data/catalog";
+
+interface Props {
+  sectionId?: string;
+  title: string;
+  description: string;
+  products: readonly CatalogProduct[];
+  viewAllHref: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+}
+
+const {
+  sectionId = "medical-products-title",
+  title,
+  description,
+  products,
+  viewAllHref,
+  emptyTitle = "Danh mục sản phẩm đang được cập nhật",
+  emptyDescription = "Đội ngũ Thiên Lộc có thể hỗ trợ tìm cấu hình phù hợp trong thời gian dữ liệu được hoàn thiện.",
+} = Astro.props;
+---
+
+<section class="medical-products-section" aria-labelledby={sectionId}>
+  <div class="container">
+    <header class="medical-section-heading">
+      <div>
+        <h2 id={sectionId}>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <a class="medical-section-link" href={viewAllHref}>Xem tất cả sản phẩm<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+    </header>
+
+    {products.length > 0 ? (
+      <div class="medical-product-grid">
+        {products.map((product) => <CatalogProductCard product={product} headingLevel="h3" />)}
+      </div>
+    ) : (
+      <div class="medical-products-empty">
+        <i class="ph ph-folders" aria-hidden="true"></i>
+        <div><h3>{emptyTitle}</h3><p>{emptyDescription}</p></div>
+        <a class="button button-outline" href={viewAllHref}>Mở danh mục Y tế</a>
+      </div>
+    )}
+  </div>
+</section>

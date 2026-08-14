@@ -1,0 +1,52 @@
+---
+import "@/styles/fonts.css";
+import "@/styles/icons.css";
+import "@/styles/global.css";
+import "@/styles/admin.css";
+import "@/styles/admin-controls.css";
+import AdminSidebar from "@/components/AdminSidebar.astro";
+import AdminTopbar from "@/components/AdminTopbar.astro";
+import { ClientRouter } from "astro:transitions";
+
+interface Props {
+  title: string;
+  description: string;
+  bare?: boolean;
+  section?: string;
+}
+
+const { title, description, bare = false, section = "Dashboard" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#f4f6f8" />
+    <title>{title}</title>
+    <ClientRouter fallback="swap" />
+  </head>
+  <body class="admin-body">
+    <div class="admin-navigation-progress" data-admin-navigation-progress aria-hidden="true"></div>
+    <a class="skip-link" href="#admin-main">Chuyển đến nội dung chính</a>
+    {bare ? <slot /> : (
+      <div class="admin-shell" data-admin-shell>
+        <AdminSidebar />
+        <div class="admin-workspace">
+          <AdminTopbar section={section} />
+          <main id="admin-main" class="admin-main"><slot /></main>
+        </div>
+      </div>
+    )}
+    <div class="admin-toast admin-shell-toast" role="status" aria-live="polite" data-admin-shell-toast hidden></div>
+    <script>
+      import "@/scripts/admin";
+      import "@/scripts/admin-navigation";
+      import "@/scripts/admin-selects";
+      import "@/scripts/session-controls";
+    </script>
+  </body>
+</html>

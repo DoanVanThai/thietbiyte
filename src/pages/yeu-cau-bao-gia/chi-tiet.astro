@@ -1,0 +1,208 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import { getSettings } from "@/lib/content-repository";
+import "@/styles/quote.css";
+const settings = getSettings();
+const supportTel = `tel:${settings.hotline.replace(/\D/g, "")}`;
+---
+
+<BaseLayout title="Chi tiết yêu cầu báo giá | THIÊN LỘC GROUP" description="Theo dõi trạng thái yêu cầu báo giá của bạn.">
+  <Header />
+  <main id="main-content" class="quote-detail-page" data-quote-detail>
+    <section class="quote-detail-intro" data-detail-intro>
+      <div class="container">
+        <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Chi tiết yêu cầu" }]} />
+        <div class="quote-detail-title-row">
+          <div class="quote-detail-identity">
+            <span class="quote-detail-label">Yêu cầu báo giá</span>
+            <h1 data-detail-id>Đang tải...</h1>
+            <span class="quote-detail-created" data-detail-date>Đang tải thông tin yêu cầu</span>
+          </div>
+          <span class="quote-status-badge" data-detail-status>
+            <i class="ph ph-clock" aria-hidden="true"></i>
+            <span data-detail-status-label>Đang tải</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="quote-detail-content">
+      <div class="container quote-detail-layout" data-detail-content hidden>
+        <div class="quote-detail-main">
+          <section class="quote-detail-section" aria-labelledby="detail-products-title">
+            <div class="quote-detail-section-heading">
+              <div>
+                <span class="quote-detail-section-icon" aria-hidden="true"><i class="ph ph-package"></i></span>
+                <h2 id="detail-products-title">Sản phẩm yêu cầu</h2>
+              </div>
+              <span data-detail-product-count></span>
+            </div>
+            <div class="quote-detail-products" data-detail-products></div>
+          </section>
+
+          <section class="quote-detail-section" aria-labelledby="detail-request-title">
+            <div class="quote-detail-section-heading">
+              <div>
+                <span class="quote-detail-section-icon" aria-hidden="true"><i class="ph ph-clipboard-text"></i></span>
+                <h2 id="detail-request-title">Thông tin yêu cầu</h2>
+              </div>
+            </div>
+            <dl class="quote-detail-data">
+              <div><dt>Người liên hệ</dt><dd data-detail-customer></dd></div>
+              <div><dt>Điện thoại</dt><dd data-detail-phone></dd></div>
+              <div><dt>Email</dt><dd data-detail-email></dd></div>
+              <div><dt>Đơn vị</dt><dd data-detail-unit></dd></div>
+              <div><dt>Loại cơ sở</dt><dd data-detail-facility></dd></div>
+              <div><dt>Tỉnh/Thành phố</dt><dd data-detail-city></dd></div>
+              <div class="is-wide"><dt>Nhu cầu</dt><dd data-detail-need></dd></div>
+              <div class="is-wide" data-detail-note-row><dt>Ghi chú</dt><dd data-detail-note></dd></div>
+            </dl>
+          </section>
+
+          <section class="quote-detail-section" aria-labelledby="detail-documents-title" data-detail-documents-section hidden>
+            <div class="quote-detail-section-heading">
+              <div>
+                <span class="quote-detail-section-icon" aria-hidden="true"><i class="ph ph-files"></i></span>
+                <h2 id="detail-documents-title">Tài liệu đã gửi</h2>
+              </div>
+              <span>Chỉ hiển thị tài liệu của yêu cầu này</span>
+            </div>
+            <div class="quote-detail-documents" data-detail-documents></div>
+          </section>
+        </div>
+
+        <aside class="quote-detail-side">
+          <section class="quote-detail-timeline" aria-labelledby="detail-timeline-title">
+            <div class="quote-detail-side-heading">
+              <span aria-hidden="true"><i class="ph ph-clock-counter-clockwise"></i></span>
+              <h2 id="detail-timeline-title">Trạng thái yêu cầu</h2>
+            </div>
+            <div class="quote-detail-received" role="status">
+              <span aria-hidden="true"><i class="ph ph-check"></i></span>
+              <div>
+                <strong>Đã tiếp nhận thông tin</strong>
+                <p>Bên em đã nhận được thông tin của mình và sẽ liên hệ hỗ trợ sớm nhất.</p>
+              </div>
+            </div>
+          </section>
+          <section class="quote-detail-help">
+            <div class="quote-detail-side-heading">
+              <span aria-hidden="true"><i class="ph ph-headset"></i></span>
+              <h2>Cần trao đổi sớm hơn?</h2>
+            </div>
+            <p>Gọi hotline và cung cấp mã yêu cầu để đội ngũ tư vấn hỗ trợ nhanh hơn.</p>
+            <a class="button button-outline" href={supportTel}><i class="ph ph-phone" aria-hidden="true"></i>Gọi {settings.hotline}</a>
+          </section>
+          <section class="quote-detail-account" data-detail-account-suggestion>
+            <h2>Theo dõi mọi yêu cầu</h2>
+            <p>Tạo tài khoản để quản lý lịch sử báo giá. Yêu cầu hiện tại không bị ảnh hưởng.</p>
+            <a class="button button-primary" href="/dang-ky">Tạo tài khoản</a>
+          </section>
+        </aside>
+      </div>
+
+      <div class="container quote-detail-empty" data-detail-empty hidden>
+        <i class="ph ph-file-dashed" aria-hidden="true"></i>
+        <h2>Không tìm thấy yêu cầu báo giá</h2>
+        <p>Kiểm tra lại mã yêu cầu hoặc đăng nhập đúng tài khoản để tiếp tục.</p>
+        <div><a class="button button-primary" href="/yeu-cau-bao-gia">Tạo yêu cầu mới</a><a class="button button-outline" href={supportTel}>Liên hệ hỗ trợ</a></div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  type PublicQuote = {
+    number: string; date: string; status: "RECEIVED" | "CONSULTING" | "QUOTE_SENT" | "NEGOTIATING" | "COMPLETED" | "CANCELLED";
+    customer: { name: string; phone: string; email: string; organization: string; customerType: string; province: string };
+    need: string; note: string;
+    items: Array<{ product_id: string; quantity: number; product_name: string; model: string; note: string }>;
+    attachments: Array<{ id: string; original_name: string; mime_type: string; size: number }>;
+    updates: Array<{ status: string; title: string; detail: string; created_at: string }>;
+  };
+  const root = document.querySelector<HTMLElement>("[data-quote-detail]");
+  if (root) {
+    const content = root.querySelector<HTMLElement>("[data-detail-content]");
+    const empty = root.querySelector<HTMLElement>("[data-detail-empty]");
+    const intro = root.querySelector<HTMLElement>("[data-detail-intro]");
+    const formatSize = (bytes: number) => bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    const formatDate = (date: string, includeTime = true) => new Intl.DateTimeFormat("vi-VN", { dateStyle: "long", ...(includeTime ? { timeStyle: "short" } : {}) }).format(new Date(date));
+    const showEmpty = () => {
+      if (intro) intro.hidden = true;
+      if (content) content.hidden = true;
+      if (empty) empty.hidden = false;
+    };
+    const load = async () => {
+      const params = new URL(window.location.href).searchParams;
+      const requestedNumber = params.get("number") || params.get("id");
+      if (!requestedNumber) { showEmpty(); return; }
+      const access = params.get("access");
+      const response = await fetch(`/api/quotes/${encodeURIComponent(requestedNumber)}${access ? `?access=${encodeURIComponent(access)}` : ""}`, { credentials: "same-origin" });
+      if (!response.ok) { showEmpty(); return; }
+      const { quote } = await response.json() as { quote: PublicQuote };
+      if (content) content.hidden = false;
+      const setText = (selector: string, value: string) => { const target = root.querySelector<HTMLElement>(selector); if (target) target.textContent = value; };
+      setText("[data-detail-id]", quote.number);
+      setText("[data-detail-date]", `Tạo lúc ${formatDate(quote.date)}`);
+      setText("[data-detail-product-count]", `${quote.items.length} sản phẩm`);
+      setText("[data-detail-customer]", quote.customer.name);
+      setText("[data-detail-phone]", quote.customer.phone);
+      setText("[data-detail-email]", quote.customer.email);
+      setText("[data-detail-unit]", quote.customer.organization);
+      setText("[data-detail-facility]", quote.customer.customerType);
+      setText("[data-detail-city]", quote.customer.province);
+      setText("[data-detail-need]", quote.need);
+      setText("[data-detail-note]", quote.note);
+      setText("[data-detail-status-label]", "Đã tiếp nhận");
+      const badge = root.querySelector<HTMLElement>("[data-detail-status]");
+      if (badge) {
+        badge.dataset.status = "RECEIVED";
+        const badgeIcon = badge.querySelector<HTMLElement>("i");
+        if (badgeIcon) badgeIcon.className = "ph ph-check";
+      }
+      const noteRow = root.querySelector<HTMLElement>("[data-detail-note-row]");
+      if (noteRow) noteRow.hidden = !quote.note;
+      const productRoot = root.querySelector<HTMLElement>("[data-detail-products]");
+      quote.items.forEach((item) => {
+        const row = document.createElement("article");
+        row.className = "quote-detail-product";
+        const visual = document.createElement("span");
+        visual.className = "quote-detail-product-icon";
+        visual.setAttribute("aria-hidden", "true");
+        visual.innerHTML = '<i class="ph ph-first-aid-kit"></i>';
+        const copy = document.createElement("div"); copy.className = "quote-detail-product-copy";
+        const name = document.createElement("strong"); name.textContent = item.product_name;
+        const model = document.createElement("span"); model.textContent = item.model || "Chưa có model";
+        copy.append(name, model);
+        if (item.note) {
+          const note = document.createElement("small"); note.textContent = item.note;
+          copy.append(note);
+        }
+        const quantity = document.createElement("div"); quantity.className = "quote-detail-product-quantity";
+        const quantityLabel = document.createElement("span"); quantityLabel.textContent = "Số lượng";
+        const quantityValue = document.createElement("strong"); quantityValue.textContent = String(item.quantity);
+        quantity.append(quantityLabel, quantityValue);
+        row.append(visual, copy, quantity); productRoot?.append(row);
+      });
+      const documentSection = root.querySelector<HTMLElement>("[data-detail-documents-section]");
+      const documentRoot = root.querySelector<HTMLElement>("[data-detail-documents]");
+      if (documentSection) documentSection.hidden = quote.attachments.length === 0;
+      quote.attachments.forEach((attachment) => {
+        const row = document.createElement("div"); row.className = "quote-detail-document";
+        const icon = document.createElement("i"); icon.className = "ph ph-file-text"; icon.setAttribute("aria-hidden", "true");
+        const copy = document.createElement("span");
+        const name = document.createElement("strong"); name.textContent = attachment.original_name;
+        const size = document.createElement("small"); size.textContent = formatSize(attachment.size);
+        copy.append(name, size); row.append(icon, copy); documentRoot?.append(row);
+      });
+      const account = root.querySelector<HTMLElement>("[data-detail-account-suggestion]");
+      const authenticated = await fetch("/api/auth/me", { credentials: "same-origin" }).then((result) => result.ok).catch(() => false);
+      if (account) account.hidden = authenticated;
+    };
+    load().catch(showEmpty);
+  }
+</script>

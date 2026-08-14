@@ -1,0 +1,683 @@
+.quote-builder {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.quote-builder > .admin-page-header {
+  align-items: flex-end;
+  margin-bottom: var(--space-6);
+}
+
+.quote-builder > .admin-page-header > div {
+  max-width: 780px;
+}
+
+.quote-builder > .admin-page-header h1 {
+  margin-top: var(--space-1);
+}
+
+.quote-builder > .admin-page-header .button {
+  min-height: 42px;
+  background: var(--color-surface);
+}
+
+.quote-builder form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.quote-builder-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.quote-form-section {
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+}
+
+.quote-form-section > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.quote-form-section h2 {
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: -.01em;
+}
+
+.quote-form-section header p {
+  max-width: 62ch;
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted-foreground);
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+
+.quote-form-section > header .button {
+  min-height: 38px;
+  flex: 0 0 auto;
+}
+
+.quote-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.quote-form-grid label {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.quote-form-grid label:not(.quote-image-toggle):not(.quote-image-file-action):not(.quote-image-add) > span {
+  color: var(--color-foreground);
+  font-size: .75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.quote-form-grid label:has(> input[required], > select[required], > textarea[required]) > span::after {
+  color: var(--color-danger);
+  font-size: .6875rem;
+  content: " · Bắt buộc";
+}
+
+.quote-form-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.quote-form-grid input:not([type="checkbox"]):not([type="file"]),
+.quote-form-grid select,
+.quote-form-grid textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  outline: 0;
+  background: var(--color-surface);
+  color: var(--color-foreground);
+  line-height: 1.45;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.quote-form-grid input:not([type="checkbox"]):not([type="file"]):hover,
+.quote-form-grid select:hover,
+.quote-form-grid textarea:hover {
+  border-color: var(--color-primary);
+}
+
+.quote-form-grid input:not([type="checkbox"]):not([type="file"]):focus,
+.quote-form-grid select:focus,
+.quote-form-grid textarea:focus {
+  border-color: var(--color-focus-ring);
+  box-shadow: 0 0 0 3px oklch(.55 .17 250 / .14);
+}
+
+.quote-form-grid textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.quote-item-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.quote-line-item {
+  scroll-margin-top: 92px;
+}
+
+.quote-line-item + .quote-line-item {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.quote-line-item.is-entering {
+  animation: quote-item-enter var(--duration-standard) var(--ease-enter);
+}
+
+.quote-line-item > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.quote-line-item > header strong {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: .875rem;
+}
+
+.quote-line-item > header strong span {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.quote-line-item > header button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-danger);
+  font-size: .75rem;
+  font-weight: 600;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.quote-line-item > header button:hover {
+  background: oklch(.95 .035 25);
+}
+
+.quote-line-item > header button:active {
+  transform: scale(.98);
+}
+
+.quote-product-section textarea {
+  min-height: 360px;
+  font-family: inherit;
+}
+
+.quote-inline-images {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+}
+
+.quote-inline-images-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.quote-inline-images-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.quote-inline-images-heading strong {
+  font-size: .8125rem;
+}
+
+.quote-inline-images-heading span,
+.quote-inline-images-empty {
+  margin: 0;
+  color: var(--color-muted-foreground);
+  font-size: .75rem;
+  line-height: 1.45;
+}
+
+.quote-form-grid .quote-image-add {
+  width: auto;
+  min-height: 38px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.quote-image-add input,
+.quote-image-file-action input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  min-height: 0 !important;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.quote-image-add:has(input:focus-visible),
+.quote-image-file-action:has(input:focus-visible) {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.quote-inline-images-list {
+  display: grid;
+}
+
+.quote-inline-image {
+  display: grid;
+  grid-template-columns: 76px 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.quote-form-grid .quote-image-toggle {
+  min-height: 40px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-foreground);
+  font-size: .75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.quote-form-grid .quote-image-toggle input {
+  width: 17px;
+  min-height: 17px;
+  margin: 0;
+}
+
+.quote-image-preview {
+  width: 96px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.quote-image-preview img {
+  width: 96px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.quote-image-preview span {
+  max-width: 82px;
+  color: var(--color-danger);
+  font-size: .6875rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.quote-inline-image.has-image-error {
+  background: oklch(.97 .018 25);
+}
+
+.quote-inline-image.is-image-retrying {
+  background: oklch(.98 .018 85);
+}
+
+.quote-image-fields {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(150px, .85fr) minmax(210px, 1.15fr);
+  gap: var(--space-3);
+}
+
+.quote-image-fields label {
+  min-width: 0;
+}
+
+.quote-image-fields input,
+.quote-image-fields select {
+  min-height: 40px;
+  font-size: .8125rem;
+}
+
+.quote-image-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.quote-form-grid .quote-image-file-action,
+.quote-image-actions button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: .75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.quote-image-actions button {
+  color: var(--color-danger);
+}
+
+.quote-image-file-action:hover {
+  background: var(--color-primary-subtle);
+}
+
+.quote-image-actions button:hover {
+  background: oklch(.95 .035 25);
+}
+
+.quote-form-grid .quote-check {
+  min-height: 48px;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+}
+
+.quote-form-grid .quote-check input {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+}
+
+.quote-form-grid .quote-check span {
+  color: var(--color-foreground);
+}
+
+.quote-builder-side {
+  position: sticky;
+  top: 88px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+}
+
+.quote-builder-side section {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6) var(--space-5) var(--space-4);
+}
+
+.quote-side-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: white;
+  font-size: 1.25rem;
+}
+
+.quote-builder-side h2 {
+  font-size: 1.0625rem;
+  letter-spacing: -.01em;
+}
+
+.quote-builder-side p {
+  margin: var(--space-2) 0 var(--space-4);
+  color: var(--color-muted-foreground);
+  font-size: .8125rem;
+  line-height: 1.55;
+}
+
+.quote-builder-side dl {
+  margin: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.quote-builder-side dl div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: 11px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: .75rem;
+}
+
+.quote-builder-side dt {
+  color: var(--color-muted-foreground);
+}
+
+.quote-builder-side dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.quote-builder-side .quote-builder-feedback {
+  min-height: 0;
+  margin: 0 var(--space-5) var(--space-3);
+  color: var(--color-primary);
+  font-size: .75rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.quote-builder-side .quote-builder-feedback:not(:empty) {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-subtle);
+}
+
+.quote-builder-side > .button {
+  min-height: 46px;
+  margin: 0 var(--space-5);
+}
+
+.quote-builder-side > small {
+  display: block;
+  padding: var(--space-3) var(--space-5) var(--space-5);
+  color: var(--color-muted-foreground);
+  font-size: .6875rem;
+  line-height: 1.5;
+}
+
+.quote-download-spinner {
+  display: none;
+}
+
+.quote-builder-side > .button.is-loading [data-quote-download-icon] {
+  display: none;
+}
+
+.quote-builder-side > .button.is-loading .quote-download-spinner {
+  display: inline-block;
+  animation: quote-spinner 800ms linear infinite;
+}
+
+.quote-builder-empty {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.quote-builder-empty > i {
+  margin-bottom: var(--space-3);
+  color: var(--color-muted-foreground);
+  font-size: 2rem;
+}
+
+.quote-builder-empty p {
+  color: var(--color-muted-foreground);
+}
+
+@keyframes quote-item-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes quote-spinner {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1120px) {
+  .quote-builder form {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-builder-side {
+    position: static;
+  }
+
+  .quote-builder-side section {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--space-4);
+  }
+
+  .quote-side-icon {
+    grid-row: 1 / 4;
+  }
+
+  .quote-builder-side dl {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .quote-builder > .admin-page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .quote-builder > .admin-page-header .button {
+    width: 100%;
+  }
+
+  .quote-form-section {
+    padding: var(--space-5);
+  }
+
+  .quote-form-section > header {
+    flex-direction: column;
+  }
+
+  .quote-form-section > header .button {
+    width: 100%;
+  }
+
+  .quote-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-form-grid .span-2 {
+    grid-column: auto;
+  }
+
+  .quote-product-section textarea {
+    min-height: 320px;
+  }
+
+  .quote-inline-images-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quote-form-grid .quote-image-add {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .quote-inline-image {
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+  }
+
+  .quote-image-preview,
+  .quote-image-preview img {
+    width: 72px;
+    height: 56px;
+  }
+
+  .quote-image-toggle {
+    grid-column: 1 / -1;
+  }
+
+  .quote-image-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-image-actions {
+    flex-direction: column;
+  }
+
+  .quote-builder-side {
+    border-radius: var(--radius-lg);
+  }
+}
+
+@media (max-width: 520px) {
+  .quote-form-section {
+    margin-inline: -4px;
+    padding: var(--space-4);
+  }
+
+  .quote-inline-image {
+    grid-template-columns: 1fr auto;
+  }
+
+  .quote-image-preview {
+    width: 100%;
+    height: 128px;
+  }
+
+  .quote-image-preview img {
+    width: 100%;
+    height: 128px;
+  }
+
+  .quote-image-fields {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (pointer: coarse) {
+  .quote-line-item > header button,
+  .quote-form-grid .quote-image-file-action,
+  .quote-image-actions button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quote-line-item.is-entering,
+  .quote-builder-side > .button.is-loading .quote-download-spinner {
+    animation-duration: .01ms !important;
+  }
+}

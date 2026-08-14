@@ -1,0 +1,110 @@
+---
+import { catalogOptions } from "@/lib/public-content";
+
+interface Props {
+  prefix: string;
+  mobile?: boolean;
+}
+
+const { prefix, mobile = false } = Astro.props;
+const catalogFilterOptions = await catalogOptions();
+
+const sections = [
+  { key: "group", label: "Nhóm", options: catalogFilterOptions.groups, open: true },
+  { key: "category", label: "Danh mục", options: catalogFilterOptions.categories, open: true, limit: 5 },
+  { key: "specialty", label: "Chuyên khoa", options: catalogFilterOptions.specialties, open: true, limit: 5 },
+  { key: "brand", label: "Hãng", options: catalogFilterOptions.brands, open: false, searchable: true, limit: 5 },
+] as const;
+---
+
+<div class:list={["filter-groups", mobile && "filter-groups-mobile"]} data-filter-groups>
+  {sections.map((section) => (
+    <details class="filter-group" open={section.open} data-filter-section={section.key}>
+      <summary>{section.label}<i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+      <div class="filter-group-content">
+        {"searchable" in section && section.searchable && (
+          <div class="filter-search-field">
+            <label for={`${prefix}-${section.key}-search`}>Tìm hãng</label>
+            <div><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input id={`${prefix}-${section.key}-search`} type="search" placeholder="Nhập tên hãng" data-filter-search={section.key} /></div>
+          </div>
+        )}
+        <div class="filter-options" data-filter-options={section.key}>
+          {section.options.map(([value, label], index) => (
+            <label class:list={["filter-option", "limit" in section && section.limit && index >= section.limit && "is-extra"]} data-filter-label={String(label).toLocaleLowerCase("vi")}>
+              <input id={`${prefix}-${section.key}-${value}`} type="checkbox" name={section.key} value={value} data-filter-key={section.key} data-label={label} />
+              <span aria-hidden="true"></span>
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+        {"limit" in section && section.limit && section.options.length > section.limit && (
+          <button class="filter-more" type="button" data-filter-more={section.key} aria-expanded="false">Xem thêm</button>
+        )}
+      </div>
+    </details>
+  ))}
+
+  <details class="filter-group" data-filter-section="origin">
+    <summary>Xuất xứ<i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+    <div class="filter-group-content filter-options">
+      {catalogFilterOptions.origins.map((value) => (
+        <label class="filter-option">
+          <input id={`${prefix}-origin-${value}`} type="checkbox" name="origin" value={value} data-filter-key="origin" data-label={value} />
+          <span aria-hidden="true"></span><span>{value}</span>
+        </label>
+      ))}
+    </div>
+  </details>
+
+  <details class="filter-group" data-filter-section="price">
+    <summary>Khoảng giá<i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+    <div class="filter-group-content filter-options">
+      {catalogFilterOptions.priceBands.map((value) => (
+        <label class="filter-option">
+          <input id={`${prefix}-price-${value}`} type="checkbox" name="price" value={value} data-filter-key="price" data-label={value} />
+          <span aria-hidden="true"></span><span>{value}</span>
+        </label>
+      ))}
+      <p class="filter-help">Giá trên dữ liệu thật sẽ quyết định khả năng sắp xếp theo giá.</p>
+    </div>
+  </details>
+
+  <details class="filter-group" data-filter-section="status">
+    <summary>Tình trạng<i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+    <div class="filter-group-content filter-options">
+      {catalogFilterOptions.statuses.map(([value, label]) => (
+        <label class="filter-option">
+          <input id={`${prefix}-status-${value}`} type="checkbox" name="status" value={value} data-filter-key="status" data-label={label} />
+          <span aria-hidden="true"></span><span>{label}</span>
+        </label>
+      ))}
+    </div>
+  </details>
+
+  <details class="filter-group" data-filter-section="warranty">
+    <summary>Bảo hành<i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+    <div class="filter-group-content filter-options">
+      {catalogFilterOptions.warranties.map((value) => (
+        <label class="filter-option">
+          <input id={`${prefix}-warranty-${value}`} type="checkbox" name="warranty" value={value} data-filter-key="warranty" data-label={value} />
+          <span aria-hidden="true"></span><span>{value}</span>
+        </label>
+      ))}
+    </div>
+  </details>
+
+  <details class="filter-group" data-filter-section="application">
+    <summary>Ứng dụng<i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+    <div class="filter-group-content">
+      <div class="filter-options" data-filter-options="application">
+        {catalogFilterOptions.applications.map(([value, label], index) => (
+          <label class:list={["filter-option", index >= 5 && "is-extra"]} data-filter-label={label.toLocaleLowerCase("vi")}>
+            <input id={`${prefix}-application-${value}`} type="checkbox" name="application" value={value} data-filter-key="application" data-label={label} />
+            <span aria-hidden="true"></span><span>{label}</span>
+          </label>
+        ))}
+      </div>
+      <button class="filter-more" type="button" data-filter-more="application" aria-expanded="false">Xem thêm</button>
+    </div>
+  </details>
+</div>

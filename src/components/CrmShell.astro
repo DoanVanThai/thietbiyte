@@ -1,0 +1,22 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import CrmNav from "@/components/CrmNav.astro";
+import "@/styles/crm.css";
+
+interface Props {
+  title: string;
+  description: string;
+  active: "leads" | "customers" | "quotes" | "activities" | "follow-ups" | "pipeline";
+  section?: string;
+  navigation?: boolean;
+}
+const { title, description, active, section = title, navigation = true } = Astro.props;
+---
+<AdminLayout title={`${title} | CRM Admin`} description={description} section={section}>
+  {navigation && <CrmNav active={active} />}
+  <slot />
+  <div class="admin-toast" role="status" aria-live="polite" data-admin-toast hidden></div>
+  <script>
+    import "@/scripts/crm";
+  </script>
+</AdminLayout>

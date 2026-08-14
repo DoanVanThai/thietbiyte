@@ -1,0 +1,23 @@
+---
+import CrmShell from "@/components/CrmShell.astro";
+import ActivityTimeline from "@/components/ActivityTimeline.astro";
+import { formatCrmCurrency } from "@/data/crm";
+import { crmViewCustomer, crmViewQuotes } from "@/server/crm-view";
+const customer = await crmViewCustomer(String(Astro.params.id), Astro.locals.auth!);
+if (!customer) return Astro.redirect("/404", 302);
+const quotes = (await crmViewQuotes(Astro.locals.auth!)).filter((quote) => customer.quoteIds.includes(quote.id));
+---
+<CrmShell title={customer.name} description={`Customer profile ${customer.id}`} active="customers" section={`CRM · ${customer.id}`}>
+  <a class="crm-back-link" href="/admin/crm/customers"><i class="ph ph-arrow-left" aria-hidden="true"></i>Quay lại Customers</a>
+  <header class="lead-detail-header"><div class="lead-identity"><span class="crm-avatar" aria-hidden="true">{customer.name.split(" ").slice(-2).map((word) => word[0]).join("")}</span><div><p>{customer.id}</p><h1>{customer.name}</h1><span>{customer.organization}</span></div></div><div class="lead-detail-actions"><a class="button button-outline" href={`tel:${customer.phone.replace(/\s/g, "")}`}><i class="ph ph-phone" aria-hidden="true"></i>Gọi</a><a class="button button-outline" href={`mailto:${customer.email}`}><i class="ph ph-envelope" aria-hidden="true"></i>Email</a><button class="button button-primary" type="button" data-demo-action="new-quote"><i class="ph ph-file-plus" aria-hidden="true"></i>Tạo báo giá</button></div></header>
+  <div class="customer-profile-layout">
+    <div class="customer-profile-main">
+      <section class="crm-section"><header class="crm-section-header"><div><h2>Quotes</h2><p>Báo giá liên quan đến customer.</p></div></header>{quotes.length ? <div class="lead-quote-list">{quotes.map((quote) => <a href={`/admin/crm/quotes/${quote.id}`}><span><strong>{quote.id}</strong><small>{quote.products.map((product) => product.model).join(", ")}</small></span><span>{formatCrmCurrency(quote.value)}<i class="ph ph-caret-right" aria-hidden="true"></i></span></a>)}</div> : <div class="crm-compact-empty"><i class="ph ph-file-text" aria-hidden="true"></i><span>Chưa có báo giá.</span></div>}</section>
+      <section class="crm-section"><header class="crm-section-header"><div><h2>Products</h2><p>Sản phẩm đã quan tâm hoặc đã được tư vấn.</p></div></header><ul class="customer-product-list">{customer.products.map((product) => <li><i class="ph ph-package" aria-hidden="true"></i><span><strong>{product}</strong><small>Dữ liệu từ lead {customer.leadId}</small></span></li>)}</ul></section>
+      <section class="crm-section"><header class="crm-section-header"><div><h2>Activities</h2><p>Lịch sử tương tác với customer.</p></div></header><ActivityTimeline activities={customer.activities} /></section>
+      <section class="crm-section internal-section"><header class="crm-section-header"><div><h2>Notes</h2><p>Không hiển thị cho khách hàng.</p></div><span class="visibility-label visibility-internal"><i class="ph ph-lock-key" aria-hidden="true"></i>Internal-only</span></header><div class="lead-notes">{customer.notes.map((note) => <article><header><span class="visibility-label visibility-internal">Internal-only</span><small>{note.author} · {note.date}</small></header><p>{note.content}</p></article>)}</div></section>
+      <section class="crm-section"><header class="crm-section-header"><div><h2>Documents</h2><p>Tài liệu liên quan.</p></div></header>{customer.documents.length ? <div class="crm-document-list">{customer.documents.map((document) => <article><i class="ph ph-file" aria-hidden="true"></i><span><strong>{document.name}</strong><small>{document.meta}</small></span><span class={`visibility-label visibility-${document.visibility}`}>{document.visibility}</span></article>)}</div> : <div class="crm-compact-empty"><i class="ph ph-folder-open" aria-hidden="true"></i><span>Chưa có tài liệu.</span></div>}</section>
+    </div>
+    <aside class="customer-profile-side"><section class="crm-side-section"><h2>Contact</h2><dl class="crm-side-data"><div><dt>Phone</dt><dd><a href={`tel:${customer.phone.replace(/\s/g, "")}`}>{customer.phone}</a></dd></div><div><dt>Email</dt><dd><a href={`mailto:${customer.email}`}>{customer.email}</a></dd></div><div><dt>Organization</dt><dd>{customer.organization}</dd></div><div><dt>Type</dt><dd>{customer.type}</dd></div><div><dt>Location</dt><dd>{customer.location}</dd></div></dl></section><section class="crm-side-section"><h2>Ownership</h2><dl class="crm-side-data"><div><dt>Sales Owner</dt><dd>{customer.salesOwner}</dd></div><div><dt>Source Lead</dt><dd><a href={`/admin/crm/leads/${customer.leadId}`}>{customer.leadId}</a></dd></div></dl></section></aside>
+  </div>
+</CrmShell>

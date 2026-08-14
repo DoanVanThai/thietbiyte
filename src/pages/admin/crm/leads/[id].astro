@@ -1,0 +1,85 @@
+---
+import CrmShell from "@/components/CrmShell.astro";
+import CrmStatus from "@/components/CrmStatus.astro";
+import ActivityTimeline from "@/components/ActivityTimeline.astro";
+import { leadStatusLabels } from "@/data/crm";
+import { crmViewLead, crmViewSalesOptions } from "@/server/crm-view";
+
+const result = await crmViewLead(String(Astro.params.id), Astro.locals.auth!);
+if (!result) return Astro.redirect("/404", 302);
+const { lead, quotes } = result;
+const recordId = "recordId" in result ? result.recordId : lead.id;
+const salesOptions = await crmViewSalesOptions();
+---
+<CrmShell title={lead.name} description={`Chi tiết lead ${lead.id}`} active="leads" section={`CRM · ${lead.id}`}>
+  <span hidden data-crm-record-id={recordId} data-crm-entity="lead"></span>
+  <a class="crm-back-link" href="/admin/crm"><i class="ph ph-arrow-left" aria-hidden="true"></i>Quay lại Leads</a>
+  <header class="lead-detail-header">
+    <div class="lead-identity"><span class="crm-avatar" aria-hidden="true">{lead.name.split(" ").slice(-2).map((word) => word[0]).join("")}</span><div><p>{lead.id}</p><h1>{lead.name}</h1><span>{lead.organization}</span></div></div>
+    <div class="lead-detail-actions">
+      <a class="button button-outline" href={`tel:${lead.phone.replace(/\s/g, "")}`}><i class="ph ph-phone" aria-hidden="true"></i>Gọi</a>
+      <a class="button button-outline" href={`mailto:${lead.email}`}><i class="ph ph-envelope" aria-hidden="true"></i>Email</a>
+      <a class="button button-outline" href={`https://zalo.me/${lead.phone.replace(/\s/g, "")}`}><i class="ph ph-chat-circle-dots" aria-hidden="true"></i>Zalo</a>
+      <button class="button button-primary" type="button" data-toggle-panel="follow-up"><i class="ph ph-calendar-plus" aria-hidden="true"></i>Thêm follow-up</button>
+    </div>
+  </header>
+
+  <section class="lead-summary-strip" aria-label="Thông tin lead">
+    <div><span>Contact</span><strong>{lead.phone}</strong><small>{lead.email}</small></div>
+    <div><span>Organization</span><strong>{lead.organization}</strong><small>{lead.customerType} · {lead.location}</small></div>
+    <div><span>Assigned Sales</span><strong>{lead.assignedSales}</strong><small>Sales owner</small></div>
+    <div><span>Status</span><CrmStatus status={lead.status} /><small>Cập nhật gần nhất {lead.lastContact}</small></div>
+  </section>
+
+  <form class="crm-inline-panel follow-up-editor" data-inline-panel="follow-up" data-runtime-follow-up hidden>
+    <header><div><h2>Thêm follow-up</h2><p>Lịch nhắc mới sẽ được gắn với lead này.</p></div><button type="button" data-close-panel="follow-up" aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header>
+    <div class="crm-inline-fields"><label><span>Ngày</span><input name="date" type="date" required /></label><label><span>Giờ</span><input name="time" type="time" required /></label><label><span>Loại</span><select name="type"><option value="CALL">Call</option><option value="EMAIL">Email</option><option value="ZALO">Zalo</option><option value="MEETING">Meeting</option></select></label><label><span>Assigned person</span><select name="assignedToId" required>{salesOptions.map((sales) => <option value={sales.id} selected={sales.name === lead.assignedSales}>{sales.name}</option>)}</select></label><label class="is-wide"><span>Ghi chú</span><textarea name="note" rows="2" required placeholder="Mục tiêu và thông tin cần xác nhận..."></textarea></label></div>
+    <footer><button class="button button-outline" type="button" data-close-panel="follow-up">Hủy</button><button class="button button-primary" type="submit">Lưu follow-up</button></footer>
+  </form>
+
+  <div class="lead-detail-layout">
+    <div class="lead-detail-main">
+      <section class="crm-section" id="product-interests">
+        <header class="crm-section-header"><div><h2>Product interests</h2><p>Nhu cầu đang được Sales xác nhận.</p></div><button type="button" class="crm-text-action" data-demo-action="product-interest"><i class="ph ph-plus" aria-hidden="true"></i>Thêm sản phẩm</button></header>
+        <div class="lead-interest"><i class="ph ph-package" aria-hidden="true"></i><div><strong>{lead.productInterest}</strong><p>{lead.requirement}</p></div><span>Quan tâm chính</span></div>
+      </section>
+
+      <section class="crm-section" id="quotes">
+        <header class="crm-section-header"><div><h2>Quotes</h2><p>{quotes.length} báo giá liên quan.</p></div><a class="crm-text-action" href="/admin/crm/quotes"><i class="ph ph-plus" aria-hidden="true"></i>Tạo báo giá</a></header>
+        {quotes.length ? <div class="lead-quote-list">{quotes.map((quote) => <a href={`/admin/crm/quotes/${quote.id}`}><span><strong>{quote.id}</strong><small>{quote.products.map((product) => product.model).join(", ")}</small></span><span>{quote.updated}<i class="ph ph-caret-right" aria-hidden="true"></i></span></a>)}</div> : <div class="crm-compact-empty"><i class="ph ph-file-text" aria-hidden="true"></i><span>Chưa có báo giá cho lead này.</span></div>}
+      </section>
+
+      <section class="crm-section" id="activities">
+        <header class="crm-section-header"><div><h2>Activities</h2><p>Cuộc gọi, email, Zalo, meeting và thay đổi trạng thái.</p></div><button class="crm-text-action" type="button" data-toggle-panel="activity"><i class="ph ph-plus" aria-hidden="true"></i>Ghi hoạt động</button></header>
+        <form class="crm-note-composer" data-inline-panel="activity" data-runtime-activity hidden>
+          <div class="crm-inline-fields"><label><span>Loại hoạt động</span><select name="type"><option value="CALL">Call</option><option value="EMAIL">Email</option><option value="ZALO">Zalo</option><option value="MEETING">Meeting</option><option value="QUOTE">Quote</option><option value="NOTE">Note</option></select></label><label><span>Phạm vi</span><select name="visibility"><option value="INTERNAL">Internal-only</option><option value="CUSTOMER">Customer-visible</option></select></label><label class="is-wide"><span>Nội dung</span><textarea name="content" rows="3" required placeholder="Kết quả trao đổi và bước tiếp theo..."></textarea></label></div>
+          <footer><button class="button button-outline" type="button" data-close-panel="activity">Hủy</button><button class="button button-primary" type="submit">Lưu hoạt động</button></footer>
+        </form>
+        <ActivityTimeline activities={lead.activities} />
+      </section>
+
+      <section class="crm-section" id="note">
+        <header class="crm-section-header"><div><h2>Notes</h2><p>Ghi chú nội bộ được tách khỏi nội dung khách hàng thấy.</p></div><button class="crm-text-action" type="button" data-toggle-panel="note"><i class="ph ph-note-pencil" aria-hidden="true"></i>Thêm ghi chú</button></header>
+        <form class="crm-note-composer" data-inline-panel="note" data-runtime-note hidden>
+          <div class="internal-warning"><i class="ph ph-lock-key" aria-hidden="true"></i><span><strong>Internal-only</strong>Nội dung này không được gửi sang User Portal hoặc email khách hàng.</span></div>
+          <label><span>Ghi chú nội bộ</span><textarea name="content" rows="4" required placeholder="Nhập thông tin chỉ dành cho staff..."></textarea></label>
+          <footer><button class="button button-outline" type="button" data-close-panel="note">Hủy</button><button class="button button-primary" type="submit">Lưu ghi chú nội bộ</button></footer>
+        </form>
+        <div class="lead-notes">{lead.notes.map((note) => <article><header><span class="visibility-label visibility-internal"><i class="ph ph-lock-key" aria-hidden="true"></i>Internal-only</span><small>{note.author} · {note.date}</small></header><p>{note.content}</p></article>)}</div>
+      </section>
+
+      <section class="crm-section" id="documents">
+        <header class="crm-section-header"><div><h2>Documents</h2><p>Tệp liên quan đến nhu cầu và báo giá.</p></div><button class="crm-text-action" type="button" data-demo-action="upload"><i class="ph ph-upload-simple" aria-hidden="true"></i>Tải lên</button></header>
+        {lead.documents.length ? <div class="crm-document-list">{lead.documents.map((document) => <article><i class="ph ph-file-pdf" aria-hidden="true"></i><span><strong>{document.name}</strong><small>{document.meta}</small></span><span class={`visibility-label visibility-${document.visibility}`}>{document.visibility === "internal" ? "Nội bộ" : "Khách hàng thấy"}</span><button type="button" data-demo-action="download" aria-label={`Tải ${document.name}`}><i class="ph ph-download-simple" aria-hidden="true"></i></button></article>)}</div> : <div class="crm-compact-empty"><i class="ph ph-folder-open" aria-hidden="true"></i><span>Chưa có tài liệu.</span></div>}
+      </section>
+    </div>
+
+    <aside class="lead-detail-side">
+      <section class="crm-side-section lead-status-editor"><h2>Trạng thái</h2><label><span>Lead status</span><select data-status-select>{Object.entries(leadStatusLabels).map(([value, label]) => <option value={value} selected={value === lead.status}>{label}</option>)}</select></label><label><span>Assigned Sales</span><select data-assignment-select data-initial-assignment={salesOptions.find((sales) => sales.name === lead.assignedSales)?.id || ""}><option value="">Chưa phân công</option>{salesOptions.map((sales) => <option value={sales.id} selected={sales.name === lead.assignedSales}>{sales.name}</option>)}</select></label><button class="button button-primary" type="button" data-save-status>Lưu thay đổi</button></section>
+      <section class="crm-side-section follow-up-section"><header><h2>Follow-up tiếp theo</h2>{lead.followUps[0]?.state === "overdue" && <span class="overdue-label">Quá hạn</span>}</header>{lead.followUps.map((followUp) => <article><div><i class={`ph ${followUp.type === "Call" ? "ph-phone" : followUp.type === "Email" ? "ph-envelope" : followUp.type === "Zalo" ? "ph-chat-circle-dots" : "ph-calendar"}`} aria-hidden="true"></i><span><strong>{followUp.type}</strong><small>{followUp.date} · {followUp.time}</small></span></div><p>{followUp.note}</p><small>Phụ trách: {followUp.assigned}</small></article>)}</section>
+      <section class="crm-side-section"><h2>Lead information</h2><dl class="crm-side-data"><div><dt>Nguồn</dt><dd>{lead.source}</dd></div><div><dt>Loại khách hàng</dt><dd>{lead.customerType}</dd></div><div><dt>Ngày tạo</dt><dd>{lead.created}</dd></div><div><dt>Liên hệ gần nhất</dt><dd>{lead.lastContact}</dd></div></dl></section>
+    </aside>
+  </div>
+
+  <nav class="lead-mobile-actions" aria-label="Thao tác lead nhanh"><a href={`tel:${lead.phone.replace(/\s/g, "")}`}><i class="ph ph-phone" aria-hidden="true"></i><span>Gọi</span></a><button type="button" data-mobile-status><i class="ph ph-arrows-clockwise" aria-hidden="true"></i><span>Trạng thái</span></button><button type="button" data-toggle-panel="note"><i class="ph ph-note-pencil" aria-hidden="true"></i><span>Ghi chú</span></button><button type="button" data-toggle-panel="follow-up"><i class="ph ph-calendar-plus" aria-hidden="true"></i><span>Follow-up</span></button></nav>
+</CrmShell>

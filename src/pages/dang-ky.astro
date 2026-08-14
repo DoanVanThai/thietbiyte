@@ -1,0 +1,64 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import AuthShell from "@/components/AuthShell.astro";
+import PasswordField from "@/components/PasswordField.astro";
+---
+
+<AuthLayout title="Tạo tài khoản | THIÊN LỘC GROUP" description="Tạo tài khoản khách hàng THIÊN LỘC GROUP.">
+  <AuthShell title="Tạo tài khoản" description="Chỉ cần những thông tin cần thiết để bắt đầu." wide>
+    <form class="auth-form" data-auth-form="register" novalidate>
+      <div class="auth-form-grid">
+        <div class="field" data-field>
+          <label for="register-name">Họ và tên</label>
+          <input id="register-name" name="name" type="text" autocomplete="name" required aria-describedby="register-name-error" aria-errormessage="register-name-error" />
+          <p class="field-error" id="register-name-error" data-field-error aria-live="polite"></p>
+        </div>
+
+        <div class="field" data-field>
+          <label for="register-phone">Số điện thoại</label>
+          <input id="register-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" pattern="[0-9+() .-]{9,18}" required aria-describedby="register-phone-error" aria-errormessage="register-phone-error" />
+          <p class="field-error" id="register-phone-error" data-field-error aria-live="polite"></p>
+        </div>
+
+        <div class="field field-full" data-field>
+          <label for="register-email">Email</label>
+          <input id="register-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required aria-describedby="register-email-error" aria-errormessage="register-email-error" />
+          <p class="field-error" id="register-email-error" data-field-error aria-live="polite"></p>
+        </div>
+
+        <div class="field field-full" data-field>
+          <label for="customer-type">Bạn là</label>
+          <select id="customer-type" name="customerType" required aria-describedby="customer-type-error" aria-errormessage="customer-type-error">
+            <option value="">Chọn loại khách hàng</option>
+            <option value="doctor">Bác sĩ/Cá nhân</option>
+            <option value="clinic">Phòng khám</option>
+            <option value="hospital">Bệnh viện</option>
+            <option value="laboratory">Phòng xét nghiệm</option>
+            <option value="dealer">Đại lý</option>
+            <option value="vet-clinic">Phòng khám thú y</option>
+            <option value="vet-hospital">Bệnh viện thú y</option>
+          </select>
+          <p class="field-error" id="customer-type-error" data-field-error aria-live="polite"></p>
+        </div>
+
+        <PasswordField id="register-password" name="password" label="Mật khẩu" autocomplete="new-password" requirementsId="register-password-requirements" />
+        <PasswordField id="register-confirm-password" name="confirmPassword" label="Xác nhận mật khẩu" autocomplete="new-password" confirm />
+      </div>
+
+      <ul id="register-password-requirements" class="password-requirements" aria-label="Yêu cầu mật khẩu">
+        <li data-password-rule="length"><i class="ph ph-circle" aria-hidden="true"></i>Ít nhất 10 ký tự</li>
+        <li data-password-rule="letter"><i class="ph ph-circle" aria-hidden="true"></i>Có chữ cái</li>
+        <li data-password-rule="number"><i class="ph ph-circle" aria-hidden="true"></i>Có chữ số</li>
+        <li data-password-rule="symbol"><i class="ph ph-circle" aria-hidden="true"></i>Có ký tự đặc biệt</li>
+      </ul>
+
+      <button class="button button-primary auth-submit" type="submit" aria-busy="false" data-loading-label="Đang tạo tài khoản">
+        <i class="ph ph-circle-notch button-loader" aria-hidden="true"></i>
+        <span class="button-label">Tạo tài khoản</span>
+      </button>
+      <p class="auth-legal">Bằng việc tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách bảo mật của THIÊN LỘC GROUP.</p>
+    </form>
+
+    <p class="auth-secondary">Đã có tài khoản? <a class="auth-link" href="/dang-nhap">Đăng nhập</a></p>
+  </AuthShell>
+</AuthLayout>

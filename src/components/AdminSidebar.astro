@@ -1,0 +1,109 @@
+---
+interface Props { currentPath?: string; }
+const { currentPath = Astro.url.pathname } = Astro.props;
+import { can, type Permission } from "@/server/auth/permissions";
+import { getSettings } from "@/lib/content-repository";
+const settings = getSettings();
+
+const navigation = [
+  {
+    label: "Tổng quan",
+    items: [["squares-four", "Dashboard", "/admin?section=tong-quan", "tong-quan"]],
+  },
+  {
+    label: "Danh mục",
+    items: [
+      ["package", "Sản phẩm", "/admin/san-pham", "san-pham"],
+      ["folders", "Danh mục", "/admin/du-lieu/category", "danh-muc"],
+      ["seal", "Thương hiệu", "/admin/du-lieu/brand", "thuong-hieu"],
+      ["stethoscope", "Chuyên khoa", "/admin/du-lieu/specialty", "chuyen-khoa"],
+    ],
+  },
+  {
+    label: "Kinh doanh",
+    items: [
+      ["phone", "Yêu cầu mới", "/admin/crm/quotes", "bao-gia"],
+      ["file-pdf", "Báo giá PDF", "/admin/bao-gia", "bao-gia-pdf"],
+      ["briefcase", "Dự án", "/admin?section=du-an", "du-an"],
+    ],
+  },
+  {
+    label: "Vận hành",
+    items: [
+      ["article", "Nội dung", "/admin/noi-dung", "noi-dung"],
+      ["folder-open", "Tài liệu", "/admin/tai-lieu", "tai-lieu"],
+      ["images", "Thư viện media", "/admin/media", "media"],
+    ],
+  },
+  {
+    label: "Hệ thống",
+    items: [
+      ["user-circle", "Người dùng", "/admin/users", "nguoi-dung"],
+      ["identification-badge", "Vai trò", "/admin/roles", "vai-tro"],
+      ["shield-check", "Phân quyền", "/admin/permissions", "phan-quyen"],
+      ["list-magnifying-glass", "Audit Logs", "/admin/audit-logs", "audit-logs"],
+      ["gear", "Cài đặt website", "/admin/cai-dat-noi-dung", "cai-dat"],
+    ],
+  },
+] as const;
+
+const currentSection = currentPath === "/admin"
+  ? Astro.url.searchParams.get("section") || "tong-quan"
+  : "";
+const isActive = (href: string, section: string) => {
+  const target = new URL(href, Astro.url);
+  if (target.pathname === "/admin" && target.searchParams.has("section")) {
+    return currentPath === "/admin" && currentSection === section;
+  }
+  if (target.pathname === "/admin/crm") {
+    return (currentPath === target.pathname || currentPath.startsWith("/admin/crm/"))
+      && !currentPath.startsWith("/admin/crm/customers")
+      && !currentPath.startsWith("/admin/crm/quotes");
+  }
+  return currentPath === target.pathname || currentPath.startsWith(`${target.pathname}/`);
+};
+const permissionFor: Partial<Record<string, Permission>> = {
+  "san-pham": "product.view", "danh-muc": "category.view", "thuong-hieu": "brand.view", "chuyen-khoa": "category.view",
+  "bao-gia": "quote.view", "bao-gia-pdf": "quote.edit", crm: "lead.view", "khach-hang": "customer.view", "du-an": "project.view",
+  "noi-dung": "article.view", "tai-lieu": "document.view", media: "document.view", "nguoi-dung": "user.view",
+  "vai-tro": "role.view", "phan-quyen": "role.view", "audit-logs": "audit.view", "cai-dat": "settings.view",
+};
+const prefetchFor = (section: string) => ["tong-quan", "san-pham", "bao-gia"].includes(section)
+  ? "load"
+  : ["danh-muc", "thuong-hieu", "chuyen-khoa", "noi-dung"].includes(section)
+    ? "hover"
+    : "tap";
+---
+
+<aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar aria-label="Điều hướng quản trị" tabindex="-1" transition:persist="admin-sidebar">
+  <div class="admin-brand-row">
+    <a class="admin-brand" href="/admin" aria-label="Thiên Lộc Group Admin">
+      <img class="admin-brand-logo" src={settings.logo || "/images/tl-group-logo.png"} alt="" width="58" height="35" />
+      <strong><b>THIÊN LỘC GROUP</b><small>ADMIN</small></strong>
+    </a>
+    <button type="button" data-sidebar-collapse aria-label="Thu gọn thanh điều hướng" aria-expanded="true">
+      <i class="ph ph-sidebar-simple" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <nav class="admin-navigation">
+    {navigation.map((group) => (
+      <section>
+        <h2>{group.label}</h2>
+        {group.items.filter(([, , , section]) => !permissionFor[section] || can(Astro.locals.auth, permissionFor[section]!)).map(([icon, label, href, section]) => (
+          <a href={href} class:list={[isActive(href, section) && "is-active"]} aria-current={isActive(href, section) ? "page" : undefined} title={label} data-admin-nav-item data-admin-nav-label={label} data-admin-nav-section={section} data-astro-prefetch={prefetchFor(section)}>
+            <i class={`ph ph-${icon}`} aria-hidden="true"></i><span>{label}</span>
+          </a>
+        ))}
+      </section>
+    ))}
+  </nav>
+
+  <div class="admin-sidebar-footer">
+    <a href="/" title="Xem website"><i class="ph ph-arrow-square-out" aria-hidden="true"></i><span>Xem website</span></a>
+    <a href="/api/auth/logout" data-auth-logout title="Đăng xuất"><i class="ph ph-sign-out" aria-hidden="true"></i><span>Đăng xuất</span></a>
+    <span>Thiên Lộc CMS · v1</span>
+  </div>
+</aside>
+
+<div class="admin-sidebar-backdrop" data-sidebar-backdrop hidden transition:persist="admin-sidebar-backdrop"></div>

@@ -1,0 +1,74 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getEntities } from "@/lib/content-repository";
+import { can } from "@/server/auth/permissions";
+
+const type = Astro.params.type;
+if (!type || !["category", "brand", "specialty"].includes(type)) return new Response("Loại dữ liệu không hợp lệ", { status: 404 });
+const entityType = type as "category" | "brand" | "specialty";
+const labels = {
+  category: { title: "Danh mục", singular: "danh mục", permission: "category.manage" as const },
+  brand: { title: "Thương hiệu", singular: "thương hiệu", permission: "brand.manage" as const },
+  specialty: { title: "Chuyên khoa", singular: "chuyên khoa", permission: "category.manage" as const },
+};
+const label = labels[entityType];
+const items = getEntities(entityType, false);
+const parents = entityType === "category" ? items.filter((item) => !item.parentSlug) : [];
+const canManage = can(Astro.locals.auth, label.permission);
+---
+
+<AdminLayout title={`${label.title} | Thiên Lộc Admin`} description={`Quản lý ${label.singular} dùng chung giữa Admin và website.`} section={label.title}>
+  <section class="admin-page taxonomy-page" data-taxonomy-root data-entity-type={entityType} aria-labelledby="taxonomy-title">
+    <script id="taxonomy-data" type="application/json" is:inline set:html={JSON.stringify(items)} />
+    <header class="admin-page-header">
+      <div><h1 id="taxonomy-title">{label.title}</h1><p>Một nguồn dữ liệu cho bộ lọc, điều hướng, trang danh mục và Homepage.</p></div>
+      {canManage && <button class="admin-button primary" type="button" data-new-entity><i class="ph ph-plus" aria-hidden="true"></i>Thêm {label.singular}</button>}
+    </header>
+
+    <div class="taxonomy-layout">
+      <section class="taxonomy-list" aria-labelledby="taxonomy-list-title">
+        <div class="section-title"><div><h2 id="taxonomy-list-title">Dữ liệu hiện có</h2><p>{items.length} bản ghi, gồm cả dữ liệu đang ẩn.</p></div></div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Tên</th><th>Slug</th>{entityType === "category" && <th>Nhóm / cha</th>}<th>Thứ tự</th><th>Trạng thái</th>{canManage && <th><span class="sr-only">Thao tác</span></th>}</tr></thead>
+            <tbody>
+              {items.map((item) => (
+                <tr data-entity-row={item.id}>
+                  <td><strong>{item.name}</strong><small>{item.description || "Chưa có mô tả"}</small></td>
+                  <td><code>{item.slug}</code></td>
+                  {entityType === "category" && <td>{item.type || "—"}<small>{item.parentSlug || "Danh mục gốc"}</small></td>}
+                  <td class="numeric">{item.sortOrder}</td>
+                  <td><span class:list={["status-badge", item.status === "active" ? "published" : "draft"]}><i></i>{item.status === "active" ? "Đang dùng" : "Đã ẩn"}</span></td>
+                  {canManage && <td class="taxonomy-actions"><button class="icon-button" type="button" data-edit-entity={item.id} aria-label={`Sửa ${item.name}`}><i class="ph ph-pencil-simple"></i></button><button class="icon-button danger" type="button" data-delete-entity={item.id} aria-label={`Ẩn ${item.name}`}><i class="ph ph-trash"></i></button></td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {canManage && <aside class="taxonomy-editor" aria-labelledby="taxonomy-editor-title">
+        <form data-taxonomy-form>
+          <input type="hidden" name="id" />
+          <div class="section-title"><div><h2 id="taxonomy-editor-title" data-form-title>Thêm {label.singular}</h2><p>Thay đổi có hiệu lực trên Public sau khi lưu.</p></div></div>
+          <label><span>Tên *</span><input name="name" required autocomplete="off" /></label>
+          <label><span>Slug</span><input name="slug" autocomplete="off" placeholder="Tự tạo từ tên" /></label>
+          <label><span>Mô tả</span><textarea name="description" rows="4"></textarea></label>
+          <label><span>Ảnh / logo</span><input name="image" inputmode="url" placeholder="/uploads/..." /></label>
+          <label class="upload-compact"><span>Tải ảnh mới</span><input type="file" accept="image/*" data-taxonomy-upload /></label>
+          {entityType === "category" && <div class="taxonomy-two-fields">
+            <label><span>Nhóm</span><select name="type"><option value="medical">Y tế</option><option value="veterinary">Thú y</option></select></label>
+            <label><span>Danh mục cha</span><select name="parentSlug"><option value="">Không có</option>{parents.map((item) => <option value={item.slug}>{item.name}</option>)}</select></label>
+          </div>}
+          <div class="taxonomy-two-fields">
+            <label><span>Thứ tự</span><input name="sortOrder" type="number" value="0" /></label>
+            <label><span>Trạng thái</span><select name="status"><option value="active">Đang dùng</option><option value="inactive">Ẩn</option></select></label>
+          </div>
+          <div class="taxonomy-form-actions"><button class="admin-button secondary" type="button" data-cancel-entity>Đặt lại</button><button class="admin-button primary" type="submit"><i class="ph ph-floppy-disk"></i>Lưu</button></div>
+          <p class="taxonomy-feedback" data-taxonomy-feedback aria-live="polite"></p>
+        </form>
+      </aside>}
+    </div>
+  </section>
+  <script>import "@/scripts/admin-taxonomy";</script>
+</AdminLayout>

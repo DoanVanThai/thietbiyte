@@ -1,0 +1,5 @@
+import type { APIRoute } from "astro";
+import { errorJson, isResponse, json, readJson, requirePermission } from "@/server/auth/http";
+import { crmRepository } from "@/server/repositories/crm-repository";
+const types = new Set(["CALL", "EMAIL", "ZALO", "MEETING"]);
+export const POST: APIRoute = async (context) => { const actor = requirePermission(context, "lead.edit"); if (isResponse(actor)) return actor; const lead = await crmRepository.getLead(String(context.params.id), actor); if (!lead) return errorJson(404, "NOT_FOUND", "Không tìm thấy lead."); const body = await readJson<{ assignedToId?: string; dueAt?: string; type?: string; note?: string }>(context.request); if (!body?.assignedToId || !body.note?.trim() || !types.has(String(body.type)) || Number.isNaN(Date.parse(String(body.dueAt)))) return errorJson(422, "INVALID_FOLLOW_UP", "Follow-up không hợp lệ."); return json({ ok: true, followUp: await crmRepository.addFollowUp(lead.id, { assignedToId: body.assignedToId, dueAt: new Date(body.dueAt!), type: body.type as never, note: body.note.trim() }, actor) }, 201); };

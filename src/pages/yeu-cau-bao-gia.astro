@@ -1,0 +1,12 @@
+---
+const target = new URL("/san-pham", Astro.url);
+
+for (const key of ["product", "products", "source", "need"]) {
+  const value = Astro.url.searchParams.get(key);
+  if (value) target.searchParams.set(key, value);
+}
+
+target.searchParams.set("quote", "open");
+
+return Astro.redirect(`${target.pathname}${target.search}`, 302);
+---

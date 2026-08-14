@@ -1,0 +1,54 @@
+---
+import type { ProductSpecificationGroup } from "@/data/product-details";
+
+interface Props {
+  groups: readonly ProductSpecificationGroup[];
+}
+
+const { groups } = Astro.props;
+---
+
+<section class="product-section specifications-section" id="thong-so" aria-labelledby="specifications-title" data-specifications>
+  <div class="section-title-row">
+    <div>
+      <h2 id="specifications-title">Thông số kỹ thuật</h2>
+      <p>Các nhóm thông số được tách riêng để dễ đối chiếu trên hồ sơ mua sắm.</p>
+    </div>
+    <div class="specification-actions" aria-label="Thao tác bảng thông số">
+      <button type="button" class="button button-ghost button-sm" data-spec-expand>Mở tất cả</button>
+      <button type="button" class="button button-ghost button-sm" data-spec-collapse>Thu gọn</button>
+      <button type="button" class="button button-outline button-sm" data-spec-copy>
+        <i class="ph ph-copy" aria-hidden="true"></i>
+        Sao chép thông số
+      </button>
+    </div>
+  </div>
+
+  <div class="specification-groups">
+    {groups.map((group, groupIndex) => (
+      <details class="specification-group" open={groupIndex < 2}>
+        <summary>
+          <span>{group.title}</span>
+          <span class="specification-count">{group.items.length} thông số</span>
+          <i class="ph ph-caret-down" aria-hidden="true"></i>
+        </summary>
+        <div class="specification-table-wrap">
+          <table>
+            <caption class="sr-only">Nhóm thông số {group.title}</caption>
+            <thead>
+              <tr><th scope="col">Thông số</th><th scope="col">Giá trị</th></tr>
+            </thead>
+            <tbody>
+              {group.items.map((item) => (
+                <tr data-spec-row data-spec-group={group.title} data-spec-label={item.label} data-spec-value={item.value}>
+                  <th scope="row">{item.label}</th>
+                  <td>{item.value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    ))}
+  </div>
+</section>

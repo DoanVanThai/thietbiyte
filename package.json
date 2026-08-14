@@ -1,0 +1,48 @@
+{
+  "name": "thien-loc-group",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "icons:generate": "node scripts/generate-icon-css.mjs",
+    "predev": "npm run icons:generate && npm run images:generate",
+    "dev": "astro dev",
+    "images:generate": "node scripts/generate-responsive-images.mjs",
+    "quote:sample": "tsx scripts/generate-quote-pdf-sample.ts",
+    "prebuild": "npm run icons:generate && npm run images:generate",
+    "postinstall": "prisma generate",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "test:server": "tsx --test tests/server/**/*.test.ts",
+    "test:integration": "tsx --test tests/server/admin-public-integration.test.ts",
+    "test:database": "tsx --env-file=.env --test tests/database/**/*.test.ts"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.1",
+    "@fontsource/be-vietnam-pro": "5.3.0",
+    "@phosphor-icons/web": "2.1.2",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "astro": "7.2.1",
+    "dotenv": "^17.4.2",
+    "pdfkit": "^0.19.1",
+    "pg": "^8.23.0",
+    "sharp": "^0.35.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.6",
+    "@types/node": "^26.2.0",
+    "@types/pdfkit": "^0.17.6",
+    "@types/pg": "^8.21.0",
+    "prisma": "^7.9.1",
+    "tsx": "^4.23.12",
+    "typescript": "5.9.3"
+  }
+}

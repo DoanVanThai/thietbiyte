@@ -1,0 +1,49 @@
+---
+import AdminLayout from "@/layouts/AdminAccessLayout.astro";
+import { permissionGroups } from "@/data/admin-access";
+import { getRoleForAdmin } from "@/server/auth/admin-data";
+import { can } from "@/server/auth/permissions";
+
+const role = await getRoleForAdmin(Astro.params.id || "");
+if (!role) return Astro.redirect("/admin/roles", 302);
+const canManageRole = can(Astro.locals.auth, "role.manage") && !role.immutable;
+---
+
+<AdminLayout title={`${role.name} | Admin THIÊN LỘC GROUP`} description={`Chỉnh sửa vai trò ${role.name}.`} activePath="roles">
+  <form class="admin-page admin-role-editor" aria-labelledby="role-editor-title" data-role-editor data-role-id={role.id} data-role-immutable={!canManageRole ? "true" : "false"}>
+    <a class="admin-back-link" href="/admin/roles"><i class="ph ph-arrow-left" aria-hidden="true"></i>Danh sách vai trò</a>
+    <header class="admin-page-header">
+      <div><h1 id="role-editor-title">{role.name}</h1><p>{role.immutable ? "Vai trò hệ thống với quyền được khóa." : "Cập nhật thông tin và nhóm quyền cho vai trò này."}</p></div>
+      <div class="admin-page-actions"><a class="button button-outline" href="/admin/permissions">Xem ma trận</a><button class="button button-primary" type="submit" disabled={!canManageRole}><i class="ph ph-floppy-disk" aria-hidden="true"></i>Lưu thay đổi</button></div>
+    </header>
+
+    {role.immutable && <div class="admin-notice admin-lock-notice"><i class="ph ph-lock-key" aria-hidden="true"></i><div><strong>Quyền Super Admin không thể thay đổi</strong><span>Chỉ backend policy ở cấp hệ thống có thể quản lý phạm vi này. Vai trò thấp hơn không được phép mở khóa hoặc gỡ quyền.</span></div></div>}
+
+    <section class="admin-role-information" aria-labelledby="role-information-title"><header><h2 id="role-information-title">Thông tin vai trò</h2><p>Tên ngắn gọn và mô tả phạm vi trách nhiệm.</p></header><div class="admin-role-form-fields"><div class="admin-field"><label for="role-name">Tên vai trò</label><input id="role-name" name="roleName" type="text" value={role.name} required disabled={!canManageRole} /></div><div class="admin-field"><label for="role-description">Mô tả</label><textarea id="role-description" name="description" disabled={!canManageRole}>{role.description}</textarea></div></div></section>
+
+    <section class="admin-role-permissions" aria-labelledby="role-permissions-title">
+      <header class="admin-section-header"><div><h2 id="role-permissions-title">Quyền truy cập</h2><p><strong data-role-selected-count>{role.permissionIds.length}</strong> quyền được chọn, chia theo nghiệp vụ.</p></div><button class="admin-text-action" type="button" data-expand-permission-groups>Mở tất cả nhóm</button></header>
+      <div class="admin-permission-groups">
+        {permissionGroups.map((group, index) => {
+          const selectedCount = group.permissions.filter((permission) => role.permissionIds.includes(permission.id)).length;
+          return (
+            <details class="admin-permission-group" data-permission-group={group.id} open={index < 2}>
+              <summary><span><strong>{group.label}</strong><small>{group.description}</small></span><span><b data-group-count>{selectedCount}/{group.permissions.length}</b><i class="ph ph-caret-down" aria-hidden="true"></i></span></summary>
+              <div class="admin-permission-group-toolbar"><span>Chọn quyền phù hợp với trách nhiệm của vai trò.</span><div><button type="button" data-select-group disabled={!canManageRole}>Chọn nhóm</button><button type="button" data-clear-group disabled={!canManageRole}>Bỏ chọn nhóm</button></div></div>
+              <div class="admin-permission-options">
+                {group.permissions.map((permission) => (
+                  <label class="admin-permission-option">
+                    <input type="checkbox" name="permission" value={permission.id} checked={role.permissionIds.includes(permission.id)} disabled={!canManageRole} data-permission-checkbox />
+                    <span><strong>{permission.label}{permission.sensitive && <i class="ph ph-warning-circle" aria-label="Quyền nhạy cảm"></i>}</strong><small>{permission.id}</small><em>{permission.description}</em></span>
+                  </label>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </section>
+
+    <footer class="admin-editor-footer"><span>Thay đổi quyền được backend ghi vào audit log.</span><div><a class="button button-outline" href="/admin/roles">Hủy</a><button class="button button-primary" type="submit" disabled={!canManageRole}>Lưu thay đổi</button></div></footer>
+  </form>
+</AdminLayout>

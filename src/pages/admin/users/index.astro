@@ -1,0 +1,63 @@
+---
+import AdminLayout from "@/layouts/AdminAccessLayout.astro";
+import { getRolesForAdmin, getUsersForAdmin } from "@/server/auth/admin-data";
+import { can } from "@/server/auth/permissions";
+
+const adminRoles = await getRolesForAdmin();
+const adminUsers = await getUsersForAdmin();
+const roleNames = new Map(adminRoles.map((role) => [role.id, role.name]));
+const roleName = (id: string) => roleNames.get(id) || id;
+const canManageUsers = can(Astro.locals.auth, "user.manage");
+
+const activeCount = adminUsers.filter((user) => user.status === "active").length;
+const pendingCount = adminUsers.filter((user) => user.status === "pending").length;
+const disabledCount = adminUsers.filter((user) => user.status === "disabled").length;
+const statusLabel = { active: "Hoạt động", pending: "Chờ xác minh", disabled: "Đã vô hiệu hóa" };
+---
+
+<AdminLayout title="Người dùng | Admin THIÊN LỘC GROUP" description="Quản lý người dùng và trạng thái truy cập." activePath="users">
+  <section class="admin-page" aria-labelledby="users-title" data-users-page>
+    <header class="admin-page-header">
+      <div><h1 id="users-title">Người dùng</h1><p>Quản lý tài khoản nội bộ, khách hàng, tổ chức và vai trò truy cập.</p></div>
+      <div class="admin-page-actions">{canManageUsers && <button class="button button-primary" type="button" data-admin-toast-trigger="Tạo người dùng nội bộ cần quy trình mời và xác minh email."><i class="ph ph-user-plus" aria-hidden="true"></i>Thêm người dùng</button>}</div>
+    </header>
+
+    <div class="admin-summary-strip" aria-label="Tổng quan người dùng">
+      <div class="admin-summary-item"><span>Tổng người dùng</span><strong>{adminUsers.length}</strong></div>
+      <div class="admin-summary-item"><span>Hoạt động</span><strong>{activeCount}</strong></div>
+      <div class="admin-summary-item"><span>Chờ xác minh</span><strong>{pendingCount}</strong></div>
+      <div class="admin-summary-item"><span>Đã vô hiệu hóa</span><strong>{disabledCount}</strong></div>
+    </div>
+
+    <form class="admin-filterbar" data-user-filters>
+      <div class="admin-field"><label for="user-search">Tìm người dùng</label><div class="admin-search-control"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input id="user-search" type="search" placeholder="Tên, email hoặc tổ chức..." autocomplete="off" data-user-search /></div></div>
+      <div class="admin-field"><label for="user-role-filter">Vai trò</label><select id="user-role-filter" data-user-role><option value="">Tất cả vai trò</option>{adminRoles.map((role) => <option value={role.id}>{role.name}</option>)}</select></div>
+      <div class="admin-field"><label for="user-status-filter">Trạng thái</label><select id="user-status-filter" data-user-status><option value="">Tất cả trạng thái</option><option value="active">Hoạt động</option><option value="pending">Chờ xác minh</option><option value="disabled">Đã vô hiệu hóa</option></select></div>
+      <div class="admin-field"><label for="user-organization-filter">Tổ chức</label><select id="user-organization-filter" data-user-organization><option value="">Tất cả tổ chức</option><option value="Nội bộ">Nội bộ</option><option value="Phòng khám">Phòng khám</option><option value="Đại lý">Đại lý</option></select></div>
+      <button class="admin-filter-reset" type="reset" data-user-reset>Xóa lọc</button>
+    </form>
+
+    <div class="admin-result-meta"><span><strong data-user-count>{adminUsers.length}</strong> người dùng</span><span>Hiển thị theo dữ liệu hiện có</span></div>
+    <div class="admin-table-wrap">
+      <table class="admin-table admin-users-table">
+        <caption class="sr-only">Danh sách người dùng, tổ chức, vai trò và trạng thái</caption>
+        <thead><tr><th scope="col">Người dùng</th><th scope="col">Email</th><th scope="col">Tổ chức</th><th scope="col">Vai trò</th><th scope="col">Trạng thái</th><th scope="col">Đăng nhập gần nhất</th><th scope="col">Ngày tạo</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+        <tbody>
+          {adminUsers.map((user) => (
+            <tr data-user-row data-search={`${user.name} ${user.email} ${user.organization}`.toLocaleLowerCase("vi")} data-role={user.roleIds.join(" ")} data-status={user.status} data-organization={user.organizationType}>
+              <td><div class="admin-user-cell"><span class="admin-avatar" aria-hidden="true">{user.initials}</span><span><strong>{user.name}</strong><small>{user.phone}</small></span></div></td>
+              <td>{user.email}</td>
+              <td>{user.organization}</td>
+              <td><div class="admin-role-list">{user.roleIds.map((roleId) => <span class="admin-role-chip">{roleName(roleId)}</span>)}</div></td>
+              <td><span class={`admin-status admin-status-${user.status}`}>{statusLabel[user.status]}</span></td>
+              <td>{user.lastLogin ? <time>{user.lastLogin}</time> : <span class="admin-muted">Chưa đăng nhập</span>}</td>
+              <td><time>{user.createdAt}</time></td>
+              <td><div class="admin-actions"><a class="admin-text-action" href={`/admin/users/${user.id}`}>Xem</a>{canManageUsers && <button class="admin-row-icon" type="button" aria-label={`Gửi liên kết đặt lại mật khẩu cho ${user.name}`} title="Đặt lại mật khẩu" data-admin-toast-trigger="Dùng flow quên mật khẩu để gửi liên kết an toàn."><i class="ph ph-key" aria-hidden="true"></i></button>}{canManageUsers && (user.roleIds.includes("super-admin") ? <button class="admin-row-icon" type="button" disabled aria-label={`${user.name} được hệ thống bảo vệ`} title="Super Admin được hệ thống bảo vệ"><i class="ph ph-lock" aria-hidden="true"></i></button> : <button class="admin-row-icon admin-row-icon-danger" type="button" aria-label={`Vô hiệu hóa ${user.name}`} title="Vô hiệu hóa" data-confirm-action="disable-user" data-confirm-name={user.name} data-user-id={user.id}><i class="ph ph-user-minus" aria-hidden="true"></i></button>)}</div></td>
+            </tr>
+          ))}
+          <tr class="admin-empty-row" data-user-empty hidden><td colspan="8"><strong>Không tìm thấy người dùng phù hợp</strong><span>Thử từ khóa khác hoặc xóa bớt bộ lọc.</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</AdminLayout>

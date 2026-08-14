@@ -1,0 +1,703 @@
+---
+import { publicProducts, searchIndex } from "@/lib/public-content";
+import { searchGroupLabels } from "@/data/search";
+
+const catalogProducts = await publicProducts();
+const searchEntries = await searchIndex();
+const compareProducts = catalogProducts.map((product) => ({
+  id: product.id,
+  name: product.name,
+  shortName: product.model.replace(" (minh họa)", ""),
+  model: product.model,
+  brand: product.brand,
+  image: product.image,
+  href: `/san-pham/${product.slug}`,
+}));
+---
+
+<script id="phase6-search-index" type="application/json" is:inline set:html={JSON.stringify({ entries: searchEntries, labels: searchGroupLabels })} />
+<script id="phase6-product-index" type="application/json" is:inline set:html={JSON.stringify(compareProducts)} />
+
+<dialog class="global-search-dialog" data-global-search aria-labelledby="global-search-title">
+  <div class="global-search-shell">
+    <header class="global-search-header">
+      <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+      <div class="global-search-field">
+        <label class="sr-only" for="global-search-input">Tìm kiếm toàn bộ website</label>
+        <input
+          id="global-search-input"
+          type="search"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="global-search-results"
+          aria-expanded="true"
+          placeholder="Tên thiết bị, model, hãng, danh mục..."
+          autocomplete="off"
+          data-global-search-input
+        />
+      </div>
+      <button type="button" class="search-dialog-close" data-search-close aria-label="Đóng tìm kiếm">
+        <span>Esc</span><i class="ph ph-x" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <div class="global-search-body">
+      <h2 id="global-search-title" class="sr-only">Tìm kiếm</h2>
+      <div class="search-recent" data-search-recent hidden></div>
+      <div id="global-search-results" class="global-search-results" role="listbox" aria-label="Gợi ý tìm kiếm" data-global-search-results></div>
+      <div class="global-search-empty" data-global-search-empty hidden>
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+        <strong>Không có gợi ý phù hợp</strong>
+        <span>Nhấn Enter để xem toàn bộ kết quả và các lựa chọn khác.</span>
+      </div>
+    </div>
+
+    <footer class="global-search-footer">
+      <div aria-hidden="true"><kbd>↑</kbd><kbd>↓</kbd><span>Di chuyển</span><kbd>Enter</kbd><span>Mở</span></div>
+      <a href="/tim-kiem" data-view-all-search>Xem trang tìm kiếm</a>
+    </footer>
+  </div>
+</dialog>
+
+<dialog class="quote-dialog" data-quote-dialog aria-labelledby="quote-dialog-title">
+  <div class="quote-dialog-shell">
+    <header class="quote-dialog-header">
+      <div><span>Thiên Lộc Group</span><h2 id="quote-dialog-title">Yêu cầu báo giá & tư vấn</h2><p>Để lại thông tin, đội ngũ phụ trách sẽ liên hệ để xác nhận nhu cầu.</p></div>
+      <button class="icon-action" type="button" data-quote-dialog-close aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button>
+    </header>
+    <form class="quote-dialog-form" data-quote-dialog-form novalidate>
+      <div class="quote-dialog-products" data-quote-dialog-products hidden></div>
+      <div class="quote-dialog-field quote-product-field" data-quote-product-picker>
+        <span id="quote-product-label">Thiết bị quan tâm <small>Không bắt buộc</small></span>
+        <div class="quote-product-combobox" data-quote-product-combobox>
+          <div class="quote-combobox-control">
+            <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+            <input
+              type="search"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="quote-product-options"
+              aria-expanded="false"
+              aria-labelledby="quote-product-label"
+              placeholder="Tìm theo tên, model hoặc hãng..."
+              autocomplete="off"
+              data-quote-product-search
+            />
+            <input type="hidden" name="productId" data-quote-product-value />
+            <button type="button" data-clear-quote-product aria-label="Bỏ thiết bị đã chọn" hidden><i class="ph ph-x" aria-hidden="true"></i></button>
+          </div>
+          <div class="quote-product-options" id="quote-product-options" role="listbox" aria-labelledby="quote-product-label" data-quote-product-options hidden>
+            {compareProducts.map((product, index) => (
+              <button
+                id={`quote-product-option-${index}`}
+                type="button"
+                role="option"
+                aria-selected="false"
+                data-quote-product-option
+                data-product-id={product.id}
+                data-product-text={`${product.name} ${product.shortName} ${product.model} ${product.brand}`}
+              >
+                <img src={product.image} alt="" width="52" height="44" loading="lazy" />
+                <span><strong>{product.shortName}</strong><small>{product.brand} · {product.model}</small></span>
+                <i class="ph ph-plus" aria-hidden="true"></i>
+              </button>
+            ))}
+            <div class="quote-product-empty" data-quote-product-empty hidden>
+              <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+              <span>Không tìm thấy thiết bị phù hợp.</span>
+            </div>
+          </div>
+        </div>
+        <small class="quote-field-help">Có thể bỏ qua nếu bạn cần tư vấn chọn thiết bị.</small>
+      </div>
+      <div class="quote-dialog-grid">
+        <label class="quote-dialog-field"><span>Họ và tên</span><input name="name" type="text" autocomplete="name" minlength="2" required /></label>
+        <label class="quote-dialog-field"><span>Số điện thoại</span><input name="phone" type="tel" inputmode="tel" autocomplete="tel" pattern="[0-9+ ()-]{9,16}" required /></label>
+        <label class="quote-dialog-field is-wide"><span>Tỉnh/Thành phố của bạn</span><input name="province" type="text" autocomplete="address-level1" placeholder="Ví dụ: TP. Hồ Chí Minh" required /></label>
+      </div>
+      <label class="quote-dialog-field"><span>Nhu cầu</span><textarea name="need" rows="3" minlength="10" required placeholder="Thiết bị, số lượng hoặc mục đích sử dụng..."></textarea></label>
+      <p class="quote-dialog-error" data-quote-dialog-error role="alert" hidden>Chưa thể gửi yêu cầu. Vui lòng kiểm tra thông tin và thử lại.</p>
+      <footer><p><i class="ph ph-lock-key" aria-hidden="true"></i>Thông tin chỉ dùng để tư vấn và xử lý báo giá.</p><button class="button button-primary" type="submit"><span>Gửi yêu cầu</span><i class="ph ph-arrow-right" aria-hidden="true"></i></button></footer>
+    </form>
+    <section class="quote-dialog-success" data-quote-dialog-success role="status" aria-live="polite" hidden>
+      <i class="ph ph-check-circle" aria-hidden="true"></i><h2>Đã tiếp nhận yêu cầu</h2><p>Mã yêu cầu: <strong data-quote-dialog-number></strong>. Đội ngũ Thiên Lộc sẽ liên hệ theo thông tin bạn cung cấp.</p>
+      <div><button class="button button-outline" type="button" data-quote-dialog-close>Đóng</button><a class="button button-primary" href="/yeu-cau-bao-gia/chi-tiet" data-quote-dialog-detail>Xem trạng thái</a></div>
+    </section>
+  </div>
+</dialog>
+
+<aside class="compare-tray" data-compare-tray hidden aria-label="Danh sách so sánh">
+  <div class="compare-tray-inner">
+    <div class="compare-tray-heading">
+      <i class="ph ph-arrows-left-right" aria-hidden="true"></i>
+      <div><strong>So sánh sản phẩm</strong><span data-compare-tray-count>0/4 sản phẩm</span></div>
+    </div>
+    <div class="compare-tray-items" data-compare-tray-items></div>
+    <div class="compare-tray-actions">
+      <a class="compare-add-link" href="/san-pham"><i class="ph ph-plus" aria-hidden="true"></i> Thêm sản phẩm</a>
+      <a class="button button-primary" href="/so-sanh">So sánh</a>
+      <button class="compare-tray-collapse" type="button" data-compare-tray-collapse aria-label="Thu gọn danh sách so sánh" aria-expanded="true"><i class="ph ph-caret-down" aria-hidden="true"></i></button>
+    </div>
+  </div>
+</aside>
+
+<div class="phase6-toast" role="status" aria-live="polite" data-phase6-toast hidden></div>
+
+<script>
+  type SearchEntry = {
+    id: string;
+    group: "products" | "categories" | "brands" | "specialties" | "knowledge";
+    label: string;
+    meta: string;
+    href: string;
+    keywords: string;
+    image?: string;
+    productId?: string;
+  };
+  type SearchPayload = { entries: SearchEntry[]; labels: Record<SearchEntry["group"], string> };
+  type CompareProduct = { id: string; name: string; shortName: string; model: string; brand: string; image: string; href: string };
+
+  const parseJson = <T,>(id: string, fallback: T): T => {
+    try { return JSON.parse(document.getElementById(id)?.textContent || "") as T; } catch { return fallback; }
+  };
+
+  const searchPayload = parseJson<SearchPayload>("phase6-search-index", { entries: [], labels: {} as SearchPayload["labels"] });
+  const compareProducts = parseJson<CompareProduct[]>("phase6-product-index", []);
+  const compareProductMap = new Map(compareProducts.map((product) => [product.id, product]));
+  const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi").trim();
+  const safeRead = (storage: Storage, key: string): string[] => {
+    try {
+      const value = JSON.parse(storage.getItem(key) || "[]");
+      return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+    } catch { return []; }
+  };
+  const safeWrite = (storage: Storage, key: string, value: string[]) => {
+    storage.setItem(key, JSON.stringify(value));
+  };
+
+  const toast = document.querySelector<HTMLElement>("[data-phase6-toast]");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let toastTimer = 0;
+  const showToast = (message: string, tone: "default" | "error" = "default") => {
+    if (!toast) return;
+    window.clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.dataset.tone = tone;
+    toast.hidden = false;
+    requestAnimationFrame(() => toast.classList.add("is-visible"));
+    toastTimer = window.setTimeout(() => {
+      toast.classList.remove("is-visible");
+      window.setTimeout(() => { toast.hidden = true; }, reduceMotion.matches ? 0 : 160);
+    }, 2400);
+  };
+
+  const confirmAction = (button: HTMLButtonElement | null) => {
+    if (!button || reduceMotion.matches) return;
+    button.classList.remove("is-pressing");
+    requestAnimationFrame(() => button.classList.add("is-pressing"));
+    window.setTimeout(() => button.classList.remove("is-pressing"), 220);
+  };
+  window.addEventListener("tlm:toast", ((event: CustomEvent<{ message: string; tone?: "default" | "error" }>) => {
+    showToast(event.detail.message, event.detail.tone);
+  }) as EventListener);
+
+  const searchDialog = document.querySelector<HTMLDialogElement>("[data-global-search]");
+  const searchInput = searchDialog?.querySelector<HTMLInputElement>("[data-global-search-input]");
+  const searchResults = searchDialog?.querySelector<HTMLElement>("[data-global-search-results]");
+  const searchEmpty = searchDialog?.querySelector<HTMLElement>("[data-global-search-empty]");
+  const recentRoot = searchDialog?.querySelector<HTMLElement>("[data-search-recent]");
+  const viewAllSearch = searchDialog?.querySelector<HTMLAnchorElement>("[data-view-all-search]");
+  let activeSearchIndex = -1;
+  let searchableItems: HTMLElement[] = [];
+
+  const readRecentSearches = () => {
+    try { return JSON.parse(localStorage.getItem("tlm-recent-searches") || "[]") as string[]; } catch { return []; }
+  };
+  const rememberSearch = (query: string) => {
+    const clean = query.trim();
+    if (!clean) return;
+    try {
+      const recent = readRecentSearches().filter((item) => normalize(item) !== normalize(clean));
+      localStorage.setItem("tlm-recent-searches", JSON.stringify([clean, ...recent].slice(0, 5)));
+    } catch { /* recent searches are optional */ }
+  };
+  const scoreEntry = (entry: SearchEntry, query: string) => {
+    const label = normalize(entry.label);
+    const meta = normalize(entry.meta);
+    const haystack = normalize(`${entry.label} ${entry.meta} ${entry.keywords}`);
+    if (label === query) return 100;
+    if (label.startsWith(query)) return 80;
+    if (meta.startsWith(query)) return 65;
+    if (haystack.includes(query)) return 40;
+    return 0;
+  };
+  const setActiveSearchItem = (index: number) => {
+    if (!searchableItems.length || !searchInput) return;
+    activeSearchIndex = (index + searchableItems.length) % searchableItems.length;
+    searchableItems.forEach((item, itemIndex) => {
+      const active = itemIndex === activeSearchIndex;
+      item.classList.toggle("is-active", active);
+      item.setAttribute("aria-selected", String(active));
+      if (active) item.scrollIntoView({ block: "nearest" });
+    });
+    searchInput.setAttribute("aria-activedescendant", searchableItems[activeSearchIndex].id);
+  };
+  const renderRecentSearches = () => {
+    if (!recentRoot) return;
+    recentRoot.replaceChildren();
+    const recent = readRecentSearches();
+    recentRoot.hidden = recent.length === 0;
+    if (!recent.length) return;
+    const title = document.createElement("div");
+    title.className = "search-group-label";
+    title.innerHTML = '<span>Tìm kiếm gần đây</span><button type="button" data-clear-recent>Xóa</button>';
+    recentRoot.append(title);
+    const list = document.createElement("div");
+    list.className = "search-recent-list";
+    recent.forEach((query) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.recentQuery = query;
+      const icon = document.createElement("i");
+      icon.className = "ph ph-clock-counter-clockwise";
+      icon.setAttribute("aria-hidden", "true");
+      button.append(icon, document.createTextNode(query));
+      list.append(button);
+    });
+    recentRoot.append(list);
+  };
+  const createSearchResult = (entry: SearchEntry) => {
+    const link = document.createElement("a");
+    link.id = `global-result-${entry.id}`;
+    link.className = "global-search-result";
+    link.href = entry.href;
+    link.setAttribute("role", "option");
+    link.setAttribute("aria-selected", "false");
+    if (entry.image) {
+      const image = document.createElement("img");
+      image.src = entry.image;
+      image.alt = "";
+      image.width = 52;
+      image.height = 42;
+      link.append(image);
+    } else {
+      const icon = document.createElement("i");
+      icon.className = `ph ${entry.group === "knowledge" ? "ph-article" : entry.group === "brands" ? "ph-seal" : "ph-folder"}`;
+      icon.setAttribute("aria-hidden", "true");
+      link.append(icon);
+    }
+    const copy = document.createElement("span");
+    const strong = document.createElement("strong");
+    strong.textContent = entry.label;
+    const meta = document.createElement("small");
+    meta.textContent = entry.meta;
+    copy.append(strong, meta);
+    const arrow = document.createElement("i");
+    arrow.className = "ph ph-arrow-up-right";
+    arrow.setAttribute("aria-hidden", "true");
+    link.append(copy, arrow);
+    link.addEventListener("click", () => rememberSearch(searchInput?.value || entry.label));
+    return link;
+  };
+  const renderSearchResults = () => {
+    if (!searchResults || !searchInput || !searchEmpty || !viewAllSearch) return;
+    const query = normalize(searchInput.value);
+    activeSearchIndex = -1;
+    searchInput.removeAttribute("aria-activedescendant");
+    searchResults.replaceChildren();
+    renderRecentSearches();
+    if (recentRoot) recentRoot.hidden = Boolean(query) || readRecentSearches().length === 0;
+    viewAllSearch.href = query ? `/tim-kiem?q=${encodeURIComponent(searchInput.value.trim())}` : "/tim-kiem";
+
+    const ranked = searchPayload.entries
+      .map((entry) => ({ entry, score: query ? scoreEntry(entry, query) : (entry.group === "products" ? 10 : 4) }))
+      .filter((result) => result.score > 0)
+      .sort((a, b) => b.score - a.score);
+    const groupLimit = query ? 4 : 3;
+    const grouped = new Map<SearchEntry["group"], SearchEntry[]>();
+    ranked.forEach(({ entry }) => {
+      const group = grouped.get(entry.group) || [];
+      if (group.length < groupLimit) group.push(entry);
+      grouped.set(entry.group, group);
+    });
+    const order: SearchEntry["group"][] = ["products", "categories", "brands", "specialties", "knowledge"];
+    let total = 0;
+    order.forEach((group) => {
+      const entries = grouped.get(group) || [];
+      if (!entries.length || total >= 10) return;
+      const section = document.createElement("section");
+      section.className = "global-search-group";
+      section.setAttribute("role", "group");
+      const heading = document.createElement("h3");
+      heading.id = `global-search-group-${group}`;
+      heading.textContent = searchPayload.labels[group];
+      section.setAttribute("aria-labelledby", heading.id);
+      section.append(heading);
+      entries.slice(0, 10 - total).forEach((entry) => section.append(createSearchResult(entry)));
+      total += Math.min(entries.length, 10 - total);
+      searchResults.append(section);
+    });
+    searchableItems = Array.from(searchResults.querySelectorAll<HTMLElement>("[role='option']"));
+    searchEmpty.hidden = total > 0;
+    if (!reduceMotion.matches) {
+      searchResults.animate([
+        { opacity: .55, transform: "translateY(4px)" },
+        { opacity: 1, transform: "translateY(0)" },
+      ], { duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+    }
+  };
+  const openGlobalSearch = (initialQuery = "") => {
+    if (!searchDialog || !searchInput) return;
+    if (!searchDialog.open) searchDialog.showModal();
+    searchInput.value = initialQuery;
+    renderSearchResults();
+    requestAnimationFrame(() => searchInput.focus());
+  };
+  document.querySelectorAll<HTMLElement>("[data-search-open]").forEach((button) => {
+    button.addEventListener("click", () => openGlobalSearch(button.dataset.searchQuery || ""));
+  });
+  document.addEventListener("keydown", (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === "k") {
+      event.preventDefault();
+      openGlobalSearch();
+    }
+  });
+  searchDialog?.querySelector("[data-search-close]")?.addEventListener("click", () => searchDialog.close());
+  searchDialog?.addEventListener("click", (event) => { if (event.target === searchDialog) searchDialog.close(); });
+  searchInput?.addEventListener("input", renderSearchResults);
+  searchInput?.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown") { event.preventDefault(); setActiveSearchItem(activeSearchIndex + 1); }
+    if (event.key === "ArrowUp") { event.preventDefault(); setActiveSearchItem(activeSearchIndex - 1); }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const active = searchableItems[activeSearchIndex] as HTMLAnchorElement | undefined;
+      const query = searchInput.value.trim();
+      rememberSearch(query);
+      window.location.href = active?.href || `/tim-kiem${query ? `?q=${encodeURIComponent(query)}` : ""}`;
+    }
+  });
+  recentRoot?.addEventListener("click", (event) => {
+    const clear = (event.target as HTMLElement).closest("[data-clear-recent]");
+    const queryButton = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-recent-query]");
+    if (clear) {
+      try { localStorage.removeItem("tlm-recent-searches"); } catch { /* optional storage */ }
+      renderSearchResults();
+    }
+    if (queryButton && searchInput) {
+      searchInput.value = queryButton.dataset.recentQuery || "";
+      renderSearchResults();
+      searchInput.focus();
+    }
+  });
+
+  const quoteDialog = document.querySelector<HTMLDialogElement>("[data-quote-dialog]");
+  const quoteDialogForm = quoteDialog?.querySelector<HTMLFormElement>("[data-quote-dialog-form]");
+  const quoteProductPicker = quoteDialog?.querySelector<HTMLElement>("[data-quote-product-picker]");
+  const quoteProductSearch = quoteDialog?.querySelector<HTMLInputElement>("[data-quote-product-search]");
+  const quoteProductValue = quoteDialog?.querySelector<HTMLInputElement>("[data-quote-product-value]");
+  const quoteProductOptions = quoteDialog?.querySelector<HTMLElement>("[data-quote-product-options]");
+  const quoteProductEmpty = quoteDialog?.querySelector<HTMLElement>("[data-quote-product-empty]");
+  const clearQuoteProduct = quoteDialog?.querySelector<HTMLButtonElement>("[data-clear-quote-product]");
+  const quoteProductSummary = quoteDialog?.querySelector<HTMLElement>("[data-quote-dialog-products]");
+  const quoteDialogError = quoteDialog?.querySelector<HTMLElement>("[data-quote-dialog-error]");
+  const quoteDialogSuccess = quoteDialog?.querySelector<HTMLElement>("[data-quote-dialog-success]");
+  const quoteDialogNumber = quoteDialog?.querySelector<HTMLElement>("[data-quote-dialog-number]");
+  const quoteDialogDetail = quoteDialog?.querySelector<HTMLAnchorElement>("[data-quote-dialog-detail]");
+  let quoteDialogProductIds: string[] = [];
+  let quoteDialogSource = "GLOBAL";
+  let activeQuoteProductIndex = -1;
+
+  const visibleQuoteProductOptions = () => Array.from(quoteProductOptions?.querySelectorAll<HTMLButtonElement>("[data-quote-product-option]:not([hidden])") || []);
+  const setActiveQuoteProduct = (index: number) => {
+    const options = visibleQuoteProductOptions();
+    if (!options.length || !quoteProductSearch) return;
+    activeQuoteProductIndex = (index + options.length) % options.length;
+    options.forEach((option, optionIndex) => option.classList.toggle("is-active", optionIndex === activeQuoteProductIndex));
+    const active = options[activeQuoteProductIndex];
+    quoteProductSearch.setAttribute("aria-activedescendant", active.id);
+    active.scrollIntoView({ block: "nearest" });
+  };
+  const renderQuoteProductOptions = () => {
+    if (!quoteProductOptions || !quoteProductSearch) return;
+    const query = normalize(quoteProductSearch.value);
+    let visibleCount = 0;
+    quoteProductOptions.querySelectorAll<HTMLButtonElement>("[data-quote-product-option]").forEach((option) => {
+      option.hidden = Boolean(query) && !normalize(option.dataset.productText || "").includes(query);
+      if (!option.hidden) visibleCount += 1;
+      option.classList.remove("is-active");
+    });
+    activeQuoteProductIndex = -1;
+    quoteProductEmpty!.hidden = visibleCount > 0;
+    quoteProductOptions.hidden = false;
+    quoteProductSearch.setAttribute("aria-expanded", "true");
+    quoteProductSearch.removeAttribute("aria-activedescendant");
+  };
+  const closeQuoteProductOptions = () => {
+    if (!quoteProductOptions || !quoteProductSearch) return;
+    quoteProductOptions.hidden = true;
+    quoteProductSearch.setAttribute("aria-expanded", "false");
+    quoteProductSearch.removeAttribute("aria-activedescendant");
+    activeQuoteProductIndex = -1;
+  };
+  const selectQuoteProduct = (id: string) => {
+    const product = compareProductMap.get(id);
+    if (!product || !quoteProductSearch || !quoteProductValue) return;
+    quoteProductValue.value = id;
+    quoteProductSearch.value = `${product.shortName} · ${product.brand}`;
+    quoteProductSearch.dataset.selectedProduct = id;
+    quoteProductSearch.readOnly = true;
+    if (clearQuoteProduct) clearQuoteProduct.hidden = false;
+    quoteProductOptions?.querySelectorAll<HTMLElement>("[data-quote-product-option]").forEach((option) => option.setAttribute("aria-selected", String(option.dataset.productId === id)));
+    closeQuoteProductOptions();
+    quoteProductSearch.focus();
+  };
+  const resetQuoteProduct = (focus = false) => {
+    if (!quoteProductSearch || !quoteProductValue) return;
+    quoteProductSearch.value = "";
+    quoteProductValue.value = "";
+    delete quoteProductSearch.dataset.selectedProduct;
+    quoteProductSearch.readOnly = false;
+    if (clearQuoteProduct) clearQuoteProduct.hidden = true;
+    quoteProductOptions?.querySelectorAll<HTMLElement>("[data-quote-product-option]").forEach((option) => option.setAttribute("aria-selected", "false"));
+    closeQuoteProductOptions();
+    if (focus) quoteProductSearch.focus();
+  };
+
+  const selectedProductsFromUrl = (url: URL) => {
+    const ids = new Set<string>();
+    (url.searchParams.get("products") || url.searchParams.get("product") || "").split(",").filter(Boolean).forEach((id) => { if (compareProductMap.has(id)) ids.add(id); });
+    const source = url.searchParams.get("source") || "global";
+    if (source === "compare") safeRead(sessionStorage, "tlm-compared-products").forEach((id) => { if (compareProductMap.has(id)) ids.add(id); });
+    if (source === "favorites") safeRead(localStorage, "tlm-saved-products").forEach((id) => { if (compareProductMap.has(id)) ids.add(id); });
+    return Array.from(ids).slice(0, 4);
+  };
+  const renderQuoteDialogProducts = () => {
+    if (!quoteProductSummary || !quoteProductPicker) return;
+    quoteProductSummary.replaceChildren();
+    quoteProductSummary.hidden = quoteDialogProductIds.length === 0;
+    quoteProductPicker.hidden = quoteDialogProductIds.length > 0;
+    if (quoteProductSearch) quoteProductSearch.disabled = quoteDialogProductIds.length > 0;
+    quoteDialogProductIds.forEach((id) => {
+      const product = compareProductMap.get(id); if (!product) return;
+      const item = document.createElement("div"); const icon = document.createElement("i"); const copy = document.createElement("span"); const name = document.createElement("strong"); const model = document.createElement("small");
+      icon.className = "ph ph-package"; icon.setAttribute("aria-hidden", "true"); name.textContent = product.name; model.textContent = `${product.brand} · ${product.model}`; copy.append(name, model); item.append(icon, copy); quoteProductSummary.append(item);
+    });
+  };
+  const openQuoteDialog = (href: string) => {
+    if (!quoteDialog || !quoteDialogForm) return;
+    const url = new URL(href, window.location.href);
+    quoteDialogProductIds = selectedProductsFromUrl(url);
+    quoteDialogSource = (url.searchParams.get("source") || "GLOBAL").toUpperCase();
+    quoteDialogForm.hidden = false;
+    if (quoteDialogSuccess) quoteDialogSuccess.hidden = true;
+    if (quoteDialogError) quoteDialogError.hidden = true;
+    const need = quoteDialogForm.elements.namedItem("need") as HTMLTextAreaElement | null;
+    if (need && url.searchParams.get("need")) need.value = url.searchParams.get("need") || "";
+    resetQuoteProduct();
+    renderQuoteDialogProducts();
+    document.querySelector<HTMLDialogElement>("[data-mobile-navigation][open]")?.close();
+    if (!quoteDialog.open) quoteDialog.showModal();
+    requestAnimationFrame(() => quoteDialogForm.querySelector<HTMLInputElement>("input")?.focus());
+  };
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href*="/yeu-cau-bao-gia"]');
+    if (!link || link.pathname?.startsWith?.("/yeu-cau-bao-gia/chi-tiet")) return;
+    event.preventDefault(); openQuoteDialog(link.href);
+  });
+  const quoteEntryUrl = new URL(window.location.href);
+  if (quoteEntryUrl.searchParams.get("quote") === "open") {
+    openQuoteDialog(quoteEntryUrl.href);
+    quoteEntryUrl.searchParams.delete("quote");
+    window.history.replaceState({}, "", `${quoteEntryUrl.pathname}${quoteEntryUrl.search}${quoteEntryUrl.hash}`);
+  }
+  quoteDialog?.querySelectorAll<HTMLButtonElement>("[data-quote-dialog-close]").forEach((button) => button.addEventListener("click", () => quoteDialog.close()));
+  quoteDialog?.addEventListener("click", (event) => { if (event.target === quoteDialog) quoteDialog.close(); });
+  quoteProductSearch?.addEventListener("focus", () => { if (!quoteProductSearch.readOnly) renderQuoteProductOptions(); });
+  quoteProductSearch?.addEventListener("input", renderQuoteProductOptions);
+  quoteProductSearch?.addEventListener("blur", () => {
+    window.setTimeout(() => {
+      if (!quoteDialog?.querySelector("[data-quote-product-combobox]")?.contains(document.activeElement)) closeQuoteProductOptions();
+    }, 0);
+  });
+  quoteProductSearch?.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown") { event.preventDefault(); if (quoteProductOptions?.hidden) renderQuoteProductOptions(); setActiveQuoteProduct(activeQuoteProductIndex + 1); }
+    if (event.key === "ArrowUp") { event.preventDefault(); if (quoteProductOptions?.hidden) renderQuoteProductOptions(); setActiveQuoteProduct(activeQuoteProductIndex - 1); }
+    if (event.key === "Enter" && !quoteProductOptions?.hidden) {
+      event.preventDefault();
+      const option = visibleQuoteProductOptions()[activeQuoteProductIndex] || visibleQuoteProductOptions()[0];
+      if (option?.dataset.productId) selectQuoteProduct(option.dataset.productId);
+    }
+    if (event.key === "Escape" && !quoteProductOptions?.hidden) { event.preventDefault(); closeQuoteProductOptions(); }
+  });
+  quoteProductOptions?.addEventListener("mousedown", (event) => event.preventDefault());
+  quoteProductOptions?.addEventListener("click", (event) => {
+    const option = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-quote-product-option]");
+    if (option?.dataset.productId) selectQuoteProduct(option.dataset.productId);
+  });
+  clearQuoteProduct?.addEventListener("click", () => resetQuoteProduct(true));
+  quoteDialogForm?.addEventListener("click", (event) => {
+    if (!(event.target as HTMLElement).closest("[data-quote-product-combobox]")) closeQuoteProductOptions();
+  });
+  quoteDialog?.addEventListener("close", () => {
+    quoteDialogForm?.reset(); quoteDialogProductIds = []; quoteDialogSource = "GLOBAL";
+    resetQuoteProduct();
+    if (quoteDialogForm) quoteDialogForm.hidden = false;
+    if (quoteDialogSuccess) quoteDialogSuccess.hidden = true;
+    if (quoteDialogError) quoteDialogError.hidden = true;
+  });
+  quoteDialogForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!quoteDialogForm.reportValidity()) return;
+    const values = new FormData(quoteDialogForm);
+    const productIds = quoteDialogProductIds.length ? quoteDialogProductIds : [String(values.get("productId") || "")].filter(Boolean);
+    const submit = quoteDialogForm.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (submit) { submit.disabled = true; submit.setAttribute("aria-busy", "true"); }
+    if (quoteDialogError) quoteDialogError.hidden = true;
+    const payload = new FormData();
+    ["name", "phone", "province", "need"].forEach((key) => payload.set(key, String(values.get(key) || "")));
+    payload.set("source", quoteDialogSource); payload.set("items", JSON.stringify(productIds.map((productId) => ({ productId, quantity: 1, note: "" }))));
+    try {
+      const response = await fetch("/api/quotes", { method: "POST", credentials: "same-origin", body: payload });
+      const result = await response.json() as { quoteNumber?: string; url?: string; error?: string };
+      if (!response.ok || !result.quoteNumber) throw new Error(result.error || "QUOTE_CREATE_FAILED");
+      quoteDialogForm.hidden = true;
+      if (quoteDialogSuccess) quoteDialogSuccess.hidden = false;
+      if (quoteDialogNumber) quoteDialogNumber.textContent = result.quoteNumber;
+      if (quoteDialogDetail && result.url) quoteDialogDetail.href = result.url;
+    } catch {
+      if (quoteDialogError) quoteDialogError.hidden = false;
+    } finally {
+      if (submit) { submit.disabled = false; submit.removeAttribute("aria-busy"); }
+    }
+  });
+
+  const compareTray = document.querySelector<HTMLElement>("[data-compare-tray]");
+  const compareTrayItems = compareTray?.querySelector<HTMLElement>("[data-compare-tray-items]");
+  const compareTrayCount = compareTray?.querySelector<HTMLElement>("[data-compare-tray-count]");
+  const renderCompareState = () => {
+    const ids = safeRead(sessionStorage, "tlm-compared-products").filter((id) => compareProductMap.has(id)).slice(0, 4);
+    document.querySelectorAll<HTMLButtonElement>("[data-compare-product]").forEach((button) => {
+      const id = button.dataset.productId || button.closest<HTMLElement>("[data-product-id]")?.dataset.productId || "";
+      const active = ids.includes(id);
+      button.setAttribute("aria-pressed", String(active));
+      button.classList.toggle("is-selected", active);
+      const label = button.querySelector<HTMLElement>("[data-action-label]");
+      if (label) label.textContent = active ? "Đã chọn so sánh" : "So sánh";
+    });
+    document.querySelectorAll<HTMLElement>("[data-compare-count]").forEach((element) => { element.textContent = String(ids.length); });
+    if (!compareTray || !compareTrayItems || !compareTrayCount) return;
+    const wasHidden = compareTray.hidden;
+    const isComparePage = Boolean(document.querySelector("[data-compare-page]"));
+    compareTray.hidden = isComparePage || ids.length === 0;
+    compareTrayCount.textContent = `${ids.length}/4 sản phẩm`;
+    compareTrayItems.replaceChildren();
+    ids.forEach((id) => {
+      const product = compareProductMap.get(id);
+      if (!product) return;
+      const item = document.createElement("div");
+      item.className = "compare-tray-item";
+      const image = document.createElement("img");
+      image.src = product.image;
+      image.alt = "";
+      image.width = 44;
+      image.height = 44;
+      const text = document.createElement("span");
+      const strong = document.createElement("strong");
+      strong.textContent = product.shortName;
+      const small = document.createElement("small");
+      small.textContent = product.brand;
+      text.append(strong, small);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.dataset.removeCompare = id;
+      remove.setAttribute("aria-label", `Bỏ ${product.name} khỏi so sánh`);
+      remove.innerHTML = '<i class="ph ph-x" aria-hidden="true"></i>';
+      item.append(image, text, remove);
+      compareTrayItems.append(item);
+    });
+    if (ids.length > 0 && !reduceMotion.matches) {
+      if (wasHidden) {
+        compareTray.querySelector<HTMLElement>(".compare-tray-inner")?.animate([
+          { opacity: 0, transform: "translateY(12px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ], { duration: 260, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+      } else {
+        compareTrayItems.animate([
+          { opacity: .62 },
+          { opacity: 1 },
+        ], { duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" });
+      }
+    }
+  };
+  const updateCompare = (id: string) => {
+    if (!compareProductMap.has(id)) return;
+    const ids = safeRead(sessionStorage, "tlm-compared-products").filter((item) => compareProductMap.has(item));
+    const active = ids.includes(id);
+    if (!active && ids.length >= 4) {
+      showToast("Bạn đã chọn đủ 4 sản phẩm. Hãy bỏ một sản phẩm trước khi thêm mới.", "error");
+      return;
+    }
+    const next = active ? ids.filter((item) => item !== id) : [...ids, id];
+    try {
+      safeWrite(sessionStorage, "tlm-compared-products", next);
+      renderCompareState();
+      window.dispatchEvent(new CustomEvent("tlm:compare-change", { detail: { ids: next } }));
+      showToast(active ? "Đã bỏ sản phẩm khỏi so sánh." : "Đã thêm sản phẩm vào so sánh.");
+    } catch {
+      showToast("Không thể cập nhật danh sách so sánh. Hãy thử lại.", "error");
+    }
+  };
+  compareTrayItems?.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-remove-compare]");
+    if (button?.dataset.removeCompare) updateCompare(button.dataset.removeCompare);
+  });
+  compareTray?.querySelector<HTMLButtonElement>("[data-compare-tray-collapse]")?.addEventListener("click", (event) => {
+    const collapsed = compareTray.classList.toggle("is-collapsed");
+    const button = event.currentTarget as HTMLButtonElement;
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.setAttribute("aria-label", collapsed ? "Mở rộng danh sách so sánh" : "Thu gọn danh sách so sánh");
+  });
+  window.addEventListener("tlm:compare-change", renderCompareState as EventListener);
+
+  const renderFavoriteState = () => {
+    const ids = safeRead(localStorage, "tlm-saved-products");
+    document.querySelectorAll<HTMLButtonElement>("[data-favorite-product]").forEach((button) => {
+      const id = button.dataset.productId || button.closest<HTMLElement>("[data-product-id]")?.dataset.productId || "";
+      const active = ids.includes(id);
+      button.setAttribute("aria-pressed", String(active));
+      button.classList.toggle("is-selected", active);
+      const label = button.querySelector<HTMLElement>("[data-action-label]");
+      if (label) label.textContent = active ? "Đã lưu" : "Lưu sản phẩm";
+    });
+  };
+  const updateFavorite = (id: string) => {
+    try {
+      const ids = safeRead(localStorage, "tlm-saved-products");
+      const active = ids.includes(id);
+      safeWrite(localStorage, "tlm-saved-products", active ? ids.filter((item) => item !== id) : [...ids, id]);
+      renderFavoriteState();
+      showToast(active ? "Đã bỏ lưu sản phẩm." : "Đã lưu sản phẩm.");
+    } catch {
+      showToast("Chưa thể lưu sản phẩm. Hãy kiểm tra dung lượng trình duyệt và thử lại.", "error");
+    }
+  };
+  document.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    const compareButton = target.closest<HTMLButtonElement>("[data-compare-product]");
+    const favoriteButton = target.closest<HTMLButtonElement>("[data-favorite-product]");
+    if (compareButton) {
+      confirmAction(compareButton);
+      const id = compareButton.dataset.productId || compareButton.closest<HTMLElement>("[data-product-id]")?.dataset.productId;
+      if (id) updateCompare(id);
+    }
+    if (favoriteButton) {
+      confirmAction(favoriteButton);
+      const id = favoriteButton.dataset.productId || favoriteButton.closest<HTMLElement>("[data-product-id]")?.dataset.productId;
+      if (id) updateFavorite(id);
+    }
+  });
+
+  renderCompareState();
+  renderFavoriteState();
+</script>

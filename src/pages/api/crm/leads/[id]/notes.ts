@@ -1,0 +1,4 @@
+import type { APIRoute } from "astro";
+import { errorJson, isResponse, json, readJson, requirePermission } from "@/server/auth/http";
+import { crmRepository } from "@/server/repositories/crm-repository";
+export const POST: APIRoute = async (context) => { const actor = requirePermission(context, "lead.edit"); if (isResponse(actor)) return actor; const lead = await crmRepository.getLead(String(context.params.id), actor); if (!lead) return errorJson(404, "NOT_FOUND", "Không tìm thấy lead."); const body = await readJson<{ content?: string }>(context.request); if (!body?.content?.trim() || body.content.length > 4000) return errorJson(422, "INVALID_NOTE", "Ghi chú không hợp lệ."); return json({ ok: true, note: await crmRepository.addInternalNote({ leadId: lead.id }, body.content.trim(), actor) }, 201); };

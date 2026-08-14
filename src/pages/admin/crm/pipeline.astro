@@ -1,0 +1,39 @@
+---
+import CrmShell from "@/components/CrmShell.astro";
+import CrmStatus from "@/components/CrmStatus.astro";
+import { leadStatusLabels, type LeadStatus } from "@/data/crm";
+import { crmViewLeads } from "@/server/crm-view";
+const crmLeads = await crmViewLeads(Astro.locals.auth!);
+const statuses = Object.keys(leadStatusLabels) as LeadStatus[];
+---
+<CrmShell title="Pipeline" description="Theo dõi tiến độ lead theo trạng thái và chuyển về table khi cần quét dữ liệu." active="pipeline" section="CRM · Pipeline">
+  <header class="crm-page-header">
+    <div><p>CRM</p><h1>Pipeline</h1><span>Kanban để theo dõi luồng; Table View để quét và đối chiếu nhiều trường.</span></div>
+    <div class="crm-view-switch" role="group" aria-label="Kiểu hiển thị"><button type="button" data-pipeline-view="kanban" aria-pressed="true"><i class="ph ph-kanban" aria-hidden="true"></i>Kanban</button><button type="button" data-pipeline-view="table" aria-pressed="false"><i class="ph ph-table" aria-hidden="true"></i>Table</button></div>
+  </header>
+  <div class="pipeline-summary" aria-label="Tổng quan pipeline">
+    {statuses.map((status) => <a href={`#${status}`}><span>{leadStatusLabels[status]}</span><strong>{crmLeads.filter((lead) => lead.status === status).length}</strong></a>)}
+  </div>
+  <div class="crm-kanban" data-pipeline-kanban>
+    {statuses.map((status) => (
+      <section id={status} class="kanban-column" data-kanban-status={status}>
+        <header><div><span class={`pipeline-dot pipeline-dot-${status}`}></span><h2>{leadStatusLabels[status]}</h2></div><strong>{crmLeads.filter((lead) => lead.status === status).length}</strong></header>
+        <div class="kanban-list">
+          {crmLeads.filter((lead) => lead.status === status).map((lead) => (
+            <article>
+              <div class="kanban-card-top"><a href={`/admin/crm/leads/${lead.id}`}>{lead.name}</a><button type="button" data-demo-action="pipeline" aria-label={`Tác vụ ${lead.name}`}><i class="ph ph-dots-three" aria-hidden="true"></i></button></div>
+              <p>{lead.organization}</p><strong>{lead.productInterest}</strong>
+              <footer><span><i class="ph ph-user" aria-hidden="true"></i>{lead.assignedSales}</span><time class:list={[lead.followUps[0]?.state === "overdue" && "is-overdue"]}><i class="ph ph-calendar" aria-hidden="true"></i>{lead.nextFollowUp}</time></footer>
+            </article>
+          ))}
+          {crmLeads.filter((lead) => lead.status === status).length === 0 && <p class="kanban-empty">Chưa có lead</p>}
+        </div>
+      </section>
+    ))}
+  </div>
+  <div class="crm-table-wrap" data-pipeline-table hidden>
+    <table class="crm-table"><caption class="sr-only">Pipeline dạng bảng</caption><thead><tr><th scope="col">Lead</th><th scope="col">Organization</th><th scope="col">Product Interest</th><th scope="col">Sales</th><th scope="col">Status</th><th scope="col">Next Follow-up</th><th scope="col">Updated</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead><tbody>
+      {crmLeads.map((lead) => <tr><td><a href={`/admin/crm/leads/${lead.id}`}><strong>{lead.name}</strong><small>{lead.id}</small></a></td><td>{lead.organization}</td><td>{lead.productInterest}</td><td>{lead.assignedSales}</td><td><CrmStatus status={lead.status} /></td><td class:list={[lead.followUps[0]?.state === "overdue" && "is-overdue"]}>{lead.nextFollowUp}</td><td>{lead.lastContact}</td><td><a class="crm-row-open" href={`/admin/crm/leads/${lead.id}`} aria-label={`Mở ${lead.name}`}><i class="ph ph-caret-right" aria-hidden="true"></i></a></td></tr>)}
+    </tbody></table>
+  </div>
+</CrmShell>

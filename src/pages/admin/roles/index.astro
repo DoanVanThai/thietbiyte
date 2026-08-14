@@ -1,0 +1,38 @@
+---
+import AdminLayout from "@/layouts/AdminAccessLayout.astro";
+import { getRolesForAdmin } from "@/server/auth/admin-data";
+import { can } from "@/server/auth/permissions";
+const adminRoles = await getRolesForAdmin();
+const canManageRoles = can(Astro.locals.auth, "role.manage");
+---
+
+<AdminLayout title="Vai trò | Admin THIÊN LỘC GROUP" description="Quản lý vai trò và phạm vi quyền." activePath="roles">
+  <section class="admin-page" aria-labelledby="roles-title">
+    <header class="admin-page-header">
+      <div><h1 id="roles-title">Vai trò</h1><p>Gom quyền theo trách nhiệm thực tế thay vì chỉ chia User và Admin.</p></div>
+      <div class="admin-page-actions"><span class="admin-demo-label">{adminRoles.length} vai trò</span>{canManageRoles && <button class="button button-primary" type="button" data-create-role><i class="ph ph-plus" aria-hidden="true"></i>Tạo vai trò</button>}</div>
+    </header>
+
+    <div class="admin-notice"><i class="ph ph-shield-warning" aria-hidden="true"></i><div><strong>UI permission không phải security</strong><span>Backend phải kiểm tra quyền trên mọi request. Ẩn nút hoặc khóa checkbox chỉ là phản hồi giao diện.</span></div></div>
+
+    <div class="admin-result-meta"><span><strong>{adminRoles.filter((role) => role.isDefault).length}</strong> vai trò mặc định · <strong>{adminRoles.filter((role) => !role.isDefault).length}</strong> vai trò tùy chỉnh</span><a class="admin-text-action" href="/admin/permissions">Mở ma trận quyền<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
+    <div class="admin-table-wrap">
+      <table class="admin-table admin-roles-table">
+        <caption class="sr-only">Danh sách vai trò và số quyền được gán</caption>
+        <thead><tr><th scope="col">Vai trò</th><th scope="col">Người dùng</th><th scope="col">Quyền</th><th scope="col">Cập nhật</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+        <tbody>
+          {adminRoles.map((role) => (
+            <tr>
+              <td><div class="admin-role-primary"><strong>{role.name}{role.immutable && <i class="ph ph-lock-key" aria-label="Quyền được khóa"></i>}</strong><small>{role.description}</small></div></td>
+              <td><strong class="admin-numeric">{role.userCount}</strong></td>
+              <td><span class="admin-permission-count">{role.permissionIds.length} quyền</span></td>
+              <td><time>{role.updatedAt}</time></td>
+              <td><div class="admin-actions"><a class="admin-text-action" href={`/admin/roles/${role.id}`}>{canManageRoles ? "Chỉnh sửa" : "Xem"}</a>{canManageRoles && <button class="admin-row-icon" type="button" aria-label={`Nhân bản vai trò ${role.name}`} title="Nhân bản" data-admin-toast-trigger="Nhân bản vai trò"><i class="ph ph-copy" aria-hidden="true"></i></button>}{canManageRoles && (role.protected || role.isDefault ? <button class="admin-row-icon" type="button" disabled aria-label={`Vai trò ${role.name} không thể xóa`} title="Vai trò mặc định hoặc được bảo vệ không thể xóa"><i class="ph ph-lock" aria-hidden="true"></i></button> : <button class="admin-row-icon admin-row-icon-danger" type="button" aria-label={`Xóa vai trò ${role.name}`} title="Xóa vai trò" data-confirm-action="delete-role" data-confirm-name={role.name} data-role-id={role.id}><i class="ph ph-trash" aria-hidden="true"></i></button>)}</div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {canManageRoles && <dialog class="admin-confirm-dialog" data-create-role-dialog aria-labelledby="create-role-title"><form data-create-role-form><header><div class="admin-confirm-icon"><i class="ph ph-identification-badge" aria-hidden="true"></i></div><div><h2 id="create-role-title">Tạo vai trò</h2><p>Khởi tạo vai trò rồi gán permission ở màn hình chỉnh sửa.</p></div></header><div class="admin-role-form-fields"><div class="admin-field"><label for="new-role-name">Tên vai trò</label><input id="new-role-name" name="name" required /></div><div class="admin-field"><label for="new-role-description">Mô tả</label><textarea id="new-role-description" name="description"></textarea></div></div><footer><button class="button button-outline" type="button" data-create-role-cancel>Hủy</button><button class="button button-primary" type="submit">Tạo vai trò</button></footer></form></dialog>}
+</AdminLayout>

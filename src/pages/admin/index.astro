@@ -1,0 +1,206 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { productService } from "@/server/services/product-service";
+
+const legacySection = Astro.url.searchParams.get("section");
+if (legacySection === "bao-gia") return Astro.redirect("/admin/crm/quotes");
+if (legacySection === "audit-logs") return Astro.redirect("/admin/audit-logs");
+if (legacySection === "noi-dung") return Astro.redirect(`/admin/noi-dung${Astro.url.searchParams.get("view") === "editor" ? "?new=1" : ""}`);
+if (legacySection === "tai-lieu") return Astro.redirect("/admin/tai-lieu");
+if (legacySection === "media") return Astro.redirect("/admin/media");
+
+const [{ products: catalogProducts }, metrics] = await Promise.all([
+  productService.listAdminPage(1, 20),
+  productService.getAdminMetrics(),
+]);
+const productCount = metrics.products;
+const categoryCount = metrics.categories;
+const brandCount = metrics.brands;
+const adminProducts = catalogProducts.map((product) => ({ id: product.id, label: product.name, meta: `${product.brand} · ${product.model}`, href: `/san-pham/${product.slug}`, image: product.image, keywords: `${product.name} ${product.brand} ${product.model} ${product.category}` }));
+
+const articles = [
+  { title: "7 tiêu chí chọn máy siêu âm cho phòng khám", type: "knowledge", typeLabel: "Kiến thức", category: "Chẩn đoán hình ảnh", author: "Nguyễn Minh Anh", status: "published", statusLabel: "Đã xuất bản", published: "12/08/2026", updated: "13/08/2026, 09:24" },
+  { title: "Thiên Lộc bàn giao hệ thống xét nghiệm tại miền Trung", type: "blog", typeLabel: "Blog", category: "Tin công ty", author: "Trần Hoài Nam", status: "review", statusLabel: "Chờ duyệt", published: "Chưa xuất bản", updated: "13/08/2026, 08:10" },
+  { title: "Quy trình hiệu chuẩn thiết bị xét nghiệm định kỳ", type: "knowledge", typeLabel: "Kiến thức", category: "Xét nghiệm", author: "Lê Khánh Vy", status: "draft", statusLabel: "Bản nháp", published: "Chưa xuất bản", updated: "12/08/2026, 16:42" },
+  { title: "Chính sách bảo hành và hỗ trợ kỹ thuật", type: "page", typeLabel: "Page", category: "Trang hệ thống", author: "Quản trị viên", status: "published", statusLabel: "Đã xuất bản", published: "02/08/2026", updated: "11/08/2026, 14:05" },
+  { title: "Hướng dẫn chuẩn bị phòng chụp X-quang", type: "knowledge", typeLabel: "Kiến thức", category: "X-quang", author: "Nguyễn Minh Anh", status: "scheduled", statusLabel: "Đã lên lịch", published: "16/08/2026", updated: "10/08/2026, 11:30" },
+  { title: "Thông báo lịch nghỉ lễ Quốc khánh", type: "blog", typeLabel: "Blog", category: "Thông báo", author: "Trần Hoài Nam", status: "draft", statusLabel: "Bản nháp", published: "Chưa xuất bản", updated: "09/08/2026, 15:18" },
+];
+
+const documents = [
+  { name: "Catalogue SonoScape P60 2026", ext: "PDF", type: "Catalogue", product: "SonoScape P60", access: "Công khai", accessClass: "public", size: "8,4 MB", updated: "13/08/2026" },
+  { name: "Hướng dẫn vận hành BS-240E", ext: "PDF", type: "Hướng dẫn", product: "Mindray BS-240E", access: "Khách hàng", accessClass: "customer", size: "12,1 MB", updated: "12/08/2026" },
+  { name: "Checklist bảo trì DR-03", ext: "XLSX", type: "Biểu mẫu", product: "DR-03", access: "Nội bộ", accessClass: "internal", size: "326 KB", updated: "09/08/2026" },
+  { name: "Chứng nhận CE - VET-US-09", ext: "PDF", type: "Chứng nhận", product: "VET-US-09", access: "Công khai", accessClass: "public", size: "2,6 MB", updated: "08/08/2026" },
+  { name: "Tài liệu đào tạo Endo-06", ext: "PPTX", type: "Đào tạo", product: "END-06", access: "Đối tác", accessClass: "partner", size: "28,7 MB", updated: "06/08/2026" },
+];
+
+const media = [
+  { src: "/images/hero-ultrasound-lab.webp", name: "hero-ultrasound-lab.webp", type: "Ảnh", meta: "1600 × 1067 · 248 KB", alt: "Bác sĩ vận hành hệ thống siêu âm tại phòng khám", usage: "3 vị trí" },
+  { src: "/images/category-laboratory.webp", name: "category-laboratory.webp", type: "Ảnh", meta: "1200 × 800 · 184 KB", alt: "Kỹ thuật viên thao tác trong phòng xét nghiệm", usage: "2 vị trí" },
+  { src: "/images/category-xray.webp", name: "category-xray.webp", type: "Ảnh", meta: "1200 × 800 · 172 KB", alt: "Hệ thống X-quang kỹ thuật số", usage: "4 vị trí" },
+  { src: "/images/category-endoscopy-surgery.webp", name: "endoscopy-surgery.webp", type: "Ảnh", meta: "1200 × 800 · 196 KB", alt: "Hệ thống nội soi và thiết bị phẫu thuật", usage: "1 vị trí" },
+  { src: "/images/veterinary-diagnostic-room.webp", name: "veterinary-diagnostic-room.webp", type: "Ảnh", meta: "1400 × 933 · 212 KB", alt: "Phòng chẩn đoán hình ảnh thú y", usage: "2 vị trí" },
+  { src: "/images/project-handover-placeholder.webp", name: "project-handover-08.webp", type: "Ảnh", meta: "1400 × 933 · 226 KB", alt: "Kỹ thuật viên bàn giao thiết bị sau lắp đặt", usage: "Chưa sử dụng" },
+];
+
+---
+
+<AdminLayout title="Dashboard | Thiên Lộc Group Admin" description="Trang tổng quan quản trị Thiên Lộc Group.">
+        <script id="admin-product-index" type="application/json" is:inline set:html={JSON.stringify(adminProducts)} />
+        <section class="admin-view admin-dashboard" data-admin-section="tong-quan" data-section-title="Dashboard" data-admin-dashboard>
+          <header class="admin-page-heading"><div><h1>Dashboard</h1><p>Tổng quan vận hành và các tác vụ cần xử lý.</p></div><time datetime="2026-08-13">Thứ Năm, 13 tháng 8, 2026</time></header>
+          <section class="admin-kpis" aria-label="Chỉ số tổng quan">
+            <article><div><span>Yêu cầu mới</span><i class="ph ph-file-text" aria-hidden="true"></i></div><strong data-kpi-new-quotes>0</strong><a href="/admin/crm/quotes">Xem yêu cầu<i class="ph ph-arrow-right" aria-hidden="true"></i></a></article>
+            <article><div><span>Đang xử lý</span><i class="ph ph-clock" aria-hidden="true"></i></div><strong data-kpi-processing>0</strong><small data-kpi-processing-note>Chưa có yêu cầu đang xử lý</small></article>
+            <article><div><span>Sản phẩm</span><i class="ph ph-package" aria-hidden="true"></i></div><strong>{productCount}</strong><small>{categoryCount} danh mục · {brandCount} thương hiệu</small></article>
+            <article><div><span>Khách hàng</span><i class="ph ph-users" aria-hidden="true"></i></div><strong data-kpi-customers>0</strong><small data-kpi-customers-note>Chưa có dữ liệu khách hàng</small></article>
+          </section>
+          <section class="admin-quick-actions" aria-labelledby="quick-actions-title"><div><h2 id="quick-actions-title">Thao tác nhanh</h2><p>Các tác vụ thường dùng trong vận hành.</p></div><nav aria-label="Thao tác nhanh"><a href="/admin/san-pham?view=editor&id=new"><i class="ph ph-plus" aria-hidden="true"></i>Thêm sản phẩm</a><a href="/admin/crm/quotes"><i class="ph ph-file-magnifying-glass" aria-hidden="true"></i>Xem yêu cầu mới</a><a href="/admin/crm/customers?action=new"><i class="ph ph-user-plus" aria-hidden="true"></i>Thêm khách hàng</a><a href="/admin/noi-dung?new=1"><i class="ph ph-note-pencil" aria-hidden="true"></i>Tạo bài viết</a></nav></section>
+          <div class="admin-dashboard-grid">
+            <section class="admin-panel admin-quote-panel" aria-labelledby="admin-quotes-title"><header class="admin-panel-heading"><div><h2 id="admin-quotes-title">Yêu cầu báo giá gần đây</h2><p>Dữ liệu từ các yêu cầu đã gửi trên website.</p></div><a href="/admin/crm/quotes">Xem tất cả</a></header><div class="admin-table-wrap" data-admin-quotes-table hidden><table class="admin-table"><caption class="sr-only">Yêu cầu báo giá gần đây</caption><thead><tr><th scope="col">Mã</th><th scope="col">Khách hàng</th><th scope="col">Sản phẩm</th><th scope="col">Ngày tạo</th><th scope="col">Trạng thái</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead><tbody data-admin-quotes-body></tbody></table></div><div class="admin-panel-empty" data-admin-quotes-empty><i class="ph ph-file-dashed" aria-hidden="true"></i><div><strong>Chưa có yêu cầu báo giá</strong><span>Các yêu cầu được gửi từ website sẽ xuất hiện tại đây.</span></div></div></section>
+            <section class="admin-panel admin-activity-panel" aria-labelledby="admin-activity-title"><header class="admin-panel-heading"><div><h2 id="admin-activity-title">Hoạt động gần đây</h2><p>Các thay đổi có dữ liệu xác thực.</p></div></header><ol class="admin-activity-list" data-admin-activity hidden></ol><div class="admin-panel-empty" data-admin-activity-empty><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><div><strong>Chưa có hoạt động</strong><span>Quote, sản phẩm, khách hàng và quyền hạn sẽ được ghi nhận khi có dữ liệu.</span></div></div></section>
+            <section class="admin-panel admin-chart-panel" data-quotes-chart-panel hidden aria-labelledby="quotes-chart-title"><header class="admin-panel-heading"><div><h2 id="quotes-chart-title">Yêu cầu theo tháng</h2><p>Số yêu cầu được tạo từ dữ liệu hiện có.</p></div></header><div class="admin-bar-chart" data-quotes-chart role="img" aria-label="Biểu đồ số yêu cầu báo giá theo tháng"></div></section>
+            <section class="admin-panel admin-interest-panel" data-interest-panel hidden aria-labelledby="interest-title"><header class="admin-panel-heading"><div><h2 id="interest-title">Sản phẩm được quan tâm</h2><p>Xếp theo số lần xuất hiện trong yêu cầu báo giá.</p></div></header><ol class="admin-interest-list" data-interest-list></ol></section>
+            <section class="admin-data-note" data-dashboard-no-charts><i class="ph ph-chart-bar" aria-hidden="true"></i><div><strong>Chưa đủ dữ liệu để hiển thị biểu đồ</strong><span>Biểu đồ theo tháng và mức độ quan tâm sản phẩm sẽ xuất hiện khi có yêu cầu báo giá thực tế.</span></div></section>
+          </div>
+        </section>
+
+        <section class="admin-view" data-admin-section="noi-dung" data-section-title="Nội dung" hidden>
+          <div data-content-list>
+            <header class="admin-page-header">
+              <div><h2>Nội dung</h2><p>Soạn, duyệt và xuất bản nội dung cho website.</p></div>
+              <button class="admin-button primary" type="button" data-open-editor><i class="ph ph-plus"></i>Viết bài mới</button>
+            </header>
+            <div class="content-tabs" role="group" aria-label="Lọc theo loại nội dung">
+              <button type="button" aria-pressed="true" data-content-tab="all">Tất cả <span>{articles.length}</span></button>
+              <button type="button" aria-pressed="false" data-content-tab="blog">Blog <span>{articles.filter((article) => article.type === "blog").length}</span></button>
+              <button type="button" aria-pressed="false" data-content-tab="knowledge">Kiến thức <span>{articles.filter((article) => article.type === "knowledge").length}</span></button>
+              <button type="button" aria-pressed="false" data-content-tab="page">Trang <span>{articles.filter((article) => article.type === "page").length}</span></button>
+            </div>
+            <div class="admin-toolbar">
+              <label class="toolbar-search"><span class="sr-only">Tìm nội dung</span><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Tìm theo tiêu đề..." data-article-search /></label>
+              <label><span>Danh mục</span><select data-article-category><option value="all">Tất cả danh mục</option><option>Chẩn đoán hình ảnh</option><option>Xét nghiệm</option><option>Tin công ty</option><option>Trang hệ thống</option></select></label>
+              <label><span>Trạng thái</span><select data-article-status><option value="all">Tất cả trạng thái</option><option value="published">Đã xuất bản</option><option value="review">Chờ duyệt</option><option value="draft">Bản nháp</option><option value="scheduled">Đã lên lịch</option></select></label>
+              <button class="icon-button" type="button" aria-label="Làm mới bộ lọc" data-reset-articles><i class="ph ph-arrow-counter-clockwise"></i></button>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table article-table">
+                <caption class="sr-only">Danh sách nội dung</caption>
+                <thead><tr><th scope="col"><input type="checkbox" aria-label="Chọn tất cả nội dung" /></th><th scope="col">Tiêu đề</th><th scope="col">Danh mục</th><th scope="col">Tác giả</th><th scope="col">Trạng thái</th><th scope="col">Xuất bản</th><th scope="col">Cập nhật</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+                <tbody>
+                  {articles.map((article) => (
+                    <tr data-article-row data-type={article.type} data-status={article.status} data-category={article.category} data-title={article.title.toLowerCase()}>
+                      <td><input type="checkbox" aria-label={`Chọn ${article.title}`} /></td>
+                      <td><button class="table-title" type="button" data-open-editor>{article.title}</button><span class="content-kind">{article.typeLabel}</span></td>
+                      <td>{article.category}</td><td>{article.author}</td>
+                      <td><span class={`status-badge ${article.status}`}><i></i>{article.statusLabel}</span></td>
+                      <td class="numeric">{article.published}</td><td class="numeric">{article.updated}</td>
+                      <td><details class="row-menu"><summary aria-label={`Thao tác với ${article.title}`}><i class="ph ph-dots-three"></i></summary><div><button type="button" data-open-editor><i class="ph ph-pencil-simple"></i>Chỉnh sửa</button><button type="button"><i class="ph ph-copy"></i>Nhân bản</button><button type="button"><i class="ph ph-eye"></i>Xem trước</button></div></details></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div class="table-empty" data-article-empty hidden><i class="ph ph-magnifying-glass"></i><strong>Không tìm thấy nội dung</strong><span>Thử thay đổi từ khóa hoặc bộ lọc.</span></div>
+            </div>
+            <footer class="table-footer"><span>Hiển thị <strong data-visible-article-count>{articles.length}</strong> trong {articles.length} nội dung</span></footer>
+          </div>
+
+          <div class="editor-view" data-article-editor hidden>
+            <header class="editor-topline">
+              <button class="text-button" type="button" data-close-editor><i class="ph ph-arrow-left"></i>Danh sách nội dung</button>
+              <span class="save-state" role="status" data-save-state><i class="ph ph-check-circle"></i>Đã lưu lúc 10:42</span>
+              <div><button class="admin-button secondary" type="button" data-preview-article><i class="ph ph-eye"></i>Xem trước</button><button class="admin-button primary" type="button" data-save-article><i class="ph ph-floppy-disk"></i>Lưu thay đổi</button></div>
+            </header>
+            <form class="editor-layout" data-editor-form>
+              <div class="editor-main-column">
+                <div class="editor-title-fields">
+                  <label for="article-title">Tiêu đề</label>
+                  <textarea id="article-title" rows="2" data-article-title>7 tiêu chí chọn máy siêu âm cho phòng khám</textarea>
+                  <div class="slug-row"><span>thienlocgroup.com/kien-thuc/</span><label class="sr-only" for="article-slug">Đường dẫn</label><input id="article-slug" value="7-tieu-chi-chon-may-sieu-am" data-article-slug /><button type="button" aria-label="Sao chép đường dẫn"><i class="ph ph-copy"></i></button></div>
+                </div>
+                <section class="editor-field-section">
+                  <div class="field-heading"><div><h2 id="article-excerpt-label">Tóm tắt</h2><p id="article-excerpt-description">Dùng ở trang danh sách và mô tả chia sẻ.</p></div><span><b data-excerpt-count>147</b>/180</span></div>
+                  <textarea rows="3" maxlength="180" data-article-excerpt aria-labelledby="article-excerpt-label" aria-describedby="article-excerpt-description">Những thông số và yếu tố vận hành cần đánh giá để chọn hệ thống siêu âm phù hợp quy mô, chuyên khoa và ngân sách của phòng khám.</textarea>
+                </section>
+                <section class="editor-field-section">
+                  <div class="field-heading"><div><h2>Ảnh bìa</h2><p>Khuyến nghị 1600 × 900 px, WEBP hoặc JPG.</p></div><button class="text-button" type="button" data-choose-cover><i class="ph ph-images"></i>Chọn từ thư viện</button></div>
+                  <div class="cover-picker"><img src="/images/hero-ultrasound-lab.webp" alt="Bác sĩ vận hành hệ thống siêu âm tại phòng khám" width="1600" height="1067" loading="lazy" /><div><strong>hero-ultrasound-lab.webp</strong><span>1600 × 1067 · 248 KB</span><label for="cover-alt">Mô tả thay thế</label><input id="cover-alt" value="Bác sĩ vận hành hệ thống siêu âm tại phòng khám" /></div><button type="button" aria-label="Xóa ảnh bìa"><i class="ph ph-trash"></i></button></div>
+                </section>
+                <section class="editor-field-section content-editor-section">
+                  <div class="field-heading"><div><h2>Nội dung</h2><p>Thêm khối theo cấu trúc, không cần định dạng thủ công.</p></div><span data-word-count>126 từ · 1 phút đọc</span></div>
+                  <div class="block-toolbar" aria-label="Thêm khối nội dung">
+                    <button type="button" data-add-block="heading"><i class="ph ph-text-h-two"></i><span>Tiêu đề</span></button><button type="button" data-add-block="paragraph"><i class="ph ph-text-align-left"></i><span>Đoạn văn</span></button><button type="button" data-add-block="list"><i class="ph ph-list-bullets"></i><span>Danh sách</span></button><button type="button" data-add-block="image"><i class="ph ph-image"></i><span>Ảnh</span></button><button type="button" data-add-block="quote"><i class="ph ph-quotes"></i><span>Trích dẫn</span></button><button type="button" data-add-block="table"><i class="ph ph-table"></i><span>Bảng</span></button><button type="button" data-add-block="link"><i class="ph ph-link"></i><span>Liên kết</span></button><button type="button" data-add-block="callout"><i class="ph ph-info"></i><span>Ghi chú</span></button><button type="button" data-add-block="product"><i class="ph ph-package"></i><span>Sản phẩm</span></button>
+                  </div>
+                  <div class="block-canvas" data-block-canvas>
+                    <article class="editor-block" data-block draggable="true"><button type="button" class="drag-handle" aria-label="Sắp xếp khối; dùng Alt và mũi tên lên hoặc xuống" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><i class="ph ph-dots-six-vertical" aria-hidden="true"></i></button><div><span class="block-label">Heading 2</span><h2 contenteditable="true">Bắt đầu từ nhu cầu sử dụng thực tế</h2></div><button class="block-action" type="button" aria-label="Tùy chọn khối"><i class="ph ph-dots-three" aria-hidden="true"></i></button></article>
+                    <article class="editor-block" data-block draggable="true"><button type="button" class="drag-handle" aria-label="Sắp xếp khối; dùng Alt và mũi tên lên hoặc xuống" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><i class="ph ph-dots-six-vertical" aria-hidden="true"></i></button><div><span class="block-label">Đoạn văn</span><p contenteditable="true">Một hệ thống phù hợp không chỉ dựa trên chất lượng hình ảnh. Hãy xác định nhóm ca khám chính, tần suất sử dụng, không gian đặt máy và năng lực vận hành của đội ngũ.</p></div><button class="block-action" type="button" aria-label="Tùy chọn khối"><i class="ph ph-dots-three" aria-hidden="true"></i></button></article>
+                    <article class="editor-block product-embed" data-block draggable="true"><button type="button" class="drag-handle" aria-label="Sắp xếp khối; dùng Alt và mũi tên lên hoặc xuống" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><i class="ph ph-dots-six-vertical" aria-hidden="true"></i></button><img src="/images/hero-ultrasound-lab.webp" alt="" width="1600" height="1067" loading="lazy" /><div><span class="block-label">Sản phẩm nhúng</span><strong>Hệ thống siêu âm màu SonoPort 8</strong><small>Model US-02 · Chẩn đoán hình ảnh</small></div><button class="block-action" type="button" aria-label="Thay sản phẩm"><i class="ph ph-pencil-simple" aria-hidden="true"></i></button></article>
+                    <article class="editor-block callout-block" data-block draggable="true"><button type="button" class="drag-handle" aria-label="Sắp xếp khối; dùng Alt và mũi tên lên hoặc xuống" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><i class="ph ph-dots-six-vertical" aria-hidden="true"></i></button><i class="ph ph-info" aria-hidden="true"></i><div><span class="block-label">Ghi chú</span><p contenteditable="true">Thông số kỹ thuật cần được đối chiếu với catalogue phiên bản hiện hành trước khi xuất bản.</p></div><button class="block-action" type="button" aria-label="Tùy chọn khối"><i class="ph ph-dots-three" aria-hidden="true"></i></button></article>
+                  </div>
+                </section>
+                <details class="seo-panel" open>
+                  <summary><span><strong>SEO & chia sẻ</strong><small>Kiểm soát cách bài viết xuất hiện trên kết quả tìm kiếm.</small></span><i class="ph ph-caret-down"></i></summary>
+                  <div class="seo-content"><div class="form-grid"><label>SEO title<input value="7 tiêu chí chọn máy siêu âm cho phòng khám" data-seo-title /><small><b data-seo-title-count>51</b>/60 ký tự</small></label><label class="full">Meta description<textarea rows="3" data-seo-description>Những tiêu chí quan trọng giúp phòng khám lựa chọn hệ thống siêu âm phù hợp nhu cầu chuyên môn, vận hành và ngân sách.</textarea><small><b data-seo-description-count>122</b>/160 ký tự</small></label></div><div class="search-preview"><span>Xem trước kết quả tìm kiếm</span><div><small>https://thienlocgroup.com › kien-thuc › 7-tieu-chi...</small><strong data-seo-preview-title>7 tiêu chí chọn máy siêu âm cho phòng khám</strong><p data-seo-preview-description>Những tiêu chí quan trọng giúp phòng khám lựa chọn hệ thống siêu âm phù hợp nhu cầu chuyên môn, vận hành và ngân sách.</p></div><em>Bản xem trước chỉ mô phỏng cách hiển thị, không phản ánh thứ hạng tìm kiếm.</em></div></div>
+                </details>
+              </div>
+              <aside class="editor-side-column">
+                <section><h2>Xuất bản</h2><label>Trạng thái<select><option>Bản nháp</option><option selected>Đã xuất bản</option><option>Chờ duyệt</option><option>Đã lên lịch</option></select></label><label>Ngày xuất bản<input type="datetime-local" value="2026-08-12T09:00" /></label><label>Tác giả<select><option selected>Nguyễn Minh Anh</option><option>Trần Hoài Nam</option><option>Lê Khánh Vy</option></select></label><button class="admin-button secondary full" type="button"><i class="ph ph-clock-counter-clockwise"></i>Lịch sử phiên bản</button></section>
+                <section><h2>Phân loại</h2><label>Loại nội dung<select><option>Blog</option><option selected>Kiến thức</option><option>Page</option></select></label><label>Danh mục<select><option selected>Chẩn đoán hình ảnh</option><option>Xét nghiệm</option><option>Phẫu thuật</option></select></label><label>Tags<div class="tag-input"><span>siêu âm <button type="button" aria-label="Xóa tag siêu âm">×</button></span><span>phòng khám <button type="button" aria-label="Xóa tag phòng khám">×</button></span><input aria-label="Thêm tag" placeholder="Thêm tag..." /></div></label></section>
+                <section><h2>Liên kết nội dung</h2><label>Sản phẩm liên quan<div class="relation-input"><span>SonoPort 8 <button type="button" aria-label="Xóa SonoPort 8">×</button></span><button type="button"><i class="ph ph-plus"></i>Chọn sản phẩm</button></div></label><label>Chuyên khoa liên quan<div class="relation-input"><span>Chẩn đoán hình ảnh <button type="button" aria-label="Xóa chuyên khoa">×</button></span><button type="button"><i class="ph ph-plus"></i>Chọn chuyên khoa</button></div></label></section>
+              </aside>
+            </form>
+          </div>
+        </section>
+
+        <section class="admin-view" data-admin-section="du-an" data-section-title="Dự án" hidden>
+          <div data-project-list>
+            <header class="admin-page-header"><div><h2>Dự án</h2><p>Quản lý hồ sơ lắp đặt và bằng chứng triển khai đã được phép công khai.</p></div><button class="admin-button primary" type="button" data-open-project><i class="ph ph-plus"></i>Thêm dự án</button></header>
+            <div class="privacy-notice"><i class="ph ph-shield-check"></i><div><strong>Quyền riêng tư là mặc định</strong><span>Dự án mới luôn ở chế độ nội bộ. Chỉ công khai dữ liệu khách hàng khi đã có xác nhận phù hợp.</span></div></div>
+            <div class="admin-toolbar project-toolbar"><label class="toolbar-search"><span class="sr-only">Tìm dự án</span><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Tìm tên dự án, địa điểm..." /></label><label><span>Hiển thị</span><select><option>Tất cả</option><option>Công khai</option><option>Nội bộ</option></select></label></div>
+            <div class="admin-table-wrap"><table class="admin-table project-table"><caption class="sr-only">Danh sách dự án</caption><thead><tr><th scope="col">Dự án</th><th scope="col">Khu vực</th><th scope="col">Sản phẩm</th><th scope="col">Ngày lắp đặt</th><th scope="col">Hiển thị</th><th scope="col">Cập nhật</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead><tbody>
+              <tr><td><button class="table-title" type="button" data-open-project>Triển khai hệ thống siêu âm chuyên khoa</button><small>Mã DA-2026-018</small></td><td>Đà Nẵng</td><td>SonoPort 8 + 2 phụ kiện</td><td>08/08/2026</td><td><span class="status-badge published"><i></i>Công khai</span></td><td>12/08/2026</td><td><button class="icon-button subtle" type="button" data-open-project aria-label="Sửa dự án"><i class="ph ph-pencil-simple"></i></button></td></tr>
+              <tr><td><button class="table-title" type="button" data-open-project>Lắp đặt máy phân tích sinh hóa</button><small>Mã DA-2026-015</small></td><td>TP. Hồ Chí Minh</td><td>Mindray BS-240E</td><td>29/07/2026</td><td><span class="status-badge draft"><i></i>Nội bộ</span></td><td>09/08/2026</td><td><button class="icon-button subtle" type="button" data-open-project aria-label="Sửa dự án"><i class="ph ph-pencil-simple"></i></button></td></tr>
+              <tr><td><button class="table-title" type="button" data-open-project>Hoàn thiện phòng chẩn đoán hình ảnh</button><small>Mã DA-2026-011</small></td><td>Hà Nội</td><td>DR-03 + VET-US-09</td><td>18/07/2026</td><td><span class="status-badge review"><i></i>Chờ duyệt</span></td><td>05/08/2026</td><td><button class="icon-button subtle" type="button" data-open-project aria-label="Sửa dự án"><i class="ph ph-pencil-simple"></i></button></td></tr>
+            </tbody></table></div>
+          </div>
+          <div class="project-editor" data-project-editor hidden>
+            <header class="editor-topline"><button class="text-button" type="button" data-close-project><i class="ph ph-arrow-left"></i>Danh sách dự án</button><span class="save-state"><i class="ph ph-check-circle"></i>Đã lưu bản nháp</span><div><button class="admin-button secondary" type="button"><i class="ph ph-eye"></i>Xem trước</button><button class="admin-button primary" type="button" data-save-project><i class="ph ph-floppy-disk"></i>Lưu dự án</button></div></header>
+            <form class="project-form">
+              <div class="project-form-main">
+                <section class="form-section"><div class="section-title"><div><h2>Thông tin dự án</h2><p>Dùng thông tin đã được xác nhận cho hồ sơ lắp đặt.</p></div></div><div class="form-grid"><label class="full">Tên dự án<input value="Triển khai hệ thống siêu âm chuyên khoa" /></label><label>Khách hàng<input value="" placeholder="Chọn khách hàng đã xác thực" data-customer-name /></label><label>Địa điểm<input value="Đà Nẵng" /></label><label>Sản phẩm<div class="relation-input"><span>SonoPort 8 <button type="button">×</button></span><button type="button"><i class="ph ph-plus"></i>Chọn sản phẩm</button></div></label><label>Ngày lắp đặt<input type="date" value="2026-08-08" /></label><label class="full">Mô tả<textarea rows="5">Đội ngũ kỹ thuật hoàn tất lắp đặt, hiệu chuẩn và hướng dẫn vận hành hệ thống siêu âm cho khoa chẩn đoán hình ảnh.</textarea></label><label class="full">Đội ngũ thực hiện<div class="people-picker"><span><b>HN</b>Hoàng Nam <button type="button">×</button></span><span><b>LT</b>Linh Trần <button type="button">×</button></span><button type="button"><i class="ph ph-plus"></i>Thêm thành viên</button></div></label></div></section>
+                <section class="form-section"><div class="section-title"><div><h2>Thư viện ảnh</h2><p>Kéo thả hoặc dùng phím mũi tên để sắp xếp. Chọn một ảnh bìa.</p></div><label class="admin-button secondary upload-button"><input type="file" accept="image/*" multiple data-gallery-upload /><i class="ph ph-upload-simple"></i>Tải ảnh lên</label></div><div class="project-gallery" data-project-gallery>
+                  {media.slice(0, 4).map((item, index) => <article class:list={["gallery-item", index === 0 && "is-cover"]} data-gallery-item><div><img src={item.src} alt={item.alt} width="1200" height="800" loading="lazy" /><span class="cover-label">{index === 0 ? "Ảnh bìa" : `Ảnh ${index + 1}`}</span><div class="gallery-actions"><button type="button" data-gallery-left aria-label="Chuyển ảnh sang trái"><i class="ph ph-arrow-left"></i></button><button type="button" data-gallery-right aria-label="Chuyển ảnh sang phải"><i class="ph ph-arrow-right"></i></button><button type="button" data-set-cover>Đặt làm bìa</button></div></div><label>Chú thích<input value={index === 0 ? "Nghiệm thu hệ thống sau lắp đặt" : ""} placeholder="Thêm chú thích" /></label><label>Alt<input value={item.alt} /></label></article>)}
+                </div></section>
+                <details class="seo-panel"><summary><span><strong>SEO</strong><small>Tiêu đề và mô tả cho trang dự án công khai.</small></span><i class="ph ph-caret-down"></i></summary><div class="seo-content"><div class="form-grid"><label class="full">SEO title<input value="Dự án lắp đặt hệ thống siêu âm tại Đà Nẵng" /></label><label class="full">Meta description<textarea rows="3">Hồ sơ triển khai, lắp đặt và đào tạo vận hành hệ thống siêu âm chuyên khoa.</textarea></label></div></div></details>
+              </div>
+              <aside class="project-publish-panel"><h2>Quyền hiển thị</h2><label class="visibility-option"><input type="radio" name="visibility" value="private" checked data-project-private /><span><strong>Nội bộ</strong><small>Chỉ người có quyền trong Admin.</small></span></label><label class="visibility-option"><input type="radio" name="visibility" value="public" data-project-public /><span><strong>Công khai</strong><small>Hiển thị trên website sau khi xuất bản.</small></span></label><div class="public-confirmation" data-public-confirmation hidden><i class="ph ph-warning"></i><strong>Kiểm tra dữ liệu khách hàng</strong><p>Tên khách hàng, địa điểm chi tiết và hình ảnh nhận diện có thể là dữ liệu nhạy cảm.</p><label><input type="checkbox" data-public-approved /> Tôi xác nhận đã có quyền công khai các dữ liệu này.</label></div><hr /><label>Trạng thái<select><option>Bản nháp</option><option>Chờ duyệt</option><option>Đã xuất bản</option></select></label><small class="panel-help">Chuyển sang “Công khai” không tự động xuất bản dự án.</small></aside>
+            </form>
+          </div>
+        </section>
+
+        <section class="admin-view" data-admin-section="tai-lieu" data-section-title="Tài liệu" hidden>
+          <header class="admin-page-header"><div><h2>Thư viện tài liệu</h2><p>Một nguồn tài liệu dùng lại cho sản phẩm, bài viết và cổng khách hàng.</p></div><label class="admin-button primary upload-button"><input type="file" multiple data-document-upload /><i class="ph ph-upload-simple"></i>Tải tài liệu lên</label></header>
+          <div class="admin-toolbar document-toolbar"><label class="toolbar-search"><span class="sr-only">Tìm tài liệu</span><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Tìm tên tài liệu..." data-document-search /></label><label><span>Loại</span><select data-document-type><option value="all">Tất cả</option><option>Catalogue</option><option>Hướng dẫn</option><option>Biểu mẫu</option><option>Chứng nhận</option><option>Đào tạo</option></select></label><label><span>Sản phẩm</span><select><option>Tất cả sản phẩm</option><option>SonoPort 8</option><option>Mindray BS-240E</option><option>DR-03</option></select></label><label><span>Quyền truy cập</span><select data-document-access><option value="all">Tất cả</option><option>Công khai</option><option>Khách hàng</option><option>Đối tác</option><option>Nội bộ</option></select></label></div>
+          <div class="admin-table-wrap"><table class="admin-table document-table"><caption class="sr-only">Danh sách tài liệu</caption><thead><tr><th scope="col"><input type="checkbox" aria-label="Chọn tất cả tài liệu" /></th><th scope="col">Tài liệu</th><th scope="col">Loại</th><th scope="col">Sản phẩm</th><th scope="col">Quyền truy cập</th><th scope="col">Dung lượng</th><th scope="col">Cập nhật</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead><tbody>
+            {documents.map((doc) => <tr data-document-row data-name={doc.name.toLowerCase()} data-type={doc.type} data-access={doc.access}><td><input type="checkbox" aria-label={`Chọn ${doc.name}`} /></td><td><span class={`file-icon ${doc.ext.toLowerCase()}`}>{doc.ext}</span><div><button class="table-title" type="button">{doc.name}</button><small>Phiên bản 1.2</small></div></td><td>{doc.type}</td><td>{doc.product}</td><td><span class={`access-label ${doc.accessClass}`}><i class={`ph ${doc.accessClass === "public" ? "ph-globe" : doc.accessClass === "internal" ? "ph-lock-key" : "ph-user-check"}`}></i>{doc.access}</span></td><td class="numeric">{doc.size}</td><td class="numeric">{doc.updated}</td><td><details class="row-menu"><summary aria-label={`Thao tác với ${doc.name}`}><i class="ph ph-dots-three"></i></summary><div><button type="button"><i class="ph ph-pencil-simple"></i>Sửa thông tin</button><button type="button"><i class="ph ph-link"></i>Sao chép liên kết</button><button type="button"><i class="ph ph-download-simple"></i>Tải xuống</button></div></details></td></tr>)}
+          </tbody></table><div class="table-empty" data-document-empty hidden><i class="ph ph-files"></i><strong>Không tìm thấy tài liệu</strong><span>Thử thay đổi từ khóa hoặc bộ lọc.</span></div></div>
+          <footer class="table-footer"><span>Hiển thị <strong data-visible-document-count>{documents.length}</strong> trong {documents.length} tài liệu</span></footer>
+        </section>
+
+        <section class="admin-view" data-admin-section="media" data-section-title="Thư viện media" hidden>
+          <header class="admin-page-header"><div><h2>Thư viện media</h2><p>Tải lên một lần, bổ sung alt và dùng lại trên toàn bộ nội dung.</p></div><label class="admin-button primary upload-button"><input type="file" accept="image/*,video/*" multiple data-media-upload /><i class="ph ph-upload-simple"></i>Tải media lên</label></header>
+          <div class="admin-toolbar media-toolbar"><label class="toolbar-search"><span class="sr-only">Tìm media</span><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Tìm theo tên file hoặc alt..." data-media-search /></label><label><span>Loại</span><select data-media-type><option value="all">Tất cả loại</option><option>Ảnh</option><option>Video</option><option>Tệp khác</option></select></label><div class="view-toggle" role="group" aria-label="Kiểu hiển thị"><button type="button" aria-pressed="true" data-media-view="grid" aria-label="Dạng lưới"><i class="ph ph-squares-four"></i></button><button type="button" aria-pressed="false" data-media-view="list" aria-label="Dạng danh sách"><i class="ph ph-list"></i></button></div></div>
+          <div class="media-grid" data-media-library data-view="grid">
+            {media.map((item) => <article class="media-item" data-media-item data-name={`${item.name} ${item.alt}`.toLowerCase()} data-type={item.type}><button class="media-thumb" type="button" data-open-media><img src={item.src} alt={item.alt} width="1200" height="800" loading="lazy" /><span>{item.type}</span><i class="ph ph-pencil-simple"></i></button><div class="media-meta"><strong title={item.name}>{item.name}</strong><span>{item.meta}</span><dl><div><dt>Alt</dt><dd>{item.alt}</dd></div><div><dt>Sử dụng</dt><dd class:list={[item.usage === "Chưa sử dụng" && "unused"]}>{item.usage}</dd></div></dl></div></article>)}
+          </div>
+          <div class="table-empty" data-media-empty hidden><i class="ph ph-image"></i><strong>Không tìm thấy media</strong><span>Thử từ khóa khác hoặc tải tài nguyên mới.</span></div>
+          <footer class="table-footer"><span>Hiển thị <strong data-visible-media-count>{media.length}</strong> trong {media.length} tài nguyên</span></footer>
+          <dialog class="media-dialog" data-media-dialog aria-labelledby="media-dialog-title"><form method="dialog"><header><div><strong id="media-dialog-title">Chi tiết media</strong><span>hero-ultrasound-lab.webp</span></div><button type="submit" aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><div class="media-dialog-body"><img src="/images/hero-ultrasound-lab.webp" alt="Bác sĩ vận hành hệ thống siêu âm tại phòng khám" width="1600" height="1067" /><div class="media-fields"><label>Tên file<input value="hero-ultrasound-lab.webp" /></label><label>Mô tả thay thế<textarea rows="3">Bác sĩ vận hành hệ thống siêu âm tại phòng khám</textarea></label><label>Chú thích<textarea rows="2">Hệ thống siêu âm trong môi trường vận hành thực tế.</textarea></label><div class="usage-panel"><strong>Đang dùng tại 3 vị trí</strong><span>Trang chủ · Hero</span><span>Kiến thức · 7 tiêu chí chọn máy siêu âm</span><span>Sản phẩm · SonoPort 8</span></div></div></div><footer><button class="admin-button secondary" type="button"><i class="ph ph-copy" aria-hidden="true"></i>Sao chép URL</button><button class="admin-button primary" type="submit" value="confirm"><i class="ph ph-floppy-disk" aria-hidden="true"></i>Lưu thay đổi</button></footer></form></dialog>
+        </section>
+
+  <div class="admin-toast" role="status" aria-live="polite" data-admin-toast hidden><i class="ph ph-check-circle"></i><span>Đã lưu thay đổi.</span></div>
+  <script>
+    import "@/scripts/admin-cms";
+  </script>
+</AdminLayout>

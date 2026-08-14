@@ -1,0 +1,28 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import "@/styles/admin-access.css";
+
+interface Props {
+  title: string;
+  description: string;
+  activePath: "users" | "roles" | "permissions";
+}
+
+const { title, description, activePath } = Astro.props;
+const sectionLabel = activePath === "users" ? "Người dùng" : activePath === "roles" ? "Vai trò" : "Phân quyền";
+---
+
+<AdminLayout title={title} description={description} section={sectionLabel}>
+  <div class="admin-access-root"><slot /></div>
+  <dialog class="admin-confirm-dialog" data-admin-confirm aria-labelledby="admin-confirm-title" aria-describedby="admin-confirm-description">
+    <form method="dialog">
+      <header><div class="admin-confirm-icon"><i class="ph ph-warning" aria-hidden="true"></i></div><div><h2 id="admin-confirm-title" data-confirm-title>Xác nhận thao tác</h2><p id="admin-confirm-description" data-confirm-description></p></div></header>
+      <div class="admin-confirm-impact" data-confirm-impact></div>
+      <footer><button class="button button-outline" type="submit" value="cancel">Hủy</button><button class="button admin-danger-button" type="submit" value="confirm" data-confirm-submit>Xác nhận</button></footer>
+    </form>
+  </dialog>
+  <div class="admin-toast" role="status" aria-live="polite" data-admin-toast hidden></div>
+  <script>
+    import "@/scripts/admin-access";
+  </script>
+</AdminLayout>

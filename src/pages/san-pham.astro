@@ -1,0 +1,12 @@
+---
+import CatalogPage from "@/components/CatalogPage.astro";
+
+const config = {
+  slug: "san-pham",
+  title: "Thiết bị y tế và thú y",
+  description: "Tìm thiết bị theo nhóm, danh mục, chuyên khoa, hãng và ứng dụng thực tế.",
+  kind: "all",
+} as const;
+---
+
+<CatalogPage config={config} />

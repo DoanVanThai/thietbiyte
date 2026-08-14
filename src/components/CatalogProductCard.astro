@@ -1,0 +1,70 @@
+---
+import ResponsiveImage from "@/components/ResponsiveImage.astro";
+import type { CatalogProduct } from "@/data/catalog";
+
+interface Props {
+  product: CatalogProduct & { priceMode?: "SHOW_PRICE" | "CONTACT" | "REQUEST_QUOTE"; priceVnd?: number };
+  headingLevel?: "h2" | "h3";
+}
+
+const { product, headingLevel = "h2" } = Astro.props;
+const Heading = headingLevel;
+const availabilityLabel = product.availability === "unavailable" ? "Tạm ngừng cung cấp" : product.availability === "available" ? "Có thể tư vấn" : "Liên hệ cấu hình";
+const priceLabel = product.priceMode === "SHOW_PRICE" && typeof product.priceVnd === "number" ? `${new Intl.NumberFormat("vi-VN").format(product.priceVnd)} ₫` : "Liên hệ";
+---
+
+<article
+  class:list={["catalog-product", product.availability === "unavailable" && "is-unavailable"]}
+  data-product-id={product.id}
+  data-name={product.name.toLocaleLowerCase("vi")}
+  data-model={product.model.toLocaleLowerCase("vi")}
+  data-brand={product.brandSlug}
+  data-brand-label={product.brand}
+  data-category={product.categorySlug}
+  data-category-label={product.category}
+  data-group={product.group}
+  data-specialties={product.specialtySlugs.join(",")}
+  data-origin={product.origin}
+  data-price-band={product.priceBand}
+  data-status={product.availability}
+  data-warranty={product.warranty}
+  data-applications={product.applicationSlugs.join(",")}
+  data-search={`${product.name} ${product.model} ${product.brand} ${product.category} ${product.specialties.join(" ")} ${product.applications.join(" ")}`.toLocaleLowerCase("vi")}
+  data-featured={product.featured}
+  data-created={product.createdOrder}
+>
+  <div class="catalog-product-media">
+    <ResponsiveImage src={product.image} alt={`Ảnh minh họa ${product.name}`} width={800} height={560} sourceWidth={product.image.includes("hero-ultrasound") ? 1600 : 1400} sizes="(max-width: 640px) calc(50vw - 24px), (max-width: 1024px) calc(50vw - 32px), 320px" style={`object-position:${product.imagePosition}`} />
+    <div class="catalog-product-utilities" aria-label="Thao tác nhanh">
+      <button class="icon-action save-action" type="button" data-favorite-product data-product-id={product.id} aria-pressed="false" aria-label={`Lưu ${product.name}`} title="Lưu sản phẩm">
+        <i class="ph ph-bookmark-simple" aria-hidden="true"></i>
+      </button>
+      <button class="icon-action compare-action" type="button" data-compare-product data-product-id={product.id} aria-pressed="false" aria-label={`So sánh ${product.name}`} title="Thêm vào so sánh">
+        <i class="ph ph-arrows-left-right" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+  <div class="catalog-product-body">
+    <div class="catalog-product-meta">
+      <a href={`/danh-muc/${product.categorySlug}`}>{product.category}</a>
+      <span class:list={["availability", `availability-${product.availability}`]}>{availabilityLabel}</span>
+    </div>
+    <Heading><a href={`/san-pham/${product.slug}`}>{product.name}</a></Heading>
+    <p class="catalog-product-model">{product.brand} <span aria-hidden="true">/</span> {product.model}</p>
+    <ul class="catalog-product-specs">
+      {product.specs.map((spec) => <li>{spec}</li>)}
+    </ul>
+    <div class="catalog-product-footer">
+      <div class="catalog-price">
+        <span>Giá</span>
+        <strong>{product.availability === "unavailable" ? "Nhận tư vấn" : priceLabel}</strong>
+      </div>
+      <div class="catalog-product-actions">
+        <a class="text-link" href={`/san-pham/${product.slug}`}>Chi tiết</a>
+        <a class="button button-sm button-primary" href={`/yeu-cau-bao-gia?product=${encodeURIComponent(product.id)}&source=product-card`}>
+          {product.availability === "unavailable" ? "Nhận tư vấn" : "Báo giá"}
+        </a>
+      </div>
+    </div>
+  </div>
+</article>

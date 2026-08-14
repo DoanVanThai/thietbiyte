@@ -1,0 +1,521 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import CatalogFilters from "@/components/CatalogFilters.astro";
+import CatalogToolbar from "@/components/CatalogToolbar.astro";
+import CatalogProductCard from "@/components/CatalogProductCard.astro";
+import CatalogPagination from "@/components/CatalogPagination.astro";
+import CatalogSkeleton from "@/components/CatalogSkeleton.astro";
+import {
+  medicalNavigation,
+  relatedKnowledge,
+  veterinaryNavigation,
+  type CatalogRouteConfig,
+} from "@/data/catalog";
+import { productService } from "@/server/services/product-service";
+import "@/styles/catalog.css";
+
+interface Props {
+  config: CatalogRouteConfig;
+}
+
+const { config } = Astro.props;
+const catalogProducts = await productService.listPublicCatalog();
+const pageTitle = `${config.title} | THIÊN LỘC GROUP`;
+const contextNavigation = config.kind === "group"
+  ? config.presetValue === "veterinary" ? veterinaryNavigation : medicalNavigation
+  : config.kind === "all"
+    ? [
+        ["Thiết bị Y tế", "/y-te"],
+        ["Thiết bị Thú y", "/thu-y"],
+        ["Theo danh mục", "/danh-muc/may-sieu-am"],
+        ["Theo thương hiệu", "/thuong-hieu/chison"],
+      ] as const
+    : [];
+
+const breadcrumbItems = [
+  { label: "Trang chủ", href: "/" },
+  ...(config.kind === "all" || config.kind === "search" ? [] : [{ label: "Sản phẩm", href: "/san-pham" }]),
+  ...(config.parentLabel ? [{ label: config.parentLabel, href: config.parentHref }] : []),
+  { label: config.title },
+];
+
+const showRelated = ["category", "brand", "specialty"].includes(config.kind);
+const contextColumns = config.kind === "all" ? 4 : config.presetValue === "veterinary" ? 3 : 5;
+---
+
+<BaseLayout title={pageTitle} description={config.description}>
+  <Header />
+  <main
+    id="main-content"
+    class:list={["catalog-page", config.presetValue === "veterinary" && "catalog-veterinary"]}
+    data-catalog-root
+    data-preset-key={config.presetKey}
+    data-preset-value={config.presetValue}
+    data-catalog-kind={config.kind}
+    data-view="grid"
+  >
+    <section class="catalog-intro" aria-labelledby="catalog-title">
+      <div class="container">
+        <Breadcrumb items={breadcrumbItems} />
+        <div class="catalog-title-row">
+          <div>
+            <h1 id="catalog-title">{config.title}</h1>
+            <p>{config.description}</p>
+          </div>
+          {config.kind === "brand" && (
+            <div class="brand-identity-placeholder" aria-label={`Thông tin thương hiệu ${config.title}`}>
+              <strong>{config.title}</strong>
+              <span>{config.note}</span>
+            </div>
+          )}
+        </div>
+
+        {contextNavigation.length > 0 && (
+          <nav class="catalog-context-nav" data-columns={contextColumns} aria-label={config.kind === "group" ? `Nhóm ${config.title}` : "Lối vào danh mục"}>
+            {contextNavigation.map(([label, href]) => <a href={href}>{label}<i class="ph ph-arrow-right" aria-hidden="true"></i></a>)}
+          </nav>
+        )}
+
+        <form class="catalog-search" role="search" data-catalog-search-form>
+          <label for="catalog-search-input">Tìm trong danh mục</label>
+          <div class="catalog-search-control">
+            <div class="catalog-search-field">
+              <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+              <input
+                id="catalog-search-input"
+                type="search"
+                name="q"
+                list="catalog-suggestions"
+                placeholder="Tìm theo tên thiết bị, model hoặc hãng..."
+                autocomplete="off"
+                data-catalog-search
+              />
+              <button type="button" class="search-clear" data-search-clear hidden>Xóa</button>
+            </div>
+            <button type="submit" class="button button-primary">Tìm kiếm</button>
+          </div>
+          <datalist id="catalog-suggestions">
+            {[...new Set(catalogProducts.flatMap((product) => [product.name, product.model, product.brand]))].map((suggestion) => <option value={suggestion} />)}
+          </datalist>
+        </form>
+      </div>
+    </section>
+
+    <section class="catalog-results" id="results" aria-label="Danh sách thiết bị">
+      <div class="container catalog-layout">
+        <aside class="filter-rail" data-filter-panel="desktop" aria-label="Bộ lọc sản phẩm">
+          <div class="filter-rail-header">
+            <h2>Bộ lọc</h2>
+            <button type="button" data-reset-filters>Xóa lọc</button>
+          </div>
+          <CatalogFilters prefix="desktop" />
+        </aside>
+
+        <div class="catalog-content">
+          <CatalogToolbar />
+
+          <div class="catalog-product-list" data-product-list>
+            {catalogProducts.map((product) => <CatalogProductCard product={product} />)}
+          </div>
+
+          <CatalogSkeleton />
+
+          <div class="catalog-empty" data-empty-state hidden>
+            <div class="empty-icon" aria-hidden="true"><i class="ph ph-magnifying-glass"></i></div>
+            <h2>Không tìm thấy thiết bị phù hợp</h2>
+            <p>Hãy xóa một số bộ lọc hoặc thử từ khóa khác. Đội ngũ Thiên Lộc có thể hỗ trợ xây dựng danh mục theo nhu cầu thực tế.</p>
+            <div class="empty-actions">
+              <button class="button button-outline" type="button" data-reset-all>Xóa bộ lọc</button>
+              <a class="button button-primary" href="/yeu-cau-bao-gia?source=global">Nhận tư vấn</a>
+            </div>
+          </div>
+
+          <CatalogPagination />
+        </div>
+      </div>
+    </section>
+
+    {showRelated && (
+      <section class="catalog-knowledge" aria-labelledby="catalog-knowledge-title">
+        <div class="container catalog-knowledge-layout">
+          <div>
+            <h2 id="catalog-knowledge-title">Kiến thức liên quan</h2>
+            <p>Nội dung tham khảo giúp chuẩn bị tiêu chí lựa chọn và yêu cầu báo giá.</p>
+          </div>
+          <div class="catalog-knowledge-list">
+            {relatedKnowledge.map(([category, title]) => (
+              <article>
+                <span>{category}</span>
+                <h3><a href={`/?article=${encodeURIComponent(title)}#knowledge`}>{title}</a></h3>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <dialog class="filter-drawer" data-filter-dialog aria-labelledby="filter-drawer-title">
+      <form method="dialog">
+        <div class="filter-drawer-header">
+          <div>
+            <h2 id="filter-drawer-title">Lọc sản phẩm</h2>
+            <span data-drawer-filter-count>Chưa chọn bộ lọc</span>
+          </div>
+          <button class="icon-action" type="submit" value="cancel" aria-label="Đóng bộ lọc"><i class="ph ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="filter-drawer-body" data-filter-panel="mobile">
+          <CatalogFilters prefix="mobile" mobile={true} />
+        </div>
+        <div class="filter-drawer-footer">
+          <button class="button button-outline" type="button" data-reset-drawer>Đặt lại</button>
+          <button class="button button-primary" type="submit" value="apply">Áp dụng bộ lọc</button>
+        </div>
+      </form>
+    </dialog>
+
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  const catalogRoot = document.querySelector<HTMLElement>("[data-catalog-root]");
+
+  if (catalogRoot) {
+    const productList = catalogRoot.querySelector<HTMLElement>("[data-product-list]");
+    const productCards = Array.from(productList?.querySelectorAll<HTMLElement>(":scope > .catalog-product[data-product-id]") || []);
+    const desktopPanel = catalogRoot.querySelector<HTMLElement>("[data-filter-panel='desktop']");
+    const mobilePanel = catalogRoot.querySelector<HTMLElement>("[data-filter-panel='mobile']");
+    const filterDialog = catalogRoot.querySelector<HTMLDialogElement>("[data-filter-dialog]");
+    const searchInput = catalogRoot.querySelector<HTMLInputElement>("[data-catalog-search]");
+    const searchForm = catalogRoot.querySelector<HTMLFormElement>("[data-catalog-search-form]");
+    const clearSearch = catalogRoot.querySelector<HTMLButtonElement>("[data-search-clear]");
+    const emptyState = catalogRoot.querySelector<HTMLElement>("[data-empty-state]");
+    const loadingState = catalogRoot.querySelector<HTMLElement>("[data-loading-state]");
+    const pagination = catalogRoot.querySelector<HTMLElement>("[data-pagination]");
+    const pageNumbers = catalogRoot.querySelector<HTMLElement>("[data-page-numbers]");
+    const resultCount = catalogRoot.querySelector<HTMLElement>("[data-result-count]");
+    const activeFilters = catalogRoot.querySelector<HTMLElement>("[data-active-filters]");
+    const toolbar = catalogRoot.querySelector<HTMLElement>("[data-catalog-toolbar]");
+    const presetKey = catalogRoot.dataset.presetKey || "";
+    const presetValue = catalogRoot.dataset.presetValue || "";
+    const filterKeys = ["group", "category", "specialty", "brand", "origin", "price", "status", "warranty", "application"];
+    const attributeMap: Record<string, string> = {
+      group: "group",
+      category: "category",
+      specialty: "specialties",
+      brand: "brand",
+      origin: "origin",
+      price: "priceBand",
+      status: "status",
+      warranty: "warranty",
+      application: "applications",
+    };
+    const pageSize = 6;
+    let currentPage = 1;
+    let currentView = "grid";
+    let searchTimer = 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const normalize = (value: string) => value.trim().toLocaleLowerCase("vi");
+
+    const scrollToResults = () => document.querySelector("#results")?.scrollIntoView({
+      behavior: reduceMotion.matches ? "auto" : "smooth",
+      block: "start",
+    });
+
+    const getDesktopSelections = (key: string) => Array.from(desktopPanel?.querySelectorAll<HTMLInputElement>(`input[data-filter-key='${key}']:checked`) || []).map((input) => input.value);
+
+    const syncPanelFrom = (source: HTMLElement | null, target: HTMLElement | null) => {
+      if (!source || !target) return;
+      filterKeys.forEach((key) => {
+        const values = Array.from(source.querySelectorAll<HTMLInputElement>(`input[data-filter-key='${key}']:checked`)).map((input) => input.value);
+        target.querySelectorAll<HTMLInputElement>(`input[data-filter-key='${key}']`).forEach((input) => { input.checked = values.includes(input.value); });
+      });
+    };
+
+    const restoreControlsFromUrl = () => {
+      const url = new URL(window.location.href);
+      filterKeys.forEach((key) => {
+        const values = (url.searchParams.get(key) || "").split(",").filter(Boolean);
+        catalogRoot.querySelectorAll<HTMLInputElement>(`input[data-filter-key='${key}']`).forEach((input) => { input.checked = values.includes(input.value); });
+      });
+      const query = url.searchParams.get("q") || "";
+      if (searchInput) searchInput.value = query;
+      currentPage = Math.max(1, Number(url.searchParams.get("page")) || 1);
+      currentView = url.searchParams.get("view") === "list" ? "list" : "grid";
+      catalogRoot.dataset.view = currentView;
+      catalogRoot.querySelectorAll<HTMLSelectElement>("[data-sort]").forEach((select) => { select.value = url.searchParams.get("sort") || "featured"; });
+      catalogRoot.querySelectorAll<HTMLButtonElement>("button[data-view]").forEach((button) => { button.setAttribute("aria-pressed", String(button.dataset.view === currentView)); });
+    };
+
+    const productMatchesValue = (card: HTMLElement, key: string, selected: string[]) => {
+      if (!selected.length) return true;
+      const attribute = attributeMap[key];
+      const cardValues = (card.dataset[attribute] || "").split(",");
+      return selected.some((value) => cardValues.includes(value));
+    };
+
+    const buildActiveFilters = () => {
+      if (!activeFilters) return;
+      activeFilters.replaceChildren();
+      let activeCount = 0;
+
+      filterKeys.forEach((key) => {
+        getDesktopSelections(key).forEach((value) => {
+          activeCount += 1;
+          const source = desktopPanel?.querySelector<HTMLInputElement>(`input[data-filter-key='${key}'][value='${CSS.escape(value)}']`);
+          const label = source?.dataset.label || value;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "active-filter";
+          button.dataset.removeKey = key;
+          button.dataset.removeValue = value;
+          button.setAttribute("aria-label", `Xóa bộ lọc ${label}`);
+          button.append(document.createTextNode(label));
+          const icon = document.createElement("i");
+          icon.className = "ph ph-x";
+          icon.setAttribute("aria-hidden", "true");
+          button.append(icon);
+          activeFilters.append(button);
+        });
+      });
+
+      if (activeCount > 0) {
+        const clearAllButton = document.createElement("button");
+        clearAllButton.type = "button";
+        clearAllButton.className = "clear-all-filters";
+        clearAllButton.dataset.clearAllFilters = "";
+        clearAllButton.textContent = "Xóa tất cả";
+        activeFilters.append(clearAllButton);
+      }
+
+      catalogRoot.querySelectorAll<HTMLElement>("[data-filter-count]").forEach((element) => {
+        element.textContent = String(activeCount);
+        element.hidden = activeCount === 0;
+      });
+      const drawerCount = catalogRoot.querySelector<HTMLElement>("[data-drawer-filter-count]");
+      if (drawerCount) drawerCount.textContent = activeCount ? `${activeCount} bộ lọc đang dùng` : "Chưa chọn bộ lọc";
+    };
+
+    const updateUrl = () => {
+      const url = new URL(window.location.href);
+      filterKeys.forEach((key) => {
+        const values = getDesktopSelections(key);
+        if (values.length) url.searchParams.set(key, values.join(","));
+        else url.searchParams.delete(key);
+      });
+      const query = searchInput?.value.trim() || "";
+      if (query) url.searchParams.set("q", query); else url.searchParams.delete("q");
+      const sort = catalogRoot.querySelector<HTMLSelectElement>("[data-sort]")?.value || "featured";
+      if (sort !== "featured") url.searchParams.set("sort", sort); else url.searchParams.delete("sort");
+      if (currentView === "list") url.searchParams.set("view", "list"); else url.searchParams.delete("view");
+      if (currentPage > 1) url.searchParams.set("page", String(currentPage)); else url.searchParams.delete("page");
+      url.searchParams.delete("state");
+      window.history.replaceState({}, "", url);
+    };
+
+    const renderPagination = (totalPages: number) => {
+      if (!pagination || !pageNumbers) return;
+      pagination.hidden = totalPages <= 1;
+      pageNumbers.replaceChildren();
+      for (let page = 1; page <= totalPages; page += 1) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = String(page);
+        button.dataset.page = String(page);
+        button.setAttribute("aria-label", `Trang ${page}`);
+        if (page === currentPage) button.setAttribute("aria-current", "page");
+        pageNumbers.append(button);
+      }
+      const prev = pagination.querySelector<HTMLButtonElement>("[data-page-prev]");
+      const next = pagination.querySelector<HTMLButtonElement>("[data-page-next]");
+      if (prev) prev.disabled = currentPage <= 1;
+      if (next) next.disabled = currentPage >= totalPages;
+    };
+
+    const renderCatalog = (resetPage = false) => {
+      if (!productList || !emptyState || !resultCount) return;
+      if (resetPage) currentPage = 1;
+
+      const selected: Record<string, string[]> = {};
+      filterKeys.forEach((key) => { selected[key] = getDesktopSelections(key); });
+      const query = normalize(searchInput?.value || "");
+      const forceEmpty = new URL(window.location.href).searchParams.get("state") === "empty";
+
+      let matches = productCards.filter((card) => {
+        if (forceEmpty) return false;
+        if (query && !normalize(card.dataset.search || "").includes(query)) return false;
+        if (presetKey && presetValue && !productMatchesValue(card, presetKey, [presetValue])) return false;
+        return filterKeys.every((key) => productMatchesValue(card, key, selected[key]));
+      });
+
+      const sort = catalogRoot.querySelector<HTMLSelectElement>("[data-sort]")?.value || "featured";
+      matches.sort((a, b) => {
+        if (sort === "newest") return Number(b.dataset.created) - Number(a.dataset.created);
+        if (sort === "name") return (a.dataset.name || "").localeCompare(b.dataset.name || "", "vi");
+        return Number(b.dataset.featured) - Number(a.dataset.featured);
+      });
+
+      matches.forEach((card) => productList.append(card));
+      const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
+      currentPage = Math.min(currentPage, totalPages);
+      const start = (currentPage - 1) * pageSize;
+      const pageItems = new Set(matches.slice(start, start + pageSize));
+      productCards.forEach((card) => { card.hidden = !pageItems.has(card); });
+
+      if (!reduceMotion.matches && matches.length > 0) {
+        productList.animate([
+          { opacity: .72, transform: "translateY(3px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ], { duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+      }
+
+      resultCount.textContent = `${matches.length} sản phẩm`;
+      emptyState.hidden = matches.length > 0;
+      productList.hidden = matches.length === 0;
+      if (toolbar) toolbar.classList.toggle("has-empty-results", matches.length === 0);
+      renderPagination(matches.length ? totalPages : 0);
+      buildActiveFilters();
+      if (clearSearch) clearSearch.hidden = !searchInput?.value;
+      updateUrl();
+    };
+
+    const clearAllFilters = () => {
+      catalogRoot.querySelectorAll<HTMLInputElement>("input[data-filter-key]").forEach((input) => { input.checked = false; });
+      if (searchInput) searchInput.value = "";
+      renderCatalog(true);
+    };
+
+    restoreControlsFromUrl();
+    const explicitState = new URL(window.location.href).searchParams.get("state");
+    if (explicitState === "loading") {
+      if (loadingState) loadingState.hidden = false;
+      if (productList) productList.hidden = true;
+      if (pagination) pagination.hidden = true;
+      if (toolbar) toolbar.classList.add("is-loading-state");
+      if (resultCount) resultCount.textContent = "Đang tải sản phẩm";
+    } else {
+      renderCatalog(false);
+    }
+    searchForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      renderCatalog(true);
+      scrollToResults();
+    });
+
+    searchInput?.addEventListener("input", () => {
+      window.clearTimeout(searchTimer);
+      if (clearSearch) clearSearch.hidden = !searchInput.value;
+      searchTimer = window.setTimeout(() => renderCatalog(true), 180);
+    });
+
+    clearSearch?.addEventListener("click", () => {
+      if (searchInput) { searchInput.value = ""; searchInput.focus(); }
+      renderCatalog(true);
+    });
+
+    desktopPanel?.addEventListener("change", (event) => {
+      const input = (event.target as HTMLElement).closest<HTMLInputElement>("input[data-filter-key]");
+      if (!input) return;
+      syncPanelFrom(desktopPanel, mobilePanel);
+      renderCatalog(true);
+    });
+
+    catalogRoot.querySelectorAll<HTMLSelectElement>("[data-sort]").forEach((select) => {
+      select.addEventListener("change", () => {
+        catalogRoot.querySelectorAll<HTMLSelectElement>("[data-sort]").forEach((other) => { other.value = select.value; });
+        renderCatalog(true);
+      });
+    });
+
+    catalogRoot.querySelectorAll<HTMLButtonElement>("button[data-view]").forEach((button) => {
+      button.addEventListener("click", () => {
+        currentView = button.dataset.view || "grid";
+        catalogRoot.dataset.view = currentView;
+        catalogRoot.querySelectorAll<HTMLButtonElement>("button[data-view]").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+        renderCatalog(true);
+      });
+    });
+
+    activeFilters?.addEventListener("click", (event) => {
+      const removeButton = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-remove-key]");
+      const clearAll = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-clear-all-filters]");
+      if (removeButton) {
+        const key = removeButton.dataset.removeKey;
+        const value = removeButton.dataset.removeValue;
+        catalogRoot.querySelectorAll<HTMLInputElement>(`input[data-filter-key='${key}']`).forEach((input) => { if (input.value === value) input.checked = false; });
+        renderCatalog(true);
+      } else if (clearAll) {
+        catalogRoot.querySelectorAll<HTMLInputElement>("input[data-filter-key]").forEach((input) => { input.checked = false; });
+        renderCatalog(true);
+      }
+    });
+
+    catalogRoot.querySelectorAll<HTMLButtonElement>("[data-reset-filters]").forEach((button) => button.addEventListener("click", () => {
+      catalogRoot.querySelectorAll<HTMLInputElement>("input[data-filter-key]").forEach((input) => { input.checked = false; });
+      renderCatalog(true);
+    }));
+    catalogRoot.querySelector<HTMLButtonElement>("[data-reset-all]")?.addEventListener("click", clearAllFilters);
+
+    catalogRoot.querySelectorAll<HTMLButtonElement>("[data-filter-more]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const section = button.closest<HTMLElement>("[data-filter-section]");
+        const expanded = button.getAttribute("aria-expanded") === "true";
+        section?.classList.toggle("show-all", !expanded);
+        button.setAttribute("aria-expanded", String(!expanded));
+        button.textContent = expanded ? "Xem thêm" : "Thu gọn";
+      });
+    });
+
+    catalogRoot.querySelectorAll<HTMLInputElement>("[data-filter-search]").forEach((input) => {
+      input.addEventListener("input", () => {
+        const section = input.closest<HTMLElement>("[data-filter-section]");
+        const query = normalize(input.value);
+        section?.querySelectorAll<HTMLElement>("[data-filter-label]").forEach((option) => { option.hidden = query.length > 0 && !normalize(option.dataset.filterLabel || "").includes(query); });
+      });
+    });
+
+    catalogRoot.querySelector<HTMLButtonElement>("[data-open-filter]")?.addEventListener("click", () => {
+      syncPanelFrom(desktopPanel, mobilePanel);
+      filterDialog?.showModal();
+      document.body.classList.add("has-modal-open");
+    });
+
+    catalogRoot.querySelector<HTMLButtonElement>("[data-reset-drawer]")?.addEventListener("click", () => {
+      mobilePanel?.querySelectorAll<HTMLInputElement>("input[data-filter-key]").forEach((input) => { input.checked = false; });
+      const drawerCount = catalogRoot.querySelector<HTMLElement>("[data-drawer-filter-count]");
+      if (drawerCount) drawerCount.textContent = "Chưa chọn bộ lọc";
+    });
+
+    mobilePanel?.addEventListener("change", () => {
+      const count = mobilePanel.querySelectorAll("input[data-filter-key]:checked").length;
+      const drawerCount = catalogRoot.querySelector<HTMLElement>("[data-drawer-filter-count]");
+      if (drawerCount) drawerCount.textContent = count ? `${count} bộ lọc được chọn` : "Chưa chọn bộ lọc";
+    });
+
+    filterDialog?.addEventListener("close", () => {
+      document.body.classList.remove("has-modal-open");
+      if (filterDialog.returnValue === "apply") {
+        syncPanelFrom(mobilePanel, desktopPanel);
+        renderCatalog(true);
+      } else {
+        syncPanelFrom(desktopPanel, mobilePanel);
+      }
+    });
+
+    pagination?.addEventListener("click", (event) => {
+      const pageButton = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-page]");
+      const prev = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-page-prev]");
+      const next = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-page-next]");
+      if (pageButton) currentPage = Number(pageButton.dataset.page);
+      if (prev) currentPage -= 1;
+      if (next) currentPage += 1;
+      renderCatalog(false);
+      scrollToResults();
+    });
+
+  }
+</script>

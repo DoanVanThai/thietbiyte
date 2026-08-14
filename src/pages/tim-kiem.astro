@@ -1,0 +1,248 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import { searchGroupLabels, type SearchEntry, type SearchGroup } from "@/data/search";
+import { searchIndex } from "@/lib/public-content";
+import { getSettings } from "@/lib/content-repository";
+
+const searchEntries = await searchIndex();
+const settings = getSettings();
+const supportTel = `tel:${settings.hotline.replace(/\D/g, "")}`;
+
+const displayGroups: { key: "products" | "categories" | "brands" | "knowledge"; label: string; source: SearchGroup[] }[] = [
+  { key: "products", label: "Sản phẩm", source: ["products"] },
+  { key: "categories", label: "Danh mục", source: ["categories", "specialties"] },
+  { key: "brands", label: "Thương hiệu", source: ["brands"] },
+  { key: "knowledge", label: "Bài viết", source: ["knowledge"] },
+];
+const entriesByDisplayGroup = Object.fromEntries(displayGroups.map((group) => [
+  group.key,
+  searchEntries.filter((entry) => group.source.includes(entry.group)),
+])) as Record<(typeof displayGroups)[number]["key"], SearchEntry[]>;
+---
+
+<BaseLayout title="Tìm kiếm | THIÊN LỘC GROUP" description="Tìm sản phẩm, danh mục, thương hiệu và bài viết kỹ thuật.">
+  <Header />
+  <main id="main-content" class="search-results-page" data-search-page>
+    <section class="search-page-intro" aria-labelledby="search-page-title">
+      <div class="container">
+        <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tìm kiếm" }]} />
+        <h1 id="search-page-title">Tìm kiếm</h1>
+        <form class="search-page-form" role="search" action="/tim-kiem" method="get">
+          <label for="search-page-input">Tìm trong sản phẩm và nội dung</label>
+          <div>
+            <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+            <input id="search-page-input" name="q" type="search" placeholder="Ví dụ: SonoPort 8, Mindray, máy siêu âm..." autocomplete="off" data-search-page-input />
+            <button class="button button-primary" type="submit">Tìm kiếm</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="search-page-content" aria-labelledby="search-summary">
+      <div class="container search-page-layout">
+        <aside class="search-filter-rail" data-search-filters hidden aria-label="Lọc loại kết quả">
+          <h2>Lọc kết quả</h2>
+          <div role="list">
+            <button type="button" data-result-filter="all" aria-pressed="true"><span>Tất cả</span><strong data-filter-count="all">0</strong></button>
+            {displayGroups.map((group) => (
+              <button type="button" data-result-filter={group.key} aria-pressed="false"><span>{group.label}</span><strong data-filter-count={group.key}>0</strong></button>
+            ))}
+          </div>
+          <button class="search-reset-filter" type="button" data-clear-result-filter hidden>Xóa filter</button>
+        </aside>
+
+        <div class="search-result-content">
+          <header class="search-result-summary">
+            <div>
+              <h2 id="search-summary" data-search-summary>Nhập từ khóa để bắt đầu</h2>
+              <p data-search-description>Tìm theo tên sản phẩm, model, hãng, danh mục, chuyên khoa hoặc kiến thức.</p>
+            </div>
+            <button type="button" class="button button-outline search-mobile-filter" data-search-mobile-filter hidden>
+              <i class="ph ph-funnel" aria-hidden="true"></i> Lọc kết quả
+            </button>
+          </header>
+
+          <div class="search-loading" data-search-loading hidden aria-label="Đang tìm kiếm">
+            {[1, 2, 3, 4].map(() => <div><span></span><p></p><small></small></div>)}
+          </div>
+
+          <div class="search-error-state" data-search-error hidden>
+            <i class="ph ph-cloud-slash" aria-hidden="true"></i>
+            <h2>Chưa thể tải kết quả tìm kiếm</h2>
+            <p>Hãy kiểm tra kết nối và thử lại. Bạn vẫn có thể gọi đội ngũ tư vấn nếu cần tìm thiết bị ngay.</p>
+            <div><button class="button button-outline" type="button" data-search-retry>Thử lại</button><a class="button button-primary" href={supportTel}>Gọi tư vấn</a></div>
+          </div>
+
+          <div class="search-no-results" data-search-no-results hidden>
+            <div class="search-empty-symbol" aria-hidden="true"><i class="ph ph-magnifying-glass"></i></div>
+            <h2>Không tìm thấy kết quả cho “<span data-empty-query></span>”</h2>
+            <p>Hãy kiểm tra lại model, thử tên hãng hoặc xóa filter đang áp dụng.</p>
+            <ul>
+              <li>Kiểm tra model có dấu cách hoặc ký tự đặc biệt.</li>
+              <li>Thử tên hãng, ví dụ CHISON hoặc Mindray.</li>
+              <li>Dùng tên danh mục rộng hơn, ví dụ máy siêu âm.</li>
+            </ul>
+            <a class="button button-primary" href="/yeu-cau-bao-gia?source=search&need=Cần%20tư%20vấn%20tìm%20thiết%20bị%20phù%20hợp.">Nhận tư vấn tìm thiết bị</a>
+          </div>
+
+          <div class="search-groups" data-search-groups hidden>
+            {displayGroups.map((group) => (
+              <section class="search-result-group" data-result-group={group.key} aria-labelledby={`search-group-${group.key}`}>
+                <header>
+                  <h2 id={`search-group-${group.key}`}>{group.label}</h2>
+                  <span data-group-count={group.key}>0 kết quả</span>
+                </header>
+                <div class:list={["search-result-list", group.key === "products" && "search-product-results"]}>
+                  {entriesByDisplayGroup[group.key].map((entry) => (
+                    <article
+                      class:list={["search-result-item", entry.group === "products" && "search-product-result"]}
+                      data-search-entry
+                      data-search-entry-group={group.key}
+                      data-search-entry-text={`${entry.label} ${entry.meta} ${entry.keywords}`}
+                      data-product-id={entry.productId}
+                    >
+                      {entry.image ? <img src={entry.image} alt="" width="160" height="120" loading="lazy" /> : (
+                        <div class="search-result-icon" aria-hidden="true">
+                          <i class={`ph ${entry.group === "brands" ? "ph-seal" : entry.group === "knowledge" ? "ph-article" : entry.group === "specialties" ? "ph-stethoscope" : "ph-folder"}`}></i>
+                        </div>
+                      )}
+                      <div class="search-result-copy">
+                        <span>{entry.group === "specialties" ? "Chuyên khoa" : searchGroupLabels[entry.group]}</span>
+                        <h3><a href={entry.href} data-highlight-target>{entry.label}</a></h3>
+                        <p data-highlight-target>{entry.meta}</p>
+                      </div>
+                      {entry.productId ? (
+                        <div class="search-result-actions" aria-label={`Thao tác ${entry.label}`}>
+                          <button type="button" data-favorite-product data-product-id={entry.productId} aria-pressed="false" aria-label={`Lưu ${entry.label}`}><i class="ph ph-bookmark-simple" aria-hidden="true"></i></button>
+                          <button type="button" data-compare-product data-product-id={entry.productId} aria-pressed="false" aria-label={`So sánh ${entry.label}`}><i class="ph ph-arrows-left-right" aria-hidden="true"></i></button>
+                        </div>
+                      ) : <a class="search-result-open" href={entry.href} aria-label={`Mở ${entry.label}`}><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  const root = document.querySelector<HTMLElement>("[data-search-page]");
+  if (root) {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const input = root.querySelector<HTMLInputElement>("[data-search-page-input]");
+    const items = Array.from(root.querySelectorAll<HTMLElement>("[data-search-entry]"));
+    const groups = Array.from(root.querySelectorAll<HTMLElement>("[data-result-group]"));
+    const filters = root.querySelector<HTMLElement>("[data-search-filters]");
+    const groupsRoot = root.querySelector<HTMLElement>("[data-search-groups]");
+    const empty = root.querySelector<HTMLElement>("[data-search-no-results]");
+    const loading = root.querySelector<HTMLElement>("[data-search-loading]");
+    const error = root.querySelector<HTMLElement>("[data-search-error]");
+    const summary = root.querySelector<HTMLElement>("[data-search-summary]");
+    const description = root.querySelector<HTMLElement>("[data-search-description]");
+    const clearFilter = root.querySelector<HTMLButtonElement>("[data-clear-result-filter]");
+    const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi").trim();
+    let activeFilter = "all";
+
+    const highlight = (query: string) => {
+      if (!query) return;
+      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      let expression: RegExp;
+      try { expression = new RegExp(`(${escaped})`, "ig"); } catch { return; }
+      root.querySelectorAll<HTMLElement>("[data-highlight-target]").forEach((element) => {
+        const original = element.textContent || "";
+        if (!expression.test(original)) return;
+        expression.lastIndex = 0;
+        const fragment = document.createDocumentFragment();
+        original.split(expression).forEach((part) => {
+          if (part.toLocaleLowerCase("vi") === query.toLocaleLowerCase("vi")) {
+            const mark = document.createElement("mark");
+            mark.textContent = part;
+            fragment.append(mark);
+          } else fragment.append(document.createTextNode(part));
+        });
+        element.replaceChildren(fragment);
+      });
+    };
+
+    const render = () => {
+      const url = new URL(window.location.href);
+      const query = (url.searchParams.get("q") || "").trim();
+      const normalizedQuery = normalize(query);
+      const explicitState = url.searchParams.get("state");
+      if (input) input.value = query;
+      loading!.hidden = explicitState !== "loading";
+      error!.hidden = explicitState !== "error" && explicitState !== "offline";
+      if (explicitState === "loading" || explicitState === "error" || explicitState === "offline") {
+        groupsRoot!.hidden = true;
+        empty!.hidden = true;
+        filters!.hidden = true;
+        if (summary) summary.textContent = explicitState === "loading" ? "Đang tìm kiếm..." : "Tìm kiếm chưa sẵn sàng";
+        return;
+      }
+
+      const counts: Record<string, number> = { all: 0, products: 0, categories: 0, brands: 0, knowledge: 0 };
+      items.forEach((item) => {
+        const matchesQuery = Boolean(normalizedQuery) && normalize(item.dataset.searchEntryText || "").includes(normalizedQuery);
+        const itemGroup = item.dataset.searchEntryGroup || "";
+        if (matchesQuery) {
+          counts.all += 1;
+          counts[itemGroup] += 1;
+        }
+        item.hidden = !matchesQuery || (activeFilter !== "all" && itemGroup !== activeFilter);
+      });
+      groups.forEach((group) => {
+        const key = group.dataset.resultGroup || "";
+        const visible = counts[key] > 0 && (activeFilter === "all" || activeFilter === key);
+        group.hidden = !visible;
+        const count = group.querySelector<HTMLElement>(`[data-group-count='${key}']`);
+        if (count) count.textContent = `${counts[key]} kết quả`;
+      });
+      root.querySelectorAll<HTMLElement>("[data-filter-count]").forEach((element) => {
+        element.textContent = String(counts[element.dataset.filterCount || "all"] || 0);
+      });
+      const hasResults = counts.all > 0;
+      groupsRoot!.hidden = !hasResults || !normalizedQuery;
+      empty!.hidden = hasResults || !normalizedQuery;
+      filters!.hidden = counts.all < 7;
+      clearFilter!.hidden = activeFilter === "all";
+      const emptyQuery = root.querySelector<HTMLElement>("[data-empty-query]");
+      if (emptyQuery) emptyQuery.textContent = query;
+      if (summary) summary.textContent = normalizedQuery ? (hasResults ? `${counts.all} kết quả cho “${query}”` : `Không có kết quả cho “${query}”`) : "Nhập từ khóa để bắt đầu";
+      if (description) description.textContent = normalizedQuery && hasResults ? "Kết quả được nhóm theo loại nội dung để dễ quét và đối chiếu." : "Tìm theo tên sản phẩm, model, hãng, danh mục, chuyên khoa hoặc kiến thức.";
+      highlight(query);
+      if (hasResults && !reduceMotion.matches) {
+        groupsRoot?.animate([
+          { opacity: .68, transform: "translateY(3px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ], { duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+      }
+    };
+
+    filters?.addEventListener("click", (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-result-filter]");
+      if (!button) return;
+      activeFilter = button.dataset.resultFilter || "all";
+      filters.querySelectorAll<HTMLButtonElement>("[data-result-filter]").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      render();
+    });
+    clearFilter?.addEventListener("click", () => {
+      activeFilter = "all";
+      filters?.querySelectorAll<HTMLButtonElement>("[data-result-filter]").forEach((item) => item.setAttribute("aria-pressed", String(item.dataset.resultFilter === "all")));
+      render();
+    });
+    root.querySelector("[data-search-retry]")?.addEventListener("click", () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("state");
+      window.location.href = url.toString();
+    });
+    render();
+  }
+</script>

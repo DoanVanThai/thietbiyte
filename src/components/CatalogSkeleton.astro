@@ -1,0 +1,15 @@
+<div class="catalog-skeleton" data-loading-state hidden aria-live="polite" aria-busy="true">
+  <p class="sr-only">Đang tải danh sách thiết bị</p>
+  {Array.from({ length: 6 }).map(() => (
+    <div class="skeleton-card">
+      <div class="skeleton-block skeleton-media"></div>
+      <div class="skeleton-card-body">
+        <div class="skeleton-block skeleton-line skeleton-line-short"></div>
+        <div class="skeleton-block skeleton-line skeleton-line-title"></div>
+        <div class="skeleton-block skeleton-line"></div>
+        <div class="skeleton-block skeleton-line"></div>
+        <div class="skeleton-block skeleton-action"></div>
+      </div>
+    </div>
+  ))}
+</div>

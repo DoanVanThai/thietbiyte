@@ -1,0 +1,116 @@
+/* Shared form controls for every admin module. Long selects are progressively enhanced by admin-selects.ts. */
+.admin-body select:not([multiple]) {
+  min-height: 42px;
+  padding: 0 38px 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  outline: 0;
+  appearance: none;
+  background-color: var(--color-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 256 256'%3E%3Cpath fill='none' stroke='%23515c6c' stroke-linecap='round' stroke-linejoin='round' stroke-width='24' d='m208 96-80 80-80-80'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  color: var(--color-foreground);
+  font-size: .8125rem;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.admin-body select:not([multiple]):hover { border-color: var(--color-primary); }
+.admin-body select:not([multiple]):focus-visible { border-color: var(--color-focus-ring); box-shadow: 0 0 0 3px oklch(.55 .17 250 / .16); }
+.admin-body select:not([multiple]):disabled { background-color: var(--color-surface-subtle); color: var(--color-muted-foreground); cursor: not-allowed; opacity: .72; }
+
+.admin-select-control { position: relative; min-width: 0; width: 100%; }
+.admin-filter-primary > .admin-select-control {
+  width: auto;
+  min-width: 170px;
+  max-width: 290px;
+  flex: 1 1 190px;
+}
+.admin-filter-secondary > .admin-select-control {
+  width: auto;
+  min-width: 150px;
+  max-width: 250px;
+  flex: 0 1 210px;
+}
+.admin-select-control > select.admin-native-select {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 0 !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+.admin-select-trigger {
+  width: 100%;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-foreground);
+  font-size: .8125rem;
+  line-height: 1.35;
+  text-align: left;
+  transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.admin-select-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-select-trigger > i { color: var(--color-muted-foreground); transition: transform var(--duration-fast) var(--ease-standard); }
+.admin-select-trigger:hover { border-color: var(--color-primary); }
+.admin-select-trigger:focus-visible, .admin-select-trigger[aria-expanded="true"] { border-color: var(--color-focus-ring); outline: 0; box-shadow: 0 0 0 3px oklch(.55 .17 250 / .16); }
+.admin-select-trigger[aria-expanded="true"] > i { transform: rotate(180deg); }
+.admin-select-trigger:disabled { background: var(--color-surface-subtle); color: var(--color-muted-foreground); cursor: not-allowed; opacity: .72; }
+
+.admin-select-popover {
+  position: fixed;
+  width: var(--admin-select-width, 280px);
+  max-width: calc(100vw - 16px);
+  max-height: var(--admin-select-max-height, 340px);
+  margin: 0;
+  padding: 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-foreground);
+  box-shadow: 0 6px 8px oklch(.22 .03 250 / .12);
+}
+.admin-select-popover::backdrop { background: transparent; }
+.admin-select-search { position: relative; margin-bottom: 5px; }
+.admin-select-search > i { position: absolute; top: 50%; left: 11px; color: var(--color-muted-foreground); transform: translateY(-50%); pointer-events: none; }
+.admin-select-search input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 34px 8px 34px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: 0;
+  background: var(--color-surface-subtle);
+  color: var(--color-foreground);
+  font-size: .8125rem;
+}
+.admin-select-search input:focus { border-color: var(--color-focus-ring); background: var(--color-surface); box-shadow: 0 0 0 2px oklch(.55 .17 250 / .13); }
+.admin-select-search kbd { position: absolute; top: 50%; right: 9px; padding: 1px 5px; border: 1px solid var(--color-border); border-radius: 4px; background: white; color: var(--color-muted-foreground); font-family: var(--font-sans); font-size: .625rem; transform: translateY(-50%); }
+.admin-select-options { max-height: calc(var(--admin-select-max-height, 340px) - 57px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.admin-select-option { width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 9px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-foreground); font-size: .8125rem; text-align: left; }
+.admin-select-option:hover, .admin-select-option.is-active { background: var(--color-surface-subtle); }
+.admin-select-option[aria-selected="true"] { background: var(--color-primary-subtle); color: var(--color-primary); font-weight: 600; }
+.admin-select-option[aria-selected="true"]::after { flex: 0 0 auto; font-family: "Phosphor"; font-size: 1rem; content: "\e182"; }
+.admin-select-empty { min-height: 96px; display: grid; place-items: center; padding: 16px; color: var(--color-muted-foreground); font-size: .75rem; text-align: center; }
+@media (max-width: 720px) {
+  .admin-filter-primary > .admin-select-control { min-width: 0; max-width: none; flex: 1 1 140px; }
+  .admin-filter-secondary > .admin-select-control { width: 100%; min-width: 0; max-width: none; }
+  .admin-select-popover { max-width: calc(100vw - 24px); }
+  .admin-select-trigger, .admin-body select:not([multiple]) { min-height: 44px; font-size: 16px; }
+  .admin-select-search input { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .admin-select-trigger, .admin-select-trigger > i { transition-duration: .01ms !important; } }

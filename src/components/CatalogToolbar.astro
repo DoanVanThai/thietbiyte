@@ -1,0 +1,42 @@
+<div class="catalog-toolbar" data-catalog-toolbar>
+  <div class="catalog-mobile-actions">
+    <button class="button button-outline filter-trigger" type="button" data-open-filter>
+      <i class="ph ph-funnel" aria-hidden="true"></i>
+      Lọc <span data-filter-count hidden>0</span>
+    </button>
+    <label class="mobile-sort">
+      <span class="sr-only">Sắp xếp sản phẩm</span>
+      <select data-sort>
+        <option value="featured">Nổi bật</option>
+        <option value="newest">Mới nhất</option>
+        <option value="name">Tên A-Z</option>
+        <option value="price-asc" disabled>Giá thấp đến cao (chưa có giá)</option>
+        <option value="price-desc" disabled>Giá cao đến thấp (chưa có giá)</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="result-summary" aria-live="polite">
+    <strong data-result-count>0 sản phẩm</strong>
+  </div>
+
+  <div class="active-filters" data-active-filters aria-live="polite"></div>
+
+  <div class="catalog-toolbar-controls">
+    <a class="compare-summary" href="/so-sanh"><i class="ph ph-arrows-left-right" aria-hidden="true"></i> So sánh <span data-compare-count>0</span></a>
+    <label class="sort-field">
+      <span>Sắp xếp</span>
+      <select data-sort>
+        <option value="featured">Nổi bật</option>
+        <option value="newest">Mới nhất</option>
+        <option value="name">Tên A-Z</option>
+        <option value="price-asc" disabled>Giá thấp đến cao (chưa có giá)</option>
+        <option value="price-desc" disabled>Giá cao đến thấp (chưa có giá)</option>
+      </select>
+    </label>
+    <div class="view-switch" role="group" aria-label="Kiểu hiển thị">
+      <button type="button" data-view="grid" aria-pressed="true" aria-label="Hiển thị dạng lưới" title="Dạng lưới"><i class="ph ph-squares-four" aria-hidden="true"></i></button>
+      <button type="button" data-view="list" aria-pressed="false" aria-label="Hiển thị dạng danh sách" title="Dạng danh sách"><i class="ph ph-list-bullets" aria-hidden="true"></i></button>
+    </div>
+  </div>
+</div>

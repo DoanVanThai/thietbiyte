@@ -1,0 +1,80 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { can } from "@/server/auth/permissions";
+import { listArticles } from "@/server/repositories/operations-repository";
+import "@/styles/admin-operations.css";
+
+const articles = listArticles();
+const canManage = can(Astro.locals.auth, "article.manage");
+const canPublish = can(Astro.locals.auth, "article.publish");
+const count = (status: string) => articles.filter((item) => item.status === status).length;
+const statusLabel = { draft: "Bản nháp", review: "Chờ duyệt", scheduled: "Đã lên lịch", published: "Đã xuất bản", archived: "Lưu trữ" } as const;
+const typeLabel = { knowledge: "Kiến thức", blog: "Tin tức", page: "Trang tĩnh" } as const;
+const formatDate = (value: string) => new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(new Date(`${value.replace(" ", "T")}Z`));
+---
+
+<AdminLayout title="Nội dung | Thiên Lộc Admin" description="Soạn, duyệt và xuất bản nội dung website." section="Nội dung">
+  <section class="ops-page" data-ops-module="articles" data-can-manage={String(canManage)} data-can-publish={String(canPublish)} aria-labelledby="ops-title">
+    <script id="ops-articles-data" type="application/json" is:inline set:html={JSON.stringify(articles)} />
+    <header class="admin-page-header ops-page-header">
+      <div><span class="ops-eyebrow">Vận hành · Nội dung</span><h1 id="ops-title">Nội dung website</h1><p>Soạn thảo, kiểm duyệt và xuất bản từ một nguồn dữ liệu.</p></div>
+      {canManage && <button class="admin-button primary" type="button" data-article-new><i class="ph ph-plus" aria-hidden="true"></i>Viết nội dung</button>}
+    </header>
+
+    <nav class="ops-summary" aria-label="Tổng hợp trạng thái">
+      <button type="button" data-summary-status="all" aria-pressed="true"><span>Tất cả</span><strong>{articles.length}</strong></button>
+      <button type="button" data-summary-status="published" aria-pressed="false"><span>Đã xuất bản</span><strong>{count("published")}</strong></button>
+      <button type="button" data-summary-status="review" aria-pressed="false"><span>Chờ duyệt</span><strong>{count("review")}</strong></button>
+      <button type="button" data-summary-status="draft" aria-pressed="false"><span>Bản nháp</span><strong>{count("draft")}</strong></button>
+    </nav>
+
+    <div class="ops-toolbar">
+      <label class="ops-search"><span class="sr-only">Tìm nội dung</span><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input type="search" placeholder="Tìm tiêu đề, danh mục hoặc tác giả…" data-ops-search /></label>
+      <label><span>Loại</span><select data-ops-type><option value="all">Tất cả loại</option><option value="knowledge">Kiến thức</option><option value="blog">Tin tức</option><option value="page">Trang tĩnh</option></select></label>
+      <label><span>Trạng thái</span><select data-ops-status><option value="all">Tất cả trạng thái</option>{Object.entries(statusLabel).map(([value, label]) => <option value={value}>{label}</option>)}</select></label>
+      <button class="icon-button subtle" type="button" data-ops-reset aria-label="Đặt lại bộ lọc"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i></button>
+    </div>
+
+    <div class="admin-table-wrap ops-table-wrap">
+      <table class="admin-table ops-table" data-ops-table>
+        <caption class="sr-only">Danh sách nội dung</caption>
+        <thead><tr><th scope="col">Nội dung</th><th scope="col">Loại</th><th scope="col">Danh mục</th><th scope="col">Trạng thái</th><th scope="col">Cập nhật</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+        <tbody data-ops-rows>
+          {articles.map((article) => <tr data-ops-row data-id={article.id} data-search={`${article.title} ${article.category} ${article.authorName}`.toLocaleLowerCase("vi")} data-type={article.type} data-status={article.status}>
+            <td><button class="ops-title-button" type="button" data-article-edit={article.id}>{article.title}</button><small>/{article.slug} · {article.authorName}</small></td>
+            <td>{typeLabel[article.type]}</td><td>{article.category || "Chưa phân loại"}</td>
+            <td><span class={`status-badge ${article.status}`}><i aria-hidden="true"></i>{statusLabel[article.status]}</span></td>
+            <td class="numeric">{formatDate(article.updatedAt)}</td>
+            <td>{canManage && <div class="ops-row-actions"><button class="icon-button subtle" type="button" data-article-edit={article.id} aria-label={`Sửa ${article.title}`}><i class="ph ph-pencil-simple" aria-hidden="true"></i></button><button class="icon-button danger" type="button" data-article-delete={article.id} aria-label={`Xóa ${article.title}`}><i class="ph ph-trash" aria-hidden="true"></i></button></div>}</td>
+          </tr>)}
+        </tbody>
+      </table>
+      <div class="ops-empty" data-ops-empty hidden><i class="ph ph-article" aria-hidden="true"></i><strong>Không có nội dung phù hợp</strong><span>Thử đổi từ khóa hoặc bộ lọc.</span></div>
+    </div>
+    <footer class="ops-list-footer"><span>Đang hiển thị <strong data-ops-visible>{articles.length}</strong> / {articles.length} nội dung</span></footer>
+
+    <dialog class="ops-dialog article-editor-dialog" data-article-dialog aria-labelledby="article-dialog-title">
+      <form class="ops-dialog-form" data-article-form>
+        <header><div><span class="ops-eyebrow">Biên tập</span><h2 id="article-dialog-title" data-article-dialog-title>Viết nội dung</h2></div><button class="icon-button subtle" type="button" data-dialog-close aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header>
+        <div class="article-editor-grid">
+          <div class="article-editor-main">
+            <input type="hidden" name="id" />
+            <label class="ops-field ops-title-field"><span>Tiêu đề <b>*</b></span><input name="title" required maxlength="180" autocomplete="off" data-article-title /></label>
+            <label class="ops-field"><span>Đường dẫn</span><div class="ops-input-prefix"><span>/kien-thuc/</span><input name="slug" maxlength="180" placeholder="tự tạo theo tiêu đề" /></div><small>Để trống sẽ tự tạo; hệ thống tự tránh trùng slug.</small></label>
+            <label class="ops-field"><span>Tóm tắt</span><textarea name="excerpt" rows="3" maxlength="360"></textarea></label>
+            <label class="ops-field"><span>Nội dung</span><textarea class="article-content-input" name="content" rows="16" placeholder="Nhập nội dung bài viết…"></textarea><small>Giữ dòng trống để chia đoạn; nội dung được lưu đầy đủ trong CMS.</small></label>
+            <div class="ops-subsection"><div><h3>Ảnh bìa</h3><p>Dùng ảnh từ thư viện media hoặc tải ảnh mới.</p></div><div class="ops-two-cols"><label class="ops-field"><span>URL ảnh</span><input name="coverUrl" placeholder="/uploads/…" /></label><label class="ops-field"><span>Mô tả thay thế</span><input name="coverAlt" maxlength="240" /></label></div></div>
+            <details class="ops-details"><summary><span><strong>SEO & chia sẻ</strong><small>Tiêu đề và mô tả cho công cụ tìm kiếm.</small></span><i class="ph ph-caret-down" aria-hidden="true"></i></summary><div class="ops-two-cols"><label class="ops-field"><span>SEO title</span><input name="seoTitle" maxlength="180" /></label><label class="ops-field"><span>Meta description</span><textarea name="seoDescription" rows="3" maxlength="360"></textarea></label></div></details>
+          </div>
+          <aside class="article-editor-side">
+            <section><h3>Xuất bản</h3><label class="ops-field"><span>Trạng thái</span><select name="status"><option value="draft">Bản nháp</option><option value="review">Chờ duyệt</option><option value="scheduled">Đã lên lịch</option>{canPublish && <option value="published">Đã xuất bản</option>}<option value="archived">Lưu trữ</option></select></label><p class="ops-permission-note"><i class="ph ph-shield-check" aria-hidden="true"></i>{canPublish ? "Bạn có quyền xuất bản nội dung." : "Bạn có thể lưu nháp hoặc gửi duyệt."}</p></section>
+            <section><h3>Phân loại</h3><label class="ops-field"><span>Loại nội dung</span><select name="type"><option value="knowledge">Kiến thức</option><option value="blog">Tin tức</option><option value="page">Trang tĩnh</option></select></label><label class="ops-field"><span>Danh mục</span><input name="category" maxlength="120" placeholder="Ví dụ: Vận hành thiết bị" /></label></section>
+          </aside>
+        </div>
+        <footer><p data-ops-feedback aria-live="polite"></p><button class="admin-button secondary" type="button" data-dialog-close>Hủy</button><button class="admin-button primary" type="submit"><i class="ph ph-floppy-disk" aria-hidden="true"></i><span data-submit-label>Lưu nội dung</span></button></footer>
+      </form>
+    </dialog>
+  </section>
+  <script>import "@/scripts/admin-operations";</script>
+</AdminLayout>
+

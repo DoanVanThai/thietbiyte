@@ -1,0 +1,48 @@
+---
+import imageManifest from "@/data/responsive-images.generated.json";
+
+interface Props {
+  src: string;
+  alt: string;
+  width: number | string;
+  height: number | string;
+  sourceWidth?: number;
+  sizes: string;
+  loading?: "eager" | "lazy";
+  fetchpriority?: "high" | "low" | "auto";
+  class?: string;
+  style?: string;
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  sourceWidth,
+  sizes,
+  loading = "lazy",
+  fetchpriority,
+  class: className,
+  style,
+} = Astro.props;
+type ImageManifest = Record<string, { width?: number; height?: number; variants: Array<{ width: number; src: string }> }>;
+const managedImage = (imageManifest as ImageManifest)[src];
+const srcset = managedImage?.variants?.length
+  ? [...managedImage.variants.map((variant) => `${variant.src} ${variant.width}w`), ...(sourceWidth ? [`${src} ${sourceWidth}w`] : [])].join(", ")
+  : undefined;
+---
+
+<img
+  src={src}
+  srcset={srcset}
+  sizes={srcset ? sizes : undefined}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={loading}
+  fetchpriority={fetchpriority}
+  decoding={fetchpriority === "high" ? "sync" : "async"}
+  class={className}
+  style={style}
+/>

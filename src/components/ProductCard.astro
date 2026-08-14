@@ -1,0 +1,52 @@
+---
+import ResponsiveImage from "@/components/ResponsiveImage.astro";
+
+interface Props {
+  product: {
+    category: string;
+    name: string;
+    brandModel: string;
+    specs: readonly string[];
+    image: string;
+    imagePosition: string;
+    id?: string;
+    slug?: string;
+  };
+  index: number;
+}
+
+const { product, index } = Astro.props;
+const productId = product.id || `homepage-${index + 1}`;
+const productHref = product.slug ? `/san-pham/${product.slug}` : "/san-pham";
+---
+
+<article class="product-card" data-product-id={productId}>
+  <div class="product-media">
+    <ResponsiveImage
+      src={product.image}
+      alt={`Ảnh minh họa ${product.name}`}
+      width={800}
+      height={560}
+      sourceWidth={product.image.includes("hero-ultrasound") ? 1600 : 1400}
+      sizes="(max-width: 640px) calc(50vw - 24px), (max-width: 1024px) calc(50vw - 32px), 320px"
+      style={`object-position:${product.imagePosition}`}
+    />
+    <div class="product-utilities" aria-label="Thao tác nhanh">
+      <button class="icon-action" type="button" data-favorite-product data-product-id={productId} aria-pressed="false" aria-label={`Lưu ${product.name}`} title="Lưu sản phẩm"><i class="ph ph-bookmark-simple" aria-hidden="true"></i></button>
+      <button class="icon-action" type="button" data-compare-product data-product-id={productId} aria-pressed="false" aria-label={`So sánh ${product.name}`} title="Thêm vào so sánh"><i class="ph ph-arrows-left-right" aria-hidden="true"></i></button>
+    </div>
+  </div>
+  <div class="product-content">
+    <span class="product-category">{product.category}</span>
+    <h3>{product.name}</h3>
+    <p class="product-model">{product.brandModel}</p>
+    <ul>
+      {product.specs.map((spec) => <li>{spec}</li>)}
+    </ul>
+    <div class="price-display">Liên hệ</div>
+    <div class="product-actions">
+      <a class="button button-outline button-sm" href={productHref}>Xem chi tiết</a>
+      <a class="text-link" href={`/yeu-cau-bao-gia?product=${encodeURIComponent(productId)}&source=product-card`}>Nhận báo giá</a>
+    </div>
+  </div>
+</article>

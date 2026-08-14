@@ -1,0 +1,7 @@
+---
+import { leadStatusLabels, quoteStatusLabels, type LeadStatus, type QuoteStatus } from "@/data/crm";
+interface Props { status: LeadStatus | QuoteStatus; kind?: "lead" | "quote"; }
+const { status, kind = "lead" } = Astro.props;
+const label = kind === "quote" ? quoteStatusLabels[status as QuoteStatus] : leadStatusLabels[status as LeadStatus];
+---
+<span class={`crm-status crm-status-${status}`}>{label}</span>

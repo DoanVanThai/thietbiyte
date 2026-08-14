@@ -1,0 +1,5 @@
+import type { APIRoute } from "astro";
+import { errorJson, isResponse, json, readJson, requirePermission } from "@/server/auth/http";
+import { crmRepository } from "@/server/repositories/crm-repository";
+const types = new Set(["CALL", "EMAIL", "ZALO", "MEETING", "NOTE", "QUOTE", "STATUS_CHANGE"]);
+export const POST: APIRoute = async (context) => { const actor = requirePermission(context, "lead.edit"); if (isResponse(actor)) return actor; const lead = await crmRepository.getLead(String(context.params.id), actor); if (!lead) return errorJson(404, "NOT_FOUND", "Không tìm thấy lead."); const body = await readJson<{ type?: string; content?: string; visibility?: string }>(context.request); if (!body?.content?.trim() || !types.has(String(body.type)) || !["INTERNAL", "CUSTOMER"].includes(String(body.visibility))) return errorJson(422, "INVALID_ACTIVITY", "Activity không hợp lệ."); return json({ ok: true, activity: await crmRepository.addActivity(lead.id, { type: body.type as never, content: body.content.trim(), visibility: body.visibility as never }, actor) }, 201); };

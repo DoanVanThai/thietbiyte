@@ -1,0 +1,115 @@
+---
+import CrmShell from "@/components/CrmShell.astro";
+import { crmViewQuotePage } from "@/server/crm-view";
+
+const page = Math.max(1, Number(Astro.url.searchParams.get("page")) || 1);
+const { requests, pagination } = await crmViewQuotePage(Astro.locals.auth!, page, 50);
+const phoneHref = (phone = "") => `tel:${phone.replace(/[^\d+]/g, "")}`;
+const productSummary = (products: typeof requests[number]["products"]) => products
+  .map((product) => `${product.name} · ${product.model}${product.quantity > 1 ? ` × ${product.quantity}` : ""}`)
+  .join(", ");
+---
+
+<CrmShell
+  title="Yêu cầu mới"
+  description="Xem thông tin khách để lại và gọi lại tư vấn."
+  active="quotes"
+  section="Yêu cầu mới"
+  navigation={false}
+>
+  <header class="crm-page-header quote-request-header">
+    <div>
+      <h1>Yêu cầu mới</h1>
+      <span>Khách gửi thông tin sẽ xuất hiện tại đây. Chỉ cần gọi lại để hỗ trợ.</span>
+    </div>
+  </header>
+
+  <form class="crm-filter-bar quote-request-filter" data-crm-filters data-target="quote" aria-label="Tìm yêu cầu">
+    <label class="crm-filter-search">
+      <span>Tìm kiếm</span>
+      <div>
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" placeholder="Tên khách, số điện thoại hoặc sản phẩm..." data-filter-search />
+      </div>
+    </label>
+    <button class="crm-filter-reset" type="reset" data-filter-reset><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Đặt lại</button>
+  </form>
+
+  <div class="quote-request-count" aria-live="polite">
+    <strong data-result-count>{requests.length}</strong>
+    <span>yêu cầu</span>
+  </div>
+
+  <div class="crm-table-wrap quote-request-table-wrap">
+    <table class="crm-table quote-request-table">
+      <caption class="sr-only">Danh sách khách hàng yêu cầu tư vấn</caption>
+      <thead>
+        <tr>
+          <th scope="col">Thời gian</th>
+          <th scope="col">Khách hàng</th>
+          <th scope="col">Điện thoại</th>
+          <th scope="col">Sản phẩm quan tâm</th>
+          <th scope="col">Nhu cầu</th>
+          <th scope="col">Liên hệ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {requests.map((request) => (
+          <tr data-filter-row data-search={`${request.customer} ${request.phone || ""} ${request.organization} ${productSummary(request.products)} ${request.requirement}`}>
+            <td><strong>{request.created}</strong><small>{request.id}</small></td>
+            <td><strong>{request.customer}</strong>{request.organization !== "—" && <small>{request.organization}</small>}</td>
+            <td class="quote-request-phone">{request.phone || "Chưa cung cấp"}</td>
+            <td>{productSummary(request.products) || "Cần tư vấn chọn thiết bị"}</td>
+            <td>{request.requirement || "Khách cần được liên hệ tư vấn."}</td>
+            <td>
+              {request.phone ? (
+                <a class="button button-primary button-sm quote-call-action" href={phoneHref(request.phone)} aria-label={`Gọi ${request.customer} theo số ${request.phone}`}>
+                  <i class="ph ph-phone" aria-hidden="true"></i>Gọi ngay
+                </a>
+              ) : <span class="quote-no-phone">Thiếu số điện thoại</span>}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="crm-mobile-list quote-request-mobile">
+    {requests.map((request) => (
+      <article data-filter-row data-search={`${request.customer} ${request.phone || ""} ${request.organization} ${productSummary(request.products)} ${request.requirement}`}>
+        <header>
+          <div><strong>{request.customer}</strong><span>{request.created} · {request.id}</span></div>
+        </header>
+        <dl>
+          <div><dt>Điện thoại</dt><dd>{request.phone || "Chưa cung cấp"}</dd></div>
+          <div><dt>Sản phẩm</dt><dd>{productSummary(request.products) || "Cần tư vấn chọn thiết bị"}</dd></div>
+          <div><dt>Nhu cầu</dt><dd>{request.requirement || "Khách cần được liên hệ tư vấn."}</dd></div>
+        </dl>
+        {request.phone && (
+          <footer>
+            <a class="quote-call-action" href={phoneHref(request.phone)} aria-label={`Gọi ${request.customer} theo số ${request.phone}`}>
+              <i class="ph ph-phone" aria-hidden="true"></i>Gọi ngay {request.phone}
+            </a>
+          </footer>
+        )}
+      </article>
+    ))}
+  </div>
+
+  <div class="crm-empty-state" data-filter-empty hidden>
+    <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+    <h2>Không tìm thấy yêu cầu</h2>
+    <p>Thử tìm lại bằng tên khách, số điện thoại hoặc tên sản phẩm.</p>
+    <button class="button button-outline" type="button" data-empty-reset>Xóa tìm kiếm</button>
+  </div>
+  {pagination.totalPages > 1 && (
+    <footer class="admin-pagination">
+      <span>{(pagination.page - 1) * pagination.pageSize + 1} đến {(pagination.page - 1) * pagination.pageSize + requests.length} / {pagination.total}</span>
+      <nav aria-label="Phân trang yêu cầu">
+        {pagination.page > 1 ? <a class="button button-outline button-sm" href={`/admin/crm/quotes?page=${pagination.page - 1}`} data-astro-prefetch="tap"><i class="ph ph-caret-left" aria-hidden="true"></i>Trước</a> : <span></span>}
+        <span aria-current="page">Trang {pagination.page}/{pagination.totalPages}</span>
+        {pagination.page < pagination.totalPages ? <a class="button button-outline button-sm" href={`/admin/crm/quotes?page=${pagination.page + 1}`} data-astro-prefetch="tap">Sau<i class="ph ph-caret-right" aria-hidden="true"></i></a> : <span></span>}
+      </nav>
+    </footer>
+  )}
+</CrmShell>

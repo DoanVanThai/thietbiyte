@@ -1,0 +1,209 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
+import ResponsiveImage from "@/components/ResponsiveImage.astro";
+import "@/styles/home-top.css";
+import {
+  medicalGroups,
+  veterinaryGroups,
+} from "@/data/homepage";
+import { homepageContent } from "@/lib/public-content";
+
+const home = await homepageContent();
+const { hero, categories, featuredProducts, brands, specialties, solutions, projects, knowledge: articles, reasons, settings } = home;
+const telHref = `tel:${settings.hotline.replace(/\D/g, "")}`;
+---
+
+<BaseLayout
+  title="THIÊN LỘC GROUP | Thiết bị y tế và thú y"
+  description="Thiết bị, giải pháp và dịch vụ kỹ thuật cho bệnh viện, phòng khám, phòng xét nghiệm và cơ sở thú y."
+>
+  <Header />
+  <main id="main-content">
+    <section class="home-hero" aria-labelledby="hero-title">
+      <div class="container home-hero-shell">
+        <div class="home-hero-copy">
+          <p class="eyebrow">{hero.eyebrow}</p>
+          <h1 id="hero-title">{hero.title}</h1>
+          <p class="home-hero-description">{hero.description}</p>
+          <div class="cta-group">
+            <a class="button button-primary button-lg" href={hero.primaryCta.href}>{hero.primaryCta.label}<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+            <a class="button button-outline button-lg" href="/yeu-cau-bao-gia?source=homepage&need=Cần%20tư%20vấn%20chuyên%20sâu%20về%20thiết%20bị%20phù%20hợp.">{hero.secondaryCta.label}</a>
+          </div>
+        </div>
+        <figure class="home-hero-visual">
+          <ResponsiveImage src={hero.image || "/images/project-handover-placeholder.webp"} alt={hero.title} width={1600} height={1067} sourceWidth={1600} sizes="(max-width: 767px) 100vw, 52vw" loading="eager" fetchpriority="high" />
+          <figcaption class="sr-only">Ảnh minh họa. Hình ảnh sản phẩm thực tế sẽ được cập nhật từ Admin.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <nav class="home-category-strip" id="categories" aria-label="Danh mục thiết bị nổi bật">
+      <div class="container home-category-track">
+        {categories.map((category) => (
+          <a href={category.query === "thu-y" ? "/thu-y" : `/danh-muc/${category.query}`}>
+            <ResponsiveImage src={category.image} alt="" width={240} height={180} sourceWidth={category.image.includes("hero-ultrasound") ? 1600 : 1400} sizes="(max-width: 640px) 42vw, 220px" style={`object-position:${category.imagePosition}`} />
+            <span><strong>{category.name}</strong><small>Xem thiết bị<i class="ph ph-arrow-right" aria-hidden="true"></i></small></span>
+          </a>
+        ))}
+      </div>
+    </nav>
+
+    <section class="home-overview" id="featured" aria-label="Thiết bị và thương hiệu nổi bật">
+      <div class="container home-overview-grid">
+        <section class="home-panel home-featured-panel" aria-labelledby="home-featured-title">
+          <header><div><h2 id="home-featured-title">Thiết bị nổi bật</h2><p>Các cấu hình đang được quan tâm tại Thiên Lộc Group</p></div><a href="/san-pham">Xem tất cả<i class="ph ph-arrow-right" aria-hidden="true"></i></a></header>
+          <div class="home-featured-products">
+            {featuredProducts.map((product) => <article data-product-id={product.id}>
+              <a class="home-featured-image" href={`/san-pham/${product.slug}`}><ResponsiveImage src={product.image || "/images/project-handover-placeholder.webp"} alt={`Ảnh ${product.name}`} width={420} height={320} sourceWidth={product.image.includes("hero-ultrasound") ? 1600 : 1400} sizes="(max-width: 640px) 78vw, (max-width: 1024px) 42vw, 230px" style={`object-position:${product.imagePosition}`} /></a>
+              <button type="button" data-favorite-product data-product-id={product.id} aria-pressed="false" aria-label={`Lưu ${product.name}`} title="Lưu sản phẩm"><i class="ph ph-heart" aria-hidden="true"></i></button>
+              <span>{product.category}</span><h3><a href={`/san-pham/${product.slug}`}>{product.name}</a></h3><p>{product.brand} · {product.model}</p>
+            </article>)}
+          </div>
+        </section>
+        <section class="home-panel home-brands-panel" aria-labelledby="home-brands-title">
+          <header><div><h2 id="home-brands-title">Thương hiệu thiết bị</h2><p>Tìm thiết bị theo hãng sản xuất.</p></div><a href="/san-pham">Xem tất cả<i class="ph ph-arrow-right" aria-hidden="true"></i></a></header>
+          <div class="home-brand-grid">
+            {brands.map((brand) => (
+              <a class:list={["home-brand-link", brand.image && "has-image"]} href={`/thuong-hieu/${brand.slug}`}>
+                {brand.image && (
+                  <span class="home-brand-logo" aria-hidden="true">
+                    <img src={brand.image} alt="" width="96" height="64" loading="lazy" decoding="async" />
+                  </span>
+                )}
+                <span class="home-brand-name">{brand.name}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="section medical-index" id="medical">
+      <div class="container medical-layout">
+        <div class="medical-intro">
+          <h2>Thiết bị Y tế</h2>
+          <p>Tìm theo nhóm chuyên môn để rút ngắn quá trình lập danh mục và so sánh cấu hình.</p>
+          <a class="button button-primary" href="/y-te">Xem thiết bị Y tế</a>
+        </div>
+        <nav class="medical-list" aria-label="Nhóm thiết bị Y tế">
+          {medicalGroups.map((group, index) => (
+            <a href={`/?medical=${encodeURIComponent(group)}#featured`}><span>{String(index + 1).padStart(2, "0")}</span>{group}<i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>
+          ))}
+        </nav>
+      </div>
+    </section>
+
+    <section class="section veterinary-section" id="veterinary">
+      <div class="container veterinary-grid">
+        <div class="veterinary-copy">
+          <h2>Giải pháp thiết bị Thú y</h2>
+          <p>Thiết bị chẩn đoán, xét nghiệm, gây mê, monitoring và phẫu thuật cho phòng khám và bệnh viện thú y.</p>
+          <div class="veterinary-tags">
+            {veterinaryGroups.map((group) => <a href={`/?veterinary=${encodeURIComponent(group)}#featured`}>{group}</a>)}
+          </div>
+          <a class="button button-primary" href="/thu-y">Khám phá thiết bị Thú y</a>
+        </div>
+        <figure>
+          <ResponsiveImage src="/images/veterinary-diagnostic-room.webp" alt="Ảnh minh họa phòng chẩn đoán thú y với hệ thống siêu âm, monitor và gây mê" width={1400} height={934} sourceWidth={1400} sizes="(max-width: 767px) 100vw, 48vw" />
+          <figcaption>Ảnh minh họa, không đại diện cho một cơ sở cụ thể.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="specialty-strip" id="specialties">
+      <div class="container specialty-layout">
+        <h2>Tìm thiết bị theo chuyên khoa</h2>
+        <div class="specialty-links">
+          {specialties.map((specialty) => <a href={`/chuyen-khoa/${specialty.slug}`}>{specialty.name}<i class="ph ph-arrow-right" aria-hidden="true"></i></a>)}
+        </div>
+      </div>
+    </section>
+
+    <section class="section solutions-section" id="solutions">
+      <div class="container">
+        <SectionHeader title="Giải pháp theo mô hình cơ sở" description="Bắt đầu từ quy mô, chuyên khoa và luồng vận hành thay vì lựa chọn từng máy rời rạc." />
+        <div class="solutions-track">
+          {solutions.map(([title, description, image], index) => (
+            <article class:list={["solution-item", index === 0 && "solution-featured"]}>
+              <ResponsiveImage src={image} alt={`Ảnh minh họa ${title}`} width={900} height={600} sourceWidth={image.includes("hero-ultrasound") ? 1600 : 1400} sizes="(max-width: 767px) 100vw, 50vw" />
+              <div>
+                <h3>{title}</h3>
+                <p>{description}</p>
+                <a class="text-link" href={`/?solution=${encodeURIComponent(title)}#contact`}>Xem giải pháp<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section why-section" id="why-us">
+      <div class="container why-grid">
+        <div class="why-intro">
+          <h2>Vì sao lựa chọn Thiên Lộc?</h2>
+          <p>Từ tư vấn cấu hình đến hồ sơ, lắp đặt và hỗ trợ kỹ thuật sau bàn giao.</p>
+        </div>
+        <ol class="reason-list">
+          {reasons.map(([title, description], index) => (
+            <li><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{title}</h3><p>{description}</p></div></li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <section class="section projects-section" id="projects">
+      <div class="container">
+        <SectionHeader title="Cấu hình triển khai tham khảo" description="Hai cách tổ chức thiết bị theo không gian và luồng vận hành thường gặp." linkLabel="Trao đổi về cấu hình" href="#contact" />
+        <div class="projects-grid">
+          {projects.map((project) => (
+            <article class="project-item">
+              <figure>
+                <ResponsiveImage src={project.image} alt={`Hình ảnh ${project.title}`} width={1200} height={800} sourceWidth={1400} sizes="(max-width: 767px) 100vw, 50vw" />
+              </figure>
+              <div class="project-info">
+                <h3>{project.title}</h3>
+                <dl>
+                  <div><dt>Địa điểm</dt><dd>{project.location}</dd></div>
+                  <div><dt>Thiết bị</dt><dd>{project.equipment}</dd></div>
+                  <div><dt>Thời gian</dt><dd>{project.time}</dd></div>
+                </dl>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section knowledge-section" id="knowledge">
+      <div class="container">
+        <SectionHeader title="Kiến thức thiết bị y tế" description="Nội dung hỗ trợ lựa chọn, vận hành và quản lý thiết bị theo ngữ cảnh thực tế." linkLabel="Xem tất cả bài viết" href="/?content=knowledge#knowledge" />
+        <div class="article-list">
+          {articles.map(([category, title, excerpt]) => (
+            <article>
+              <div class="article-meta"><span>{category}</span></div>
+              <h3><a href={`/?article=${encodeURIComponent(title)}#knowledge`}>{title}</a></h3>
+              <p>{excerpt}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta" id="contact">
+      <div class="container final-cta-layout">
+        <div>
+          <h2>Bạn đang cần xây dựng danh mục thiết bị cho phòng khám?</h2>
+          <p>Đội ngũ Thiên Lộc hỗ trợ tư vấn thiết bị phù hợp với chuyên khoa, nhu cầu sử dụng và ngân sách đầu tư.</p>
+        </div>
+        <div class="cta-group">
+          <a class="button button-primary button-lg" href="/yeu-cau-bao-gia?source=global">Yêu cầu báo giá</a>
+          <a class="button button-outline button-lg" href={telHref}><i class="ph ph-phone" aria-hidden="true"></i> Gọi {settings.hotline}</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

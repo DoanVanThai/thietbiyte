@@ -1,0 +1,42 @@
+---
+import { getSettings } from "@/lib/content-repository";
+const settings = getSettings();
+const telHref = `tel:${settings.hotline.replace(/\D/g, "")}`;
+const zaloHref = settings.zalo.startsWith("http") ? settings.zalo : `https://zalo.me/${settings.zalo.replace(/\D/g, "")}`;
+---
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>
+      <a class="wordmark wordmark-footer" href="/" aria-label="THIÊN LỘC GROUP - Trang chủ">
+        {settings.logo
+          ? <img class="wordmark-logo" src={settings.logo} alt="" width="112" height="67" />
+          : <><span class="wordmark-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="wordmark-copy"><span>{settings.company.replace(/\s+GROUP$/i, "")}</span><small>GROUP</small></span></>}
+      </a>
+      <p>Thiết bị, giải pháp và dịch vụ kỹ thuật cho cơ sở y tế và thú y.</p>
+    </div>
+    <nav aria-label="Sản phẩm">
+      <h2>Sản phẩm</h2>
+      <a href="/y-te">Thiết bị Y tế</a>
+      <a href="/thu-y">Thiết bị Thú y</a>
+      <a href="/thuong-hieu/chison">Thương hiệu</a>
+    </nav>
+    <nav aria-label="Năng lực">
+      <h2>Năng lực</h2>
+      <a href="/#solutions">Giải pháp</a>
+      <a href="/#projects">Dự án</a>
+      <a href="/#why-us">Dịch vụ kỹ thuật</a>
+    </nav>
+    <div>
+      <h2>Liên hệ</h2>
+      <a href={telHref}>{settings.hotline}</a>
+      {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
+      {settings.address && <p>{settings.address}</p>}
+      {settings.zalo && <a href={zaloHref} rel="nofollow">Zalo</a>}
+      {settings.facebook && <a href={settings.facebook} rel="nofollow">Facebook</a>}
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© 2026 {settings.company}</span>
+    <span>Thiết bị y tế · Thiết bị thú y · Dịch vụ kỹ thuật</span>
+  </div>
+</footer>

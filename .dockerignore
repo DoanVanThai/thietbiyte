@@ -1,0 +1,16 @@
+.git
+.github
+.astro
+.data
+.env
+.env.*
+!.env.example
+dist
+node_modules
+output
+tmp
+var
+public/_astro
+public/uploads
+*.log
+.DS_Store

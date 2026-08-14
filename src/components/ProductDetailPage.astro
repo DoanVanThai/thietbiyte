@@ -1,0 +1,437 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import ProductGallery from "@/components/ProductGallery.astro";
+import ProductSpecifications from "@/components/ProductSpecifications.astro";
+import CatalogProductCard from "@/components/CatalogProductCard.astro";
+import { getSettings } from "@/lib/content-repository";
+import { productService } from "@/server/services/product-service";
+import { formatVnd, type ProductDetail } from "@/data/product-details";
+import "@/styles/catalog.css";
+import "@/styles/product-detail.css";
+
+interface Props {
+  detail: ProductDetail;
+}
+
+const { detail } = Astro.props;
+const { product } = detail;
+const catalogProducts = await productService.listPublicCatalog();
+const settings = getSettings();
+const telHref = `tel:${settings.hotline.replace(/\D/g, "")}`;
+const zaloHref = `https://zalo.me/${settings.zalo.replace(/\D/g, "")}`;
+const signedIn = Boolean(Astro.locals.auth);
+const groupLabel = product.group === "veterinary" ? "Thú y" : "Y tế";
+const groupHref = product.group === "veterinary" ? "/thu-y" : "/y-te";
+const relatedProducts = [
+  ...catalogProducts.filter((item) => item.id !== product.id && item.categorySlug === product.categorySlug),
+  ...catalogProducts.filter((item) => item.id !== product.id && item.categorySlug !== product.categorySlug && item.group === product.group),
+].slice(0, 4);
+
+const navigation = [
+  ["Tổng quan", "tong-quan", true],
+  ["Tính năng", "tinh-nang", detail.features.length > 0],
+  ["Cấu hình", "cau-hinh", detail.configurations.length > 0],
+  ["Thông số", "thong-so", detail.specificationGroups.length > 0],
+  ["Ứng dụng", "ung-dung", detail.applications.length > 0],
+  ["Tài liệu", "tai-lieu", detail.documents.filter((document) => document.access === "public" || (document.access === "login" && signedIn)).length > 0],
+  ["Bảo hành", "bao-hanh", Boolean(detail.warranty)],
+  ["FAQ", "faq", detail.faq.length > 0],
+].filter((item) => item[2]) as [string, string, boolean][];
+
+const priceLabel = detail.priceMode === "SHOW_PRICE" && typeof detail.priceVnd === "number"
+  ? formatVnd(detail.priceVnd)
+  : detail.priceMode === "CONTACT"
+    ? "Liên hệ để nhận giá"
+    : "Yêu cầu báo giá";
+
+const quoteHref = `/yeu-cau-bao-gia?product=${encodeURIComponent(product.id)}&source=product-detail`;
+const publicDocuments = detail.documents.filter((document) => document.access === "public" || (document.access === "login" && signedIn));
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: product.name,
+  image: detail.gallery.filter((item) => item.type === "image").map((item) => item.src),
+  description: detail.overview[0],
+  sku: product.model,
+  model: product.model,
+  category: product.category,
+  brand: { "@type": "Brand", name: product.brand },
+  additionalProperty: detail.specificationGroups.flatMap((group) => group.items.map((item) => ({
+    "@type": "PropertyValue",
+    name: `${group.title}: ${item.label}`,
+    value: item.value,
+  }))),
+};
+---
+
+<BaseLayout
+  title={detail.seo?.title || `${detail.shortName} | ${product.category} | THIÊN LỘC GROUP`}
+  description={detail.seo?.description || detail.overview[0] || `${product.name} · ${product.brand} · ${product.model}`}
+  image={detail.seo?.ogImage || detail.gallery.find((item) => item.type === "image")?.src || product.image}
+  structuredData={schema}
+>
+  <Header />
+  <main id="main-content" class="product-detail-page" data-product-detail data-product-id={product.id}>
+    <div class="container product-breadcrumb">
+      <Breadcrumb items={[
+        { label: "Trang chủ", href: "/" },
+        { label: groupLabel, href: groupHref },
+        { label: product.category, href: `/danh-muc/${product.categorySlug}` },
+        { label: detail.shortName },
+      ]} />
+    </div>
+
+    <section class="product-hero" aria-labelledby="product-title">
+      <div class="container product-hero-layout">
+        <ProductGallery items={detail.gallery} productName={detail.shortName} />
+
+        <div class="product-summary">
+          <div class="product-category-line">
+            <a href={`/danh-muc/${product.categorySlug}`}>{product.category}</a>
+            {detail.dataNotice && <span>Dữ liệu minh họa</span>}
+          </div>
+          <p class="product-descriptor">{detail.descriptor}</p>
+          <h1 id="product-title">{detail.shortName}</h1>
+          <p class="product-full-name">{product.name}</p>
+
+          <div class="product-identity">
+            <a class="product-brand" href={`/thuong-hieu/${product.brandSlug}`}>{product.brand}</a>
+            <dl>
+              <div><dt>Model</dt><dd>{product.model}</dd></div>
+              <div><dt>Xuất xứ</dt><dd>{product.origin}</dd></div>
+              {detail.manufacturingYear && <div><dt>Năm sản xuất</dt><dd>{detail.manufacturingYear}</dd></div>}
+              {detail.condition && <div><dt>Tình trạng</dt><dd>{detail.condition}</dd></div>}
+              {detail.availability && <div><dt>Khả dụng</dt><dd>{detail.availability}</dd></div>}
+            </dl>
+          </div>
+
+          <div class="product-price" data-price-mode={detail.priceMode}>
+            <span>Giá sản phẩm</span>
+            <strong>{priceLabel}</strong>
+            {detail.priceMode !== "SHOW_PRICE" && <small>Giá phụ thuộc cấu hình, phụ kiện và phạm vi dịch vụ.</small>}
+          </div>
+
+          <div class="product-primary-actions">
+            <a class="button button-primary button-lg" href={quoteHref}>
+              <i class="ph ph-file-text" aria-hidden="true"></i>
+              Nhận báo giá
+            </a>
+            <a class="button button-outline button-lg" href={telHref}>
+              <i class="ph ph-phone" aria-hidden="true"></i>
+              Gọi tư vấn
+            </a>
+          </div>
+          <div class="product-secondary-actions" aria-label="Thao tác sản phẩm">
+            <a href={zaloHref}><i class="ph ph-chat-circle-dots" aria-hidden="true"></i>Zalo</a>
+            <button type="button" data-favorite-product data-product-id={product.id} aria-pressed="false"><i class="ph ph-bookmark-simple" aria-hidden="true"></i><span data-action-label>Lưu sản phẩm</span></button>
+            <button type="button" data-compare-product data-product-id={product.id} aria-pressed="false"><i class="ph ph-arrows-left-right" aria-hidden="true"></i><span data-action-label>So sánh</span></button>
+          </div>
+
+          {detail.dataNotice && <p class="product-data-notice"><i class="ph ph-info" aria-hidden="true"></i>{detail.dataNotice}</p>}
+        </div>
+      </div>
+
+      {detail.quickInfo.length > 0 && (
+        <div class="container quick-information" data-items={detail.quickInfo.length} aria-label="Thông tin nhanh">
+          {detail.quickInfo.map((item) => (
+            <div>
+              <i class={`ph ${item.icon}`} aria-hidden="true"></i>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+
+    <nav class="product-content-navigation" aria-label="Nội dung sản phẩm" data-product-navigation>
+      <div class="container">
+        {navigation.map(([label, id], index) => <a href={`#${id}`} aria-current={index === 0 ? "true" : undefined}>{label}</a>)}
+      </div>
+    </nav>
+
+    <div class="container product-content">
+      <section class="product-section overview-section" data-has-visual={detail.gallery[1]?.type === "image" ? "true" : "false"} id="tong-quan" aria-labelledby="overview-title">
+        <div class="overview-copy">
+          <h2 id="overview-title">Tổng quan</h2>
+          {detail.overview.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+        {detail.gallery[1]?.type === "image" && (
+          <figure class="overview-visual">
+            <img src={detail.gallery[1].src} alt={detail.gallery[1].alt} width="960" height="720" loading="lazy" style={`object-position:${detail.gallery[1].position || "center"}`} />
+            <figcaption>Hình ảnh minh họa, cấu hình thực tế phụ thuộc hồ sơ được xác nhận.</figcaption>
+          </figure>
+        )}
+      </section>
+
+      {detail.features.length > 0 && (
+        <section class="product-section features-section" id="tinh-nang" aria-labelledby="features-title">
+          <div class="section-title-row">
+            <div>
+              <h2 id="features-title">Tính năng chính</h2>
+              <p>Các điểm cần đối chiếu khi lựa chọn cấu hình.</p>
+            </div>
+          </div>
+          <div class="feature-list" data-items={detail.features.length}>
+            {detail.features.map((feature) => (
+              <article>
+                <i class="ph ph-check-circle" aria-hidden="true"></i>
+                <div><h3>{feature.title}</h3><p>{feature.description}</p></div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {detail.configurations.length > 0 && (
+        <section class="product-section configuration-section" id="cau-hinh" aria-labelledby="configuration-title">
+          <div class="section-title-row">
+            <div>
+              <h2 id="configuration-title">Cấu hình</h2>
+              <p>Tách rõ thành phần chính, đầu dò, phụ kiện và tùy chọn mua thêm.</p>
+            </div>
+          </div>
+          <div class="configuration-groups">
+            {detail.configurations.map((group) => (
+              <article>
+                <header><h3>{group.title}</h3>{group.description && <p>{group.description}</p>}</header>
+                <ul>
+                  {group.items.map((item) => <li><span>{item.name}</span>{item.detail && <small>{item.detail}</small>}</li>)}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {detail.specificationGroups.length > 0 && <ProductSpecifications groups={detail.specificationGroups} />}
+
+      {detail.applications.length > 0 && (
+        <section class="product-section applications-section" id="ung-dung" aria-labelledby="applications-title">
+          <div class="section-title-row">
+            <div><h2 id="applications-title">Ứng dụng</h2><p>Những bối cảnh sử dụng phù hợp với thiết bị và cấu hình hiện có.</p></div>
+          </div>
+          <ul class="application-list" data-items={detail.applications.length}>
+            {detail.applications.map((application) => <li><i class="ph ph-check" aria-hidden="true"></i>{application}</li>)}
+          </ul>
+        </section>
+      )}
+
+      {publicDocuments.length > 0 && (
+        <section class="product-section documents-section" id="tai-lieu" aria-labelledby="documents-title">
+          <div class="section-title-row">
+            <div><h2 id="documents-title">Tài liệu</h2><p>Tài liệu được cung cấp theo quyền truy cập của từng hồ sơ.</p></div>
+          </div>
+          <div class="document-list">
+            {publicDocuments.map((document) => (
+              <article>
+                <i class="ph ph-file-pdf" aria-hidden="true"></i>
+                <div><h3>{document.title}</h3><p>{document.format}{document.size ? ` · ${document.size}` : ""}</p></div>
+                <span class:list={["document-access", `is-${document.access}`]}>{document.access === "public" ? "Công khai" : "Cung cấp theo yêu cầu"}</span>
+                {document.href ? (
+                  <a class="button button-outline button-sm" href={document.href} download={document.access === "public" ? true : undefined}>Tải xuống</a>
+                ) : document.access === "login" ? (
+                  <a class="button button-outline button-sm" href={`/yeu-cau-bao-gia?product=${encodeURIComponent(product.id)}&source=document&need=${encodeURIComponent(`Cần nhận tài liệu ${document.title}.`)}`}>Yêu cầu tài liệu</a>
+                ) : (
+                  <span class="document-pending">Chờ cập nhật file</span>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {detail.warranty && (
+        <section class="product-section warranty-section" id="bao-hanh" aria-labelledby="warranty-title">
+          <div class="section-title-row"><div><h2 id="warranty-title">Bảo hành và hỗ trợ</h2><p>Điều kiện bảo hành, lắp đặt và hỗ trợ kỹ thuật của thiết bị.</p></div></div>
+          <dl class="warranty-list">
+            {detail.warranty.period && <div><dt>Thời hạn bảo hành</dt><dd>{detail.warranty.period}</dd></div>}
+            {detail.warranty.coverage && <div><dt>Phạm vi</dt><dd>{detail.warranty.coverage}</dd></div>}
+            {detail.warranty.installation && <div><dt>Lắp đặt</dt><dd>{detail.warranty.installation}</dd></div>}
+            {detail.warranty.technicalSupport && <div><dt>Hỗ trợ kỹ thuật</dt><dd>{detail.warranty.technicalSupport}</dd></div>}
+          </dl>
+        </section>
+      )}
+
+      {detail.faq.length > 0 && (
+        <section class="product-section faq-section" id="faq" aria-labelledby="faq-title">
+          <div class="section-title-row"><div><h2 id="faq-title">Câu hỏi thường gặp</h2><p>Thông tin giúp chuẩn bị yêu cầu tư vấn và báo giá.</p></div></div>
+          <div class="faq-list">
+            {detail.faq.map((item, index) => (
+              <details open={index === 0}><summary>{item.question}<i class="ph ph-caret-down" aria-hidden="true"></i></summary><p>{item.answer}</p></details>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+
+    {relatedProducts.length > 0 && (
+      <section class="related-products" aria-labelledby="related-products-title">
+        <div class="container">
+          <div class="section-title-row"><div><h2 id="related-products-title">Thiết bị liên quan</h2><p>Các thiết bị cùng danh mục hoặc cùng nhóm sử dụng.</p></div><a class="text-link" href={`/danh-muc/${product.categorySlug}`}>Xem danh mục<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
+          <div class="related-product-grid">
+            {relatedProducts.map((item) => <CatalogProductCard product={item} headingLevel="h3" />)}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <div class="mobile-product-cta" aria-label="Liên hệ nhanh">
+      <a href={telHref}><i class="ph ph-phone" aria-hidden="true"></i><span>Gọi</span></a>
+      <a href={zaloHref}><i class="ph ph-chat-circle-dots" aria-hidden="true"></i><span>Zalo</span></a>
+      <a class="button button-primary" href={quoteHref}>Nhận báo giá</a>
+    </div>
+
+    <div class="product-toast" role="status" aria-live="polite" hidden data-product-toast></div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  const root = document.querySelector<HTMLElement>("[data-product-detail]");
+
+  if (root) {
+    const toast = root.querySelector<HTMLElement>("[data-product-toast]");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let toastTimer = 0;
+    const showToast = (message: string) => {
+      if (!toast) return;
+      window.clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.hidden = false;
+      requestAnimationFrame(() => toast.classList.add("is-visible"));
+      toastTimer = window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => { toast.hidden = true; }, reduceMotion.matches ? 0 : 160);
+      }, 2200);
+    };
+
+    const gallery = root.querySelector<HTMLElement>("[data-product-gallery]");
+    const thumbnails = Array.from(gallery?.querySelectorAll<HTMLButtonElement>("[data-gallery-thumbnail]") || []);
+    const mainImage = gallery?.querySelector<HTMLImageElement>("[data-gallery-main-image]");
+    const mainVideo = gallery?.querySelector<HTMLVideoElement>("[data-gallery-main-video]");
+    const zoomButton = gallery?.querySelector<HTMLButtonElement>("[data-gallery-zoom]");
+    const zoomDialog = gallery?.querySelector<HTMLDialogElement>("[data-gallery-dialog]");
+    const zoomImage = gallery?.querySelector<HTMLImageElement>("[data-gallery-dialog-image]");
+    const galleryCounter = gallery?.querySelector<HTMLElement>("[data-gallery-current]");
+    let galleryIndex = 0;
+
+    const animateGalleryItem = (element: HTMLElement | null) => {
+      if (!element || reduceMotion.matches) return;
+      element.animate([
+        { opacity: .18 },
+        { opacity: 1 },
+      ], { duration: 210, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+    };
+
+    const selectGalleryItem = (index: number) => {
+      if (!thumbnails.length) return;
+      galleryIndex = (index + thumbnails.length) % thumbnails.length;
+      const selected = thumbnails[galleryIndex];
+      const type = selected.dataset.type || "image";
+      const src = selected.dataset.src || "";
+      const alt = selected.dataset.alt || "";
+      const position = selected.dataset.position || "center";
+
+      thumbnails.forEach((thumbnail, thumbnailIndex) => {
+        const active = thumbnailIndex === galleryIndex;
+        thumbnail.classList.toggle("is-active", active);
+        thumbnail.setAttribute("aria-pressed", String(active));
+      });
+
+      if (type === "image") {
+        if (mainVideo) mainVideo.pause();
+        if (mainImage) {
+          mainImage.src = src;
+          mainImage.srcset = selected.dataset.srcset || "";
+          mainImage.alt = alt;
+          mainImage.style.objectPosition = position;
+          mainImage.hidden = false;
+        }
+        if (mainVideo) mainVideo.hidden = true;
+        if (zoomButton) zoomButton.hidden = false;
+        if (zoomImage) { zoomImage.src = src; zoomImage.alt = alt; }
+        animateGalleryItem(mainImage || null);
+      } else {
+        if (mainImage) mainImage.hidden = true;
+        if (mainVideo) {
+          mainVideo.src = src;
+          mainVideo.poster = selected.dataset.poster || "";
+          mainVideo.setAttribute("aria-label", alt);
+          mainVideo.hidden = false;
+        }
+        if (zoomButton) zoomButton.hidden = true;
+        animateGalleryItem(mainVideo || null);
+      }
+      if (galleryCounter) galleryCounter.textContent = String(galleryIndex + 1);
+    };
+
+    thumbnails.forEach((thumbnail, index) => thumbnail.addEventListener("click", () => selectGalleryItem(index)));
+    gallery?.querySelector("[data-gallery-previous]")?.addEventListener("click", () => selectGalleryItem(galleryIndex - 1));
+    gallery?.querySelector("[data-gallery-next]")?.addEventListener("click", () => selectGalleryItem(galleryIndex + 1));
+    zoomButton?.addEventListener("click", () => {
+      zoomDialog?.showModal();
+      document.body.classList.add("has-modal-open");
+    });
+    gallery?.querySelector("[data-gallery-dialog-close]")?.addEventListener("click", () => zoomDialog?.close());
+    zoomDialog?.addEventListener("click", (event) => { if (event.target === zoomDialog) zoomDialog.close(); });
+    zoomDialog?.addEventListener("close", () => document.body.classList.remove("has-modal-open"));
+
+    const specificationRoot = root.querySelector<HTMLElement>("[data-specifications]");
+    const specGroups = Array.from(specificationRoot?.querySelectorAll<HTMLDetailsElement>(".specification-group") || []);
+    specificationRoot?.querySelector("[data-spec-expand]")?.addEventListener("click", () => specGroups.forEach((group) => { group.open = true; }));
+    specificationRoot?.querySelector("[data-spec-collapse]")?.addEventListener("click", () => specGroups.forEach((group) => { group.open = false; }));
+    specificationRoot?.querySelector<HTMLButtonElement>("[data-spec-copy]")?.addEventListener("click", async (event) => {
+      const copyButton = event.currentTarget as HTMLButtonElement;
+      const rows = Array.from(specificationRoot.querySelectorAll<HTMLElement>("[data-spec-row]"));
+      const text = rows.map((row) => `${row.dataset.specGroup}\n${row.dataset.specLabel}: ${row.dataset.specValue}`).join("\n\n");
+      try {
+        await navigator.clipboard.writeText(text);
+        copyButton.innerHTML = '<i class="ph ph-check" aria-hidden="true"></i>Đã sao chép';
+        window.setTimeout(() => {
+          copyButton.innerHTML = '<i class="ph ph-copy" aria-hidden="true"></i>Sao chép thông số';
+        }, 1800);
+        showToast("Đã sao chép thông số kỹ thuật.");
+      } catch {
+        showToast("Không thể sao chép tự động. Hãy thử lại trong trình duyệt hỗ trợ clipboard.");
+      }
+    });
+
+    const navigation = root.querySelector<HTMLElement>("[data-product-navigation]");
+    const navigationLinks = Array.from(navigation?.querySelectorAll<HTMLAnchorElement>("a[href^='#']") || []);
+    const sections = navigationLinks.map((link) => document.querySelector<HTMLElement>(link.hash)).filter(Boolean) as HTMLElement[];
+    const navigationTrack = navigation?.querySelector<HTMLElement>(".container");
+    const indicator = document.createElement("span");
+    indicator.className = "product-nav-indicator";
+    indicator.setAttribute("aria-hidden", "true");
+    navigationTrack?.append(indicator);
+    navigation?.classList.add("has-motion-indicator");
+
+    const positionIndicator = (link: HTMLAnchorElement) => {
+      indicator.style.width = `${Math.max(0, link.offsetWidth - 32)}px`;
+      indicator.style.transform = `translateX(${link.offsetLeft + 16}px)`;
+    };
+
+    const setActiveNavigation = (activeSectionId: string) => {
+      const activeLink = navigationLinks.find((link) => link.hash === `#${activeSectionId}`);
+      navigationLinks.forEach((link) => link.setAttribute("aria-current", String(link === activeLink)));
+      if (activeLink) positionIndicator(activeLink);
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      setActiveNavigation(visible.target.id);
+    }, { rootMargin: "-18% 0px -68%", threshold: [0, .2, .5] });
+    sections.forEach((section) => observer.observe(section));
+    navigationLinks.forEach((link) => link.addEventListener("click", () => setActiveNavigation(link.hash.slice(1))));
+    if (navigationLinks[0]) positionIndicator(navigationLinks[0]);
+    if (navigationTrack) new ResizeObserver(() => {
+      const activeLink = navigationLinks.find((link) => link.getAttribute("aria-current") === "true") || navigationLinks[0];
+      if (activeLink) positionIndicator(activeLink);
+    }).observe(navigationTrack);
+  }
+</script>

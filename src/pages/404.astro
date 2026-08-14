@@ -1,0 +1,39 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+---
+
+<BaseLayout
+  title="Không tìm thấy trang | THIÊN LỘC GROUP"
+  description="Trang bạn đang tìm không tồn tại hoặc đã được di chuyển."
+  robots="noindex, follow"
+>
+  <Header />
+  <main id="main-content" class="not-found-page">
+    <section class="container not-found-shell" aria-labelledby="not-found-title">
+      <p class="not-found-code">404</p>
+      <h1 id="not-found-title">Không tìm thấy trang</h1>
+      <p>Đường dẫn có thể đã thay đổi. Bạn có thể quay về trang chủ hoặc tiếp tục tìm thiết bị trong danh mục.</p>
+      <div class="not-found-actions">
+        <a class="button button-primary button-lg" href="/">Về trang chủ</a>
+        <a class="button button-outline button-lg" href="/san-pham">Xem sản phẩm</a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .not-found-page { display: grid; min-height: min(680px, calc(100vh - 180px)); place-items: center; padding: clamp(72px, 10vw, 144px) 0; }
+  .not-found-shell { text-align: center; }
+  .not-found-code { margin: 0 0 var(--space-3); color: var(--color-primary); font-size: .75rem; font-weight: 700; letter-spacing: .18em; }
+  h1 { font-size: clamp(2rem, 4.2vw, 3.5rem); letter-spacing: -.035em; }
+  h1 + p { max-width: 58ch; margin: var(--space-5) auto 0; color: var(--color-muted-foreground); line-height: 1.7; }
+  .not-found-actions { display: flex; justify-content: center; gap: var(--space-3); margin-top: var(--space-8); }
+  @media (max-width: 430px) {
+    .not-found-page { min-height: calc(100vh - 120px); padding: var(--space-16) 0; }
+    .not-found-actions { align-items: stretch; flex-direction: column; }
+    .not-found-actions .button { width: 100%; }
+  }
+</style>

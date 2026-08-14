@@ -1,0 +1,23 @@
+---
+interface Item {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  items: readonly Item[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav class="breadcrumb" aria-label="Đường dẫn trang">
+  <ol>
+    {items.map((item, index) => (
+      <li>
+        {index > 0 && <i class="ph ph-caret-right" aria-hidden="true"></i>}
+        {item.href ? <a href={item.href}>{item.label}</a> : <span aria-current="page">{item.label}</span>}
+      </li>
+    ))}
+  </ol>
+</nav>

@@ -1,0 +1,26 @@
+---
+import CrmShell from "@/components/CrmShell.astro";
+import { crmViewFollowUps, crmViewSales } from "@/server/crm-view";
+const crmFollowUps = await crmViewFollowUps(Astro.locals.auth!);
+const salesPeople = await crmViewSales();
+const order: Record<string, number> = { overdue: 0, today: 1, upcoming: 2, done: 3 };
+const followUps = [...crmFollowUps].sort((a, b) => order[a.state] - order[b.state]);
+---
+<CrmShell title="Follow-ups" description="Lịch theo dõi và các việc quá hạn của đội Sales." active="follow-ups" section="CRM · Follow-ups">
+  <header class="crm-page-header"><div><p>CRM</p><h1>Follow-ups</h1><span>Ưu tiên việc quá hạn và việc cần làm hôm nay.</span></div><button class="button button-primary" type="button" data-demo-action="follow-up"><i class="ph ph-plus" aria-hidden="true"></i>Thêm follow-up</button></header>
+  <div class="follow-up-summary"><a href="#overdue"><span>Quá hạn</span><strong>{followUps.filter((item) => item.state === "overdue").length}</strong></a><a href="#today"><span>Hôm nay</span><strong>{followUps.filter((item) => item.state === "today").length}</strong></a><a href="#upcoming"><span>Sắp tới</span><strong>{followUps.filter((item) => item.state === "upcoming").length}</strong></a><a href="#done"><span>Hoàn tất</span><strong>{followUps.filter((item) => item.state === "done").length}</strong></a></div>
+  <form class="crm-filter-bar crm-filter-compact" data-crm-filters><label class="crm-filter-search"><span>Tìm kiếm</span><div><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input type="search" placeholder="Lead, đơn vị, ghi chú..." data-filter-search /></div></label><label><span>Type</span><select data-filter-key="type"><option value="">Tất cả</option><option>Call</option><option>Email</option><option>Zalo</option><option>Meeting</option></select></label><label><span>Assigned person</span><select data-filter-key="sales"><option value="">Tất cả</option>{salesPeople.map((sales) => <option>{sales}</option>)}</select></label><label><span>Ngày</span><input type="date" /></label><button class="crm-filter-reset" type="reset" data-filter-reset><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Đặt lại</button></form>
+  <div class="follow-up-list">
+    <header><span>Date & time</span><span>Lead</span><span>Type & note</span><span>Assigned</span><span>Status</span><span></span></header>
+    {followUps.map((item, index) => (
+      <article id={followUps.findIndex((candidate) => candidate.state === item.state) === index ? item.state : undefined} data-filter-row data-search={`${item.leadName} ${item.organization} ${item.note}`} data-type={item.type} data-sales={item.assigned}>
+        <time class:list={[item.state === "overdue" && "is-overdue"]}><strong>{item.date}</strong><span>{item.time}</span></time>
+        <div><a href={`/admin/crm/leads/${item.leadId}`}>{item.leadName}</a><span>{item.organization}</span></div>
+        <div><strong>{item.type}</strong><p>{item.note}</p></div><span>{item.assigned}</span>
+        <span class={`follow-up-state follow-up-${item.state}`}>{item.state === "overdue" ? "Quá hạn" : item.state === "today" ? "Hôm nay" : item.state === "done" ? "Hoàn tất" : "Sắp tới"}</span>
+        <button type="button" data-complete-followup data-followup-id={item.id} aria-label={`Đánh dấu hoàn tất ${item.leadName}`}><i class="ph ph-check" aria-hidden="true"></i></button>
+      </article>
+    ))}
+  </div>
+  <div class="crm-empty-state" data-filter-empty hidden><i class="ph ph-calendar-x" aria-hidden="true"></i><h2>Không có follow-up phù hợp</h2><button class="button button-outline" type="button" data-empty-reset>Xóa bộ lọc</button></div>
+</CrmShell>

@@ -1,0 +1,35 @@
+---
+import { searchSuggestions } from "@/data/homepage";
+
+interface Props {
+  compact?: boolean;
+  id?: string;
+}
+
+const { compact = false, id = "global-search" } = Astro.props;
+---
+
+{compact ? (
+  <button class="search-launcher" type="button" data-search-open aria-label="Mở tìm kiếm toàn bộ website">
+    <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+    <span>Tìm thiết bị, model hoặc hãng...</span>
+    <kbd aria-hidden="true">⌘ K</kbd>
+  </button>
+) : (
+  <form class="search-form" role="search" action="/tim-kiem" method="get">
+    <label class="sr-only" for={id}>Tìm kiếm thiết bị</label>
+    <i class="ph ph-magnifying-glass search-icon" aria-hidden="true"></i>
+    <input
+      id={id}
+      name="q"
+      type="search"
+      list={`${id}-suggestions`}
+      placeholder="Tìm theo tên thiết bị, model hoặc hãng..."
+      autocomplete="off"
+    />
+    <datalist id={`${id}-suggestions`}>
+      {searchSuggestions.map((item) => <option value={item} />)}
+    </datalist>
+    <button class="button button-primary search-submit" type="submit">Tìm kiếm</button>
+  </form>
+)}

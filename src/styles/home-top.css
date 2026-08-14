@@ -1,0 +1,270 @@
+/* Homepage: image-led, clinical and precise. */
+.home-hero {
+  padding-block: var(--space-12) var(--space-10);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.home-hero-shell {
+  display: grid;
+  min-height: 500px;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  align-items: center;
+  gap: clamp(40px, 6vw, 88px);
+}
+
+.home-hero-copy { min-width: 0; }
+
+.home-hero-copy .eyebrow {
+  margin-bottom: var(--space-5);
+  color: var(--color-primary);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .11em;
+}
+
+.home-hero-copy h1 {
+  max-width: 14ch;
+  font-size: clamp(2.5rem, 4.1vw, 3.75rem);
+  line-height: 1.12;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.home-hero-description {
+  max-width: 54ch;
+  margin: var(--space-5) 0 var(--space-8);
+  color: var(--color-muted-foreground);
+  font-size: 1.0625rem;
+}
+
+.home-hero-visual {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-secondary);
+}
+
+.home-hero-visual img {
+  width: 100%;
+  min-height: 500px;
+  object-fit: cover;
+  object-position: 45% center;
+}
+
+.home-category-strip {
+  padding-block: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.home-category-track {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.home-category-track > a {
+  display: grid;
+  min-width: 0;
+  min-height: 76px;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  padding-inline: var(--space-4);
+}
+
+.home-category-track > a:first-child { padding-left: 0; }
+.home-category-track > a + a { border-left: 1px solid var(--color-border); }
+
+.home-category-track img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.home-category-track > a > span { display: block; min-width: 0; }
+.home-category-track strong { display: block; font-size: .875rem; line-height: 1.4; text-wrap: balance; }
+.home-category-track small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  color: var(--color-primary);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.home-overview {
+  padding-block: var(--space-16) var(--space-20);
+  background: var(--color-surface);
+}
+
+.home-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(300px, 4fr);
+  gap: clamp(40px, 5vw, 72px);
+  align-items: start;
+}
+
+.home-panel { min-width: 0; }
+.home-brands-panel { padding-left: clamp(32px, 4vw, 56px); border-left: 1px solid var(--color-border); }
+
+.home-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.home-panel > header h2 { font-size: 1.375rem; }
+.home-panel > header p { margin: 5px 0 0; color: var(--color-muted-foreground); font-size: .875rem; }
+.home-panel > header > a {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-primary);
+  font-size: .8125rem;
+  font-weight: 600;
+}
+
+.home-featured-products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--space-8);
+}
+
+.home-featured-products article {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 132px minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  gap: 3px var(--space-4);
+  padding-block: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.home-featured-image { grid-row: 1 / 4; overflow: hidden; border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+.home-featured-image img { width: 100%; height: 100%; min-height: 112px; object-fit: cover; }
+.home-featured-products article > button {
+  position: absolute;
+  top: var(--space-6);
+  left: 84px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.home-featured-products article > button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-subtle); }
+.home-featured-products article > span { color: var(--color-primary); font-size: .75rem; font-weight: 600; line-height: 1.4; }
+.home-featured-products h3 { font-size: .9375rem; line-height: 1.4; text-wrap: pretty; }
+.home-featured-products p { margin: var(--space-2) 0 0; color: var(--color-muted-foreground); font-size: .8125rem; line-height: 1.45; }
+
+.home-brand-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--color-border-strong); }
+.home-brand-grid a {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  gap: var(--space-3);
+  padding-right: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-primary);
+  font-size: .875rem;
+  font-weight: 700;
+}
+.home-brand-grid a:nth-child(even) { padding-left: var(--space-4); border-left: 1px solid var(--color-border); }
+
+.home-brand-grid a.has-image { min-height: 70px; }
+
+.home-brand-logo {
+  display: grid;
+  width: 48px;
+  height: 42px;
+  flex: 0 0 48px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle);
+}
+
+.home-brand-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.home-brand-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.medical-index { padding-block: var(--space-20) var(--space-24); }
+.veterinary-section { padding-block: var(--space-16) var(--space-20); }
+.solutions-section { padding-block: var(--space-24) var(--space-20); }
+.why-section { padding-block: var(--space-20); }
+.projects-section { padding-block: var(--space-24); }
+.knowledge-section { padding-block: var(--space-16) var(--space-20); }
+
+.projects-grid { gap: clamp(32px, 5vw, 64px); }
+.project-item { overflow: visible; border: 0; border-radius: 0; background: transparent; }
+.project-item figure { overflow: hidden; border-radius: var(--radius-md); }
+.project-info { padding: var(--space-5) 0 0; }
+
+@media (hover: hover) and (pointer: fine) {
+  .home-category-track > a:hover strong,
+  .home-featured-products h3 a:hover,
+  .home-brand-grid a:hover { color: var(--color-primary-hover); }
+}
+
+@media (max-width: 1180px) {
+  .home-category-track { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: var(--space-4); }
+  .home-category-track > a:nth-child(4) { padding-left: 0; border-left: 0; }
+  .home-overview-grid { grid-template-columns: 1fr; }
+  .home-brands-panel { padding: var(--space-10) 0 0; border-top: 1px solid var(--color-border); border-left: 0; }
+  .home-brand-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .home-brand-grid a { padding-inline: var(--space-4); border-left: 1px solid var(--color-border); }
+}
+
+@media (max-width: 960px) {
+  .home-hero-shell { min-height: 0; grid-template-columns: 1fr; gap: var(--space-10); }
+  .home-hero-copy h1 { max-width: 16ch; }
+  .home-hero-visual img { min-height: 0; aspect-ratio: 1.7; }
+}
+
+@media (max-width: 680px) {
+  .home-hero { padding-block: var(--space-10) var(--space-8); }
+  .home-hero-shell { gap: var(--space-8); }
+  .home-hero-copy h1 { font-size: 2.25rem; line-height: 1.16; }
+  .home-hero-description { margin-block: var(--space-4) var(--space-6); font-size: 1rem; }
+  .home-hero-copy > .cta-group { display: grid; grid-template-columns: 1fr; }
+  .home-hero-copy > .cta-group .button { width: 100%; }
+  .home-hero-visual img { aspect-ratio: 1.25; }
+  .home-category-track { display: flex; overflow-x: auto; scroll-snap-type: x proximity; overscroll-behavior-inline: contain; }
+  .home-category-track > a { width: 210px; flex: 0 0 210px; padding-inline: var(--space-4); border-left: 1px solid var(--color-border); scroll-snap-align: start; }
+  .home-category-track > a:first-child { padding-left: 0; border-left: 0; }
+  .home-overview { padding-block: var(--space-12) var(--space-16); }
+  .home-panel > header { display: grid; gap: var(--space-2); }
+  .home-featured-products { grid-template-columns: 1fr; }
+  .home-brand-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-brand-grid a { padding-left: 0; border-left: 0; }
+  .home-brand-grid a:nth-child(even) { padding-left: var(--space-4); border-left: 1px solid var(--color-border); }
+  .home-brand-logo { width: 42px; height: 38px; flex-basis: 42px; }
+  .medical-index,
+  .solutions-section,
+  .projects-section { padding-block: var(--space-16); }
+  .veterinary-section,
+  .why-section,
+  .knowledge-section { padding-block: var(--space-12); }
+}

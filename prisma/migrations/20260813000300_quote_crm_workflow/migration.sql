@@ -1,0 +1,2 @@
+-- Quote/CRM workflow tables are included in the Phase 21 foundation migration.
+-- This compatibility migration intentionally performs no additional DDL.

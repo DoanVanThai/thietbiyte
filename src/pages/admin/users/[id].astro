@@ -1,0 +1,56 @@
+---
+import AdminLayout from "@/layouts/AdminAccessLayout.astro";
+import { getRolesForAdmin, getUserForAdmin, getUserSecurityData } from "@/server/auth/admin-data";
+import { can, isSuperAdmin } from "@/server/auth/permissions";
+
+const user = await getUserForAdmin(Astro.params.id || "");
+if (!user) return Astro.redirect("/admin/users", 302);
+const roles = await getRolesForAdmin();
+const roleNames = new Map(roles.map((role) => [role.id, role.name]));
+const roleName = (id: string) => roleNames.get(id) || id;
+const security = await getUserSecurityData(user.id, Astro.locals.auth!.sessionId);
+const recentUserActivity = security.events;
+const userSessions = security.sessions;
+const canManageUsers = can(Astro.locals.auth, "user.manage");
+const canManageTarget = canManageUsers && (!user.roleIds.includes("super-admin") || isSuperAdmin(Astro.locals.auth));
+const statusLabel = { active: "Hoạt động", pending: "Chờ xác minh", disabled: "Đã vô hiệu hóa" };
+---
+
+<AdminLayout title={`${user.name} | Admin THIÊN LỘC GROUP`} description={`Chi tiết người dùng ${user.name}.`} activePath="users">
+  <article class="admin-page admin-detail-page" aria-labelledby="user-detail-title">
+    <a class="admin-back-link" href="/admin/users"><i class="ph ph-arrow-left" aria-hidden="true"></i>Danh sách người dùng</a>
+    <header class="admin-page-header admin-detail-header">
+      <div class="admin-detail-identity"><span class="admin-avatar admin-avatar-large" aria-hidden="true">{user.initials}</span><div><div class="admin-detail-title-row"><h1 id="user-detail-title">{user.name}</h1><span class={`admin-status admin-status-${user.status}`}>{statusLabel[user.status]}</span></div><p>{user.email} · {user.organization}</p></div></div>
+      <div class="admin-page-actions">{canManageUsers && user.roleIds.includes("admin") && <button class="button admin-danger-outline" type="button" data-confirm-action="remove-admin" data-confirm-name={user.name} data-user-id={user.id}><i class="ph ph-shield-slash" aria-hidden="true"></i>Gỡ Admin</button>}{canManageUsers && !user.roleIds.includes("super-admin") && <button class="button admin-danger-outline" type="button" data-confirm-action="disable-user" data-confirm-name={user.name} data-user-id={user.id}><i class="ph ph-user-minus" aria-hidden="true"></i>Vô hiệu hóa</button>}</div>
+    </header>
+
+    {user.roleIds.includes("super-admin") && <div class="admin-notice"><i class="ph ph-lock-key" aria-hidden="true"></i><div><strong>Tài khoản Super Admin được bảo vệ</strong><span>Vai trò thấp hơn không thể gỡ Super Admin, thay đổi quyền khóa hoặc vô hiệu hóa tài khoản này.</span></div></div>}
+
+    <div class="admin-detail-grid">
+      <section aria-labelledby="profile-title"><header><h2 id="profile-title">Hồ sơ</h2><p>Thông tin định danh và liên hệ.</p></header><dl class="admin-description-list"><div><dt>Họ tên</dt><dd>{user.name}</dd></div><div><dt>Email</dt><dd>{user.email}</dd></div><div><dt>Số điện thoại</dt><dd>{user.phone}</dd></div><div><dt>Địa điểm</dt><dd>{user.location}</dd></div><div><dt>Ngày tạo</dt><dd>{user.createdAt}</dd></div><div><dt>Đăng nhập gần nhất</dt><dd>{user.lastLogin || "Chưa đăng nhập"}</dd></div></dl></section>
+      <section aria-labelledby="organization-title"><header><h2 id="organization-title">Tổ chức và vai trò</h2><p>Phạm vi làm việc và quyền được gán.</p></header><dl class="admin-description-list"><div><dt>Tổ chức</dt><dd>{user.organization}</dd></div><div><dt>Loại tổ chức</dt><dd>{user.organizationType}</dd></div><div class="admin-description-full"><dt>Vai trò</dt><dd><div class="admin-role-list">{user.roleIds.map((roleId) => <a class="admin-role-chip" href={`/admin/roles/${roleId}`}>{roleName(roleId)}</a>)}</div></dd></div><div class="admin-description-full"><dt>Trạng thái</dt><dd>{statusLabel[user.status]}</dd></div></dl></section>
+    </div>
+
+    <section class="admin-detail-section" aria-labelledby="assigned-roles-title">
+      <header class="admin-section-header"><div><h2 id="assigned-roles-title">Gán vai trò</h2><p>Quyền hiệu lực được tổng hợp từ các vai trò được chọn. Thay đổi sẽ thu hồi các phiên hiện có.</p></div></header>
+      <form class="admin-user-role-form" data-user-role-form data-user-id={user.id}>
+        <fieldset disabled={!canManageTarget}>
+          <legend class="sr-only">Vai trò của {user.name}</legend>
+          <div class="admin-user-role-options">
+            {roles.map((role) => {
+              const protectedOption = role.id === "super-admin" && !isSuperAdmin(Astro.locals.auth);
+              return <label class="admin-user-role-option"><input type="checkbox" name="role" value={role.id} checked={user.roleIds.includes(role.id)} disabled={protectedOption} /><span><strong>{role.name}{role.immutable && <i class="ph ph-lock-key" aria-label="Vai trò được bảo vệ"></i>}</strong><small>{role.description}</small></span></label>;
+            })}
+          </div>
+          <div class="admin-user-role-actions"><span data-user-role-message aria-live="polite">Người dùng phải còn ít nhất một vai trò.</span><button class="button button-primary" type="submit"><i class="ph ph-floppy-disk" aria-hidden="true"></i>Lưu vai trò</button></div>
+        </fieldset>
+      </form>
+    </section>
+
+    <section class="admin-detail-section" aria-labelledby="activity-title"><header class="admin-section-header"><div><h2 id="activity-title">Hoạt động gần đây</h2><p>Các hoạt động nghiệp vụ gần nhất của người dùng.</p></div></header><div class="admin-table-wrap"><table class="admin-table admin-activity-table"><caption class="sr-only">Hoạt động gần đây của {user.name}</caption><thead><tr><th scope="col">Thời gian</th><th scope="col">Hoạt động</th><th scope="col">Đối tượng</th><th scope="col">Thực hiện bởi</th></tr></thead><tbody>{recentUserActivity.map((item) => <tr><td><time>{item.time}</time></td><td>{item.action}</td><td>{item.context}</td><td>{item.actor}</td></tr>)}</tbody></table></div></section>
+
+    <section class="admin-detail-section" aria-labelledby="sessions-title"><header class="admin-section-header"><div><h2 id="sessions-title">Phiên đăng nhập</h2><p>Thiết bị và phiên còn hiệu lực từ database.</p></div></header><div class="admin-session-list">{userSessions.map((session) => <article><i class={`ph ${session.device.includes("iPhone") ? "ph-device-mobile" : "ph-desktop"}`} aria-hidden="true"></i><div><strong>{session.device}</strong><span>{session.location} · {session.lastActive}</span></div>{session.current && <span class="admin-session-current">Phiên hiện tại</span>}</article>)}</div></section>
+
+    <section class="admin-detail-section" aria-labelledby="audit-title"><header class="admin-section-header"><div><h2 id="audit-title">Audit activity</h2><p>Lịch sử thay đổi quyền và trạng thái tài khoản.</p></div></header><ol class="admin-audit-list">{recentUserActivity.map((item) => <li><time>{item.time}</time><span><strong>{item.action}</strong><small>{item.context} · {item.actor}</small></span></li>)}</ol></section>
+  </article>
+</AdminLayout>

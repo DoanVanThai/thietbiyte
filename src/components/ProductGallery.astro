@@ -1,0 +1,115 @@
+---
+import type { ProductGalleryItem } from "@/data/product-details";
+import imageManifest from "@/data/responsive-images.generated.json";
+
+interface Props {
+  items: readonly ProductGalleryItem[];
+  productName: string;
+}
+
+const { items, productName } = Astro.props;
+const firstItem = items[0];
+const firstImage = items.find((item) => item.type === "image");
+const firstVideo = items.find((item) => item.type === "video");
+type ImageManifest = Record<string, { width?: number; variants: Array<{ width: number; src: string }> }>;
+const responsiveImages = imageManifest as ImageManifest;
+const srcsetFor = (src: string) => {
+  const managed = responsiveImages[src];
+  return managed?.variants?.length
+    ? [...managed.variants.map((variant) => `${variant.src} ${variant.width}w`), ...(managed.width ? [`${src} ${managed.width}w`] : [])].join(", ")
+    : undefined;
+};
+---
+
+<section class="product-gallery" aria-label={`Hình ảnh ${productName}`} data-product-gallery>
+  <div class="gallery-stage">
+    <div class="gallery-counter" aria-live="polite"><span data-gallery-current>1</span> / {items.length}</div>
+    <div class="gallery-media" data-gallery-media>
+      {firstImage && (
+        <img
+          class="gallery-main-image"
+          src={firstImage.src}
+          srcset={srcsetFor(firstImage.src)}
+          sizes="(max-width: 767px) 100vw, 45vw"
+          alt={firstImage.alt}
+          width="1200"
+          height="900"
+          loading="eager"
+          fetchpriority="high"
+          style={`object-position:${firstImage.position || "center"}`}
+          hidden={firstItem?.type !== "image"}
+          data-gallery-main-image
+        />
+      )}
+      {firstVideo && (
+        <video
+          class="gallery-main-video"
+          src={firstVideo.src}
+          poster={firstVideo.poster}
+          controls
+          preload="metadata"
+          aria-label={firstVideo.alt}
+          hidden={firstItem?.type !== "video"}
+          data-gallery-main-video
+        ></video>
+      )}
+    </div>
+
+    <div class="gallery-stage-actions">
+      <button class="icon-action gallery-zoom" type="button" aria-label="Phóng to ảnh" title="Phóng to ảnh" hidden={firstItem?.type === "video"} data-gallery-zoom>
+        <i class="ph ph-magnifying-glass-plus" aria-hidden="true"></i>
+      </button>
+      {items.length > 1 && (
+        <>
+          <button class="icon-action gallery-previous" type="button" aria-label="Ảnh trước" title="Ảnh trước" data-gallery-previous>
+            <i class="ph ph-caret-left" aria-hidden="true"></i>
+          </button>
+          <button class="icon-action gallery-next" type="button" aria-label="Ảnh tiếp theo" title="Ảnh tiếp theo" data-gallery-next>
+            <i class="ph ph-caret-right" aria-hidden="true"></i>
+          </button>
+        </>
+      )}
+    </div>
+  </div>
+
+  {items.length > 1 && (
+    <div class="gallery-thumbnails" role="group" aria-label="Chọn hình ảnh">
+      {items.map((item, index) => (
+        <button
+          class:list={["gallery-thumbnail", index === 0 && "is-active"]}
+          type="button"
+          aria-label={`${item.type === "video" ? "Video" : "Ảnh"} ${index + 1}: ${item.alt}`}
+          aria-pressed={index === 0 ? "true" : "false"}
+          data-gallery-thumbnail
+          data-index={index}
+          data-type={item.type}
+          data-src={item.src}
+          data-srcset={item.type === "image" ? srcsetFor(item.src) : undefined}
+          data-alt={item.alt}
+          data-poster={item.poster}
+          data-position={item.position || "center"}
+        >
+          {item.type === "image" ? (
+            <img src={item.src} srcset={srcsetFor(item.src)} sizes="112px" alt="" width="180" height="136" loading="lazy" decoding="async" style={`object-position:${item.position || "center"}`} />
+          ) : item.poster ? (
+            <span class="gallery-video-thumbnail">
+              <img src={item.poster} alt="" width="180" height="136" loading="lazy" />
+              <i class="ph ph-play-circle" aria-hidden="true"></i>
+            </span>
+          ) : (
+            <span class="gallery-video-fallback"><i class="ph ph-play-circle" aria-hidden="true"></i><span>Video</span></span>
+          )}
+        </button>
+      ))}
+    </div>
+  )}
+
+  {firstImage && (
+    <dialog class="gallery-dialog" aria-label={`Xem ảnh lớn ${productName}`} data-gallery-dialog>
+      <button class="icon-action gallery-dialog-close" type="button" aria-label="Đóng ảnh lớn" data-gallery-dialog-close>
+        <i class="ph ph-x" aria-hidden="true"></i>
+      </button>
+      <img src={firstImage.src} alt={firstImage.alt} width="1600" height="1200" data-gallery-dialog-image />
+    </dialog>
+  )}
+</section>

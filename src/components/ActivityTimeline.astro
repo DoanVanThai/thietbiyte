@@ -1,0 +1,18 @@
+---
+import type { CrmActivity } from "@/data/crm";
+interface Props { activities: CrmActivity[]; compact?: boolean; }
+const { activities, compact = false } = Astro.props;
+const icons = { call: "phone", email: "envelope", zalo: "chat-circle-dots", meeting: "calendar", quote: "file-text", note: "note", status: "arrows-clockwise" };
+---
+<ol class:list={["crm-timeline", compact && "is-compact"]}>
+  {activities.map((activity) => (
+    <li>
+      <span class="crm-timeline-icon" aria-hidden="true"><i class={`ph ph-${icons[activity.type]}`}></i></span>
+      <div>
+        <div class="crm-timeline-heading"><strong>{activity.title}</strong><span class={`visibility-label visibility-${activity.visibility}`}><i class={`ph ${activity.visibility === "internal" ? "ph-lock-key" : "ph-eye"}`} aria-hidden="true"></i>{activity.visibility === "internal" ? "Nội bộ" : "Khách hàng thấy"}</span></div>
+        <p>{activity.detail}</p>
+        <small>{activity.actor} · {activity.date}</small>
+      </div>
+    </li>
+  ))}
+</ol>

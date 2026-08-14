@@ -1,0 +1,18 @@
+---
+import ProductDetailPage from "@/components/ProductDetailPage.astro";
+import { productDetailFromCms } from "@/lib/public-content";
+import { productService } from "@/server/services/product-service";
+import { isStaff } from "@/server/auth/permissions";
+
+const slug = Astro.params.slug || "";
+const previewId = Astro.url.searchParams.get("preview");
+const previewProduct = previewId && isStaff(Astro.locals.auth) ? await productService.getAdminProduct(previewId) : null;
+const detail = previewProduct?.slug === slug ? productDetailFromCms(previewProduct) : await productService.getPublicDetail(slug);
+if (!detail) {
+  const currentSlug = await productService.resolveOldSlug(slug);
+  if (currentSlug) return Astro.redirect(`/san-pham/${currentSlug}`, 301);
+  return new Response("Không tìm thấy sản phẩm", { status: 404 });
+}
+---
+
+<ProductDetailPage detail={detail} />

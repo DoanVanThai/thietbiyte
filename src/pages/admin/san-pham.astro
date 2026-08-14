@@ -1,0 +1,294 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import "@/styles/admin-products.css";
+import { productDetailFromCms } from "@/lib/public-content";
+import { productService } from "@/server/services/product-service";
+import { buildProductQuoteDescription } from "@/server/services/sales-quote-pdf";
+import { can } from "@/server/auth/permissions";
+import type { CmsProduct } from "@/lib/content-repository";
+
+const canCreateProduct = can(Astro.locals.auth, "product.create");
+const canEditProduct = can(Astro.locals.auth, "product.edit");
+const canPublishProduct = can(Astro.locals.auth, "product.publish");
+const canCreateQuote = can(Astro.locals.auth, "quote.edit");
+
+const requestedPage = Math.max(1, Number(Astro.url.searchParams.get("page")) || 1);
+const priceModeParam = Astro.url.searchParams.get("price");
+const filters = {
+  search: Astro.url.searchParams.get("q") || undefined,
+  category: Astro.url.searchParams.get("category") || undefined,
+  brand: Astro.url.searchParams.get("brand") || undefined,
+  specialty: Astro.url.searchParams.get("specialty") || undefined,
+  group: (Astro.url.searchParams.get("group") || undefined) as "medical" | "veterinary" | undefined,
+  status: (Astro.url.searchParams.get("status") || undefined) as "published" | "draft" | "archived" | undefined,
+  priceMode: priceModeParam === "Hiển thị giá" ? "SHOW_PRICE" as const : priceModeParam === "Yêu cầu báo giá" ? "REQUEST_QUOTE" as const : priceModeParam === "Liên hệ" ? "CONTACT" as const : undefined,
+  featured: Astro.url.searchParams.get("featured") === "1",
+};
+const [{ products: catalogProducts, pagination }, filterOptions] = await Promise.all([
+  productService.listAdminPage(requestedPage, 50, filters),
+  productService.getAdminFilterOptions(),
+]);
+const { categories, brands, specialties } = filterOptions;
+const statusFor = (status: string) => status === "published" ? ["Đã xuất bản", "published"] : status === "archived" ? ["Lưu trữ", "archived"] : ["Bản nháp", "draft"];
+const priceModeFor = (mode: string) => mode === "SHOW_PRICE" ? "Hiển thị giá" : mode === "REQUEST_QUOTE" ? "Yêu cầu báo giá" : "Liên hệ";
+const requestedId = Astro.url.searchParams.get("id");
+const editorActive = Astro.url.searchParams.get("view") === "editor";
+const isCreating = requestedId === "new";
+const requestedProduct = editorActive && requestedId && requestedId !== "new" ? await productService.getAdminProduct(requestedId) : null;
+const blankProduct: CmsProduct = {
+  id: "new", slug: "", sku: "", name: "", model: "", group: "medical",
+  category: categories[0] || "", categorySlug: "", brand: brands[0] || "", brandSlug: "",
+  origin: "", warranty: "", description: "", priceBand: "", priceMode: "CONTACT",
+  featured: 0, availability: "contact", image: "/images/project-handover-placeholder.webp", imagePosition: "center",
+  specialties: [], specialtySlugs: [], applications: [], applicationSlugs: [], specs: [],
+  publishStatus: "draft", createdOrder: Math.floor(Date.now() / 1000),
+  detail: { gallery: [], features: [], configurations: [], specificationGroups: [], documents: [] },
+};
+const editorProduct = isCreating ? blankProduct : requestedProduct || catalogProducts[0];
+const serializedProducts = isCreating
+  ? [blankProduct, ...catalogProducts]
+  : requestedProduct && !catalogProducts.some((product) => product.id === requestedProduct.id)
+  ? [requestedProduct, ...catalogProducts]
+  : catalogProducts;
+const pageHref = (page: number) => { const url = new URL(Astro.url); url.searchParams.set("page", String(page)); return `${url.pathname}${url.search}`; };
+const resolvedEditorDetail = productDetailFromCms(editorProduct);
+const editorDetail = (isCreating ? { ...resolvedEditorDetail, overview: [], gallery: [], features: [], configurations: [], specificationGroups: [], applications: [], documents: [], warranty: undefined, seo: undefined } : resolvedEditorDetail) as ReturnType<typeof productDetailFromCms> & {
+  configurations: Array<{ title: string; items: Array<{ name: string; detail?: string; quantity?: number; imageUrl?: string }> }>;
+};
+const editorSeoTitle = editorProduct.detail?.seo?.title || (isCreating ? "" : `${editorProduct.name} | THIÊN LỘC GROUP`);
+const editorSeoDescription = editorProduct.detail?.seo?.description || (isCreating ? "" : `Thông tin, cấu hình và tư vấn ${editorProduct.name} tại THIÊN LỘC GROUP.`);
+const quotePlacementOptions = [...new Set(buildProductQuoteDescription(editorProduct).split("\n").map((line) => line.trim()).filter(Boolean))];
+
+const editorSections = [
+  ["info", "Thông tin cơ bản"], ["classification", "Phân loại"], ["media", "Hình ảnh"], ["pricing", "Giá bán"],
+  ["description", "Mô tả"], ["features", "Tính năng"], ["configuration", "Cấu hình"], ["specifications", "Thông số kỹ thuật"],
+  ["applications", "Ứng dụng"], ["documents", "Tài liệu"], ["warranty", "Bảo hành"], ["seo", "SEO"],
+] as const;
+---
+
+<AdminLayout title="Quản lý sản phẩm | THIÊN LỘC GROUP Admin" description="Quản lý danh mục và nội dung sản phẩm." section="Sản phẩm">
+  <script id="admin-product-data" type="application/json" is:inline set:html={JSON.stringify(serializedProducts)} />
+
+  <section class="admin-products-view" data-products-list-view aria-labelledby="products-title">
+    <header class="admin-page-header">
+      <div><nav aria-label="Đường dẫn"><a href="/admin">Quản trị</a><i class="ph ph-caret-right" aria-hidden="true"></i><span>Sản phẩm</span></nav><h1 id="products-title">Sản phẩm</h1><p>Quản lý thông tin hiển thị trên website và dữ liệu phục vụ báo giá.</p></div>
+      {canCreateProduct && <a class="button button-primary" href="/admin/san-pham?view=editor&id=new" data-open-new-product><i class="ph ph-plus" aria-hidden="true"></i>Thêm sản phẩm</a>}
+    </header>
+
+    <section class="admin-filter-region" aria-labelledby="filters-title">
+      <h2 id="filters-title" class="sr-only">Lọc sản phẩm</h2>
+      <div class="admin-filter-primary">
+        <label class="admin-search-field" for="admin-product-search"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Tìm sản phẩm</span><input id="admin-product-search" type="search" placeholder="Tên sản phẩm, model, SKU..." autocomplete="off" data-admin-search value={filters.search || ""} /></label>
+        <select aria-label="Danh mục" data-filter="category"><option value="all">Tất cả danh mục</option>{categories.map((category) => <option value={category} selected={filters.category === category}>{category}</option>)}</select>
+        <select aria-label="Thương hiệu" data-filter="brand"><option value="all">Tất cả thương hiệu</option>{brands.map((brand) => <option value={brand} selected={filters.brand === brand}>{brand}</option>)}</select>
+        <button class="button button-outline admin-more-filters" type="button" data-more-filters aria-expanded="false" aria-controls="admin-secondary-filters"><i class="ph ph-funnel" aria-hidden="true"></i>Bộ lọc khác<span data-filter-count hidden>0</span></button>
+      </div>
+      <div class="admin-filter-secondary" id="admin-secondary-filters" data-secondary-filters hidden>
+        <select aria-label="Chuyên khoa" data-filter="specialty"><option value="all">Tất cả chuyên khoa</option>{specialties.map((specialty) => <option value={specialty} selected={filters.specialty === specialty}>{specialty}</option>)}</select>
+        <select aria-label="Nhóm sản phẩm" data-filter="group"><option value="all">Y tế & Thú y</option><option value="medical" selected={filters.group === "medical"}>Y tế</option><option value="veterinary" selected={filters.group === "veterinary"}>Thú y</option></select>
+        <select aria-label="Trạng thái" data-filter="status"><option value="all">Tất cả trạng thái</option><option value="published" selected={filters.status === "published"}>Đã xuất bản</option><option value="draft" selected={filters.status === "draft"}>Bản nháp</option><option value="archived" selected={filters.status === "archived"}>Lưu trữ</option></select>
+        <select aria-label="Chế độ giá" data-filter="price"><option value="all">Tất cả chế độ giá</option><option value="Hiển thị giá" selected={priceModeParam === "Hiển thị giá"}>Hiển thị giá</option><option value="Liên hệ" selected={priceModeParam === "Liên hệ"}>Liên hệ</option><option value="Yêu cầu báo giá" selected={priceModeParam === "Yêu cầu báo giá"}>Yêu cầu báo giá</option></select>
+        <label class="admin-checkbox"><input type="checkbox" data-filter-featured checked={filters.featured} /><span>Chỉ sản phẩm nổi bật</span></label>
+        <button class="admin-clear-filters" type="button" data-clear-filters>Đặt lại</button>
+      </div>
+    </section>
+
+    <div class="admin-list-meta"><p><strong data-result-count>{catalogProducts.length}</strong> sản phẩm trên trang · {pagination.total} tổng cộng</p><span data-filter-summary>Hiển thị trang {pagination.page}/{pagination.totalPages}</span></div>
+
+    <div class="admin-bulk-bar" data-bulk-bar hidden>
+      <span><strong data-selected-count>0</strong> sản phẩm đã chọn</span>
+      <div>
+        {canPublishProduct && <button type="button" data-bulk-action="Xuất bản"><i class="ph ph-check-circle" aria-hidden="true"></i>Xuất bản</button>}
+        {canPublishProduct && <button type="button" data-bulk-action="Gỡ xuất bản"><i class="ph ph-eye-slash" aria-hidden="true"></i>Gỡ xuất bản</button>}
+        {canEditProduct && <button type="button" data-bulk-category><i class="ph ph-folder" aria-hidden="true"></i>Chuyển danh mục</button>}
+        {canEditProduct && <button type="button" data-bulk-action="Đặt nổi bật"><i class="ph ph-star" aria-hidden="true"></i>Nổi bật</button>}
+        {canEditProduct && <button type="button" data-bulk-action="Lưu trữ"><i class="ph ph-archive" aria-hidden="true"></i>Lưu trữ</button>}
+      </div>
+      <button class="admin-bulk-clear" type="button" data-clear-selection aria-label="Bỏ chọn tất cả"><i class="ph ph-x" aria-hidden="true"></i></button>
+    </div>
+
+    <div class="admin-products-table-wrap">
+      <table class="admin-products-table">
+        <caption class="sr-only">Danh sách sản phẩm</caption>
+        <thead><tr>
+          <th class="admin-select-column" scope="col"><input type="checkbox" data-select-all aria-label="Chọn tất cả sản phẩm đang hiển thị" /></th>
+          <th class="admin-image-column" scope="col"><span class="sr-only">Ảnh</span></th>
+          <th scope="col">Sản phẩm</th><th scope="col">Model</th><th scope="col">Thương hiệu</th><th scope="col">Danh mục</th><th scope="col">Nhóm</th><th scope="col">Giá</th><th scope="col">Trạng thái</th><th scope="col">Cập nhật</th><th scope="col"><span class="sr-only">Thao tác</span></th>
+        </tr></thead>
+        <tbody data-product-table-body>
+          {catalogProducts.map((product, index) => {
+            const [statusLabel, statusKey] = statusFor(product.publishStatus);
+            const priceMode = priceModeFor(product.priceMode);
+            const updated = index < 2 ? "Hôm nay" : index < 5 ? "Hôm qua" : `${index + 1}/08/2026`;
+            return (
+              <tr data-product-row data-id={product.id} data-search={`${product.name} ${product.model} ${product.id}`.toLocaleLowerCase("vi")} data-category={product.category} data-brand={product.brand} data-specialties={product.specialties.join("|")} data-group={product.group} data-status={statusKey} data-price={priceMode} data-featured={product.featured >= 9 ? "true" : "false"}>
+                <td class="admin-select-column"><input type="checkbox" data-row-select aria-label={`Chọn ${product.name}`} /></td>
+                <td class="admin-image-column"><img src={product.image} alt="" width="52" height="42" loading="lazy" /></td>
+                <td class="admin-product-name"><a href={canEditProduct ? `/admin/san-pham?view=editor&id=${product.id}` : `/san-pham/${product.slug}`}><strong>{product.name}</strong><span>SKU: {product.id.toUpperCase()}</span></a></td>
+                <td>{product.model.replace(" (minh họa)", "")}</td><td>{product.brand}</td><td>{product.category}</td>
+                <td><span class={`admin-group-tag group-${product.group}`}>{product.group === "medical" ? "Y tế" : "Thú y"}</span></td>
+                <td><span class="admin-price-mode">{priceMode}</span></td>
+                <td><span class={`admin-product-status status-${statusKey}`}><i aria-hidden="true"></i>{statusLabel}</span></td>
+                <td><time datetime={`2026-08-${String(Math.max(1, 13 - index)).padStart(2, "0")}`}>{updated}</time></td>
+                <td>{(canEditProduct || canCreateProduct) && <button class="admin-row-menu" type="button" data-row-menu aria-label={`Thao tác với ${product.name}`} aria-expanded="false"><i class="ph ph-dots-three-vertical" aria-hidden="true"></i></button>}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <div class="admin-table-empty" data-table-empty hidden><i class="ph ph-magnifying-glass" aria-hidden="true"></i><h2>Không tìm thấy sản phẩm</h2><p>Thử thay đổi từ khóa hoặc đặt lại bộ lọc.</p><button class="button button-outline" type="button" data-clear-filters>Đặt lại bộ lọc</button></div>
+    </div>
+
+    <footer class="admin-pagination">
+      <span>{(pagination.page - 1) * pagination.pageSize + (catalogProducts.length ? 1 : 0)} đến {(pagination.page - 1) * pagination.pageSize + catalogProducts.length} / {pagination.total}</span>
+      <nav aria-label="Phân trang">
+        {pagination.page > 1 ? <a class="button button-outline button-sm" href={pageHref(pagination.page - 1)} aria-label="Trang trước" data-astro-prefetch="tap"><i class="ph ph-caret-left" aria-hidden="true"></i></a> : <button type="button" disabled aria-label="Trang trước"><i class="ph ph-caret-left" aria-hidden="true"></i></button>}
+        <span aria-current="page">{pagination.page}</span>
+        {pagination.page < pagination.totalPages ? <a class="button button-outline button-sm" href={pageHref(pagination.page + 1)} aria-label="Trang sau" data-astro-prefetch="tap"><i class="ph ph-caret-right" aria-hidden="true"></i></a> : <button type="button" disabled aria-label="Trang sau"><i class="ph ph-caret-right" aria-hidden="true"></i></button>}
+      </nav>
+    </footer>
+  </section>
+
+  <section class="admin-editor-view" data-product-editor hidden aria-labelledby="editor-title">
+    <header class="admin-editor-header">
+      <div class="admin-editor-title"><a href="/admin/san-pham" data-close-editor aria-label="Quay lại danh sách"><i class="ph ph-arrow-left" aria-hidden="true"></i></a><div><span data-editor-kicker>{isCreating ? "Sản phẩm mới" : "Chỉnh sửa sản phẩm"}</span><h2 id="editor-title" data-editor-heading>{isCreating ? "Sản phẩm chưa đặt tên" : editorProduct.name}</h2><p><span class={`admin-product-status status-${statusFor(editorProduct.publishStatus)[1]}`}><i aria-hidden="true"></i>{statusFor(editorProduct.publishStatus)[0]}</span><span data-editor-id>{isCreating ? "BẢN NHÁP MỚI" : editorProduct.id.toUpperCase()}</span></p></div></div>
+      <div class="admin-editor-actions">
+        <div class="admin-editor-secondary-actions" role="group" aria-label="Công cụ sản phẩm">
+          {canCreateQuote && !isCreating && <a class="button button-outline" href={`/admin/bao-gia?product=${encodeURIComponent(editorProduct.id)}`}><i class="ph ph-file-pdf" aria-hidden="true"></i>Báo giá PDF</a>}
+          <a class="button button-outline" href={isCreating ? undefined : `/san-pham/${editorProduct.slug}`} target="_blank" rel="noopener noreferrer" data-preview-link aria-disabled={isCreating ? "true" : undefined}><i class="ph ph-eye" aria-hidden="true"></i>Xem trước</a>
+        </div>
+        <div class="admin-editor-primary-actions" role="group" aria-label="Lưu sản phẩm">
+          <span class:list={["admin-save-state", isCreating && "is-dirty"]} data-save-state><i class={`ph ${isCreating ? "ph-warning-circle" : "ph-cloud-check"}`} aria-hidden="true"></i>{isCreating ? "Chưa lưu" : "Đã lưu"}</span>
+          <button class="button button-outline" type="button" data-save-draft>Lưu nháp</button>
+          {canPublishProduct && <button class="button button-primary" type="button" data-save-publish>Lưu & xuất bản</button>}
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-editor-layout">
+      <nav class="admin-editor-nav" aria-label="Các phần của sản phẩm">
+        {editorSections.map(([id, label], index) => <a href={`#editor-${id}`} aria-current={index === 0 ? "location" : undefined} data-editor-nav>{label}</a>)}
+      </nav>
+
+      <form class="admin-product-form" data-product-form data-product-id={requestedId === "new" ? "" : editorProduct.id} novalidate>
+        <section class="admin-editor-section" id="editor-info" aria-labelledby="editor-info-title">
+          <header><div><h2 id="editor-info-title">Thông tin cơ bản</h2><p>Thông tin nhận diện và trạng thái vận hành của sản phẩm.</p></div></header>
+          <div class="admin-form-grid">
+            <div class="admin-field span-2"><label for="product-name">Tên sản phẩm</label><input id="product-name" name="name" type="text" value={editorProduct.name} required data-editor-name aria-describedby="product-name-error" aria-errormessage="product-name-error" /><p id="product-name-error" data-field-error aria-live="polite"></p></div>
+            <div class="admin-field span-2"><label for="product-slug">Slug</label><div class="admin-input-prefix admin-generated-field"><span>/san-pham/</span><input id="product-slug" name="slug" type="text" value={editorProduct.slug} placeholder="tự-tạo-từ-tên-sản-phẩm" required data-editor-slug aria-describedby="product-slug-help product-slug-error" aria-errormessage="product-slug-error" /><button type="button" data-generate-slug title="Tạo lại slug từ tên sản phẩm"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i><span>Tạo lại</span></button></div><small class="admin-field-help" id="product-slug-help">Tự động tạo từ tên sản phẩm; bạn vẫn có thể chỉnh sửa.</small><p id="product-slug-error" data-field-error aria-live="polite"></p></div>
+            <div class="admin-field"><label for="product-sku">SKU</label><div class="admin-input-action admin-generated-field"><input id="product-sku" name="sku" type="text" value={isCreating ? "" : editorProduct.sku} placeholder="TL-2026-XXXXXX" required data-editor-sku aria-describedby="product-sku-help product-sku-error" aria-errormessage="product-sku-error" /><button type="button" data-generate-sku title="Tạo mã SKU ngẫu nhiên"><i class="ph ph-dice-five" aria-hidden="true"></i><span>Tạo mã</span></button></div><small class="admin-field-help" id="product-sku-help">Mã được tạo ngẫu nhiên và có thể tạo lại.</small><p id="product-sku-error" data-field-error aria-live="polite"></p></div>
+            <div class="admin-field"><label for="product-model">Model</label><input id="product-model" name="model" type="text" value={editorProduct.model} required data-editor-model aria-describedby="product-model-error" aria-errormessage="product-model-error" /><p id="product-model-error" data-field-error aria-live="polite"></p></div>
+            <div class="admin-field"><label for="product-brand">Thương hiệu</label><select id="product-brand" name="brand" data-editor-brand>{brands.map((brand) => <option selected={brand === editorProduct.brand}>{brand}</option>)}</select></div>
+            <div class="admin-field"><label for="product-category">Danh mục</label><select id="product-category" name="category" data-editor-category>{categories.map((category) => <option selected={category === editorProduct.category}>{category}</option>)}</select></div>
+            <div class="admin-field"><label for="product-origin">Xuất xứ</label><input id="product-origin" name="origin" type="text" value={editorProduct.origin} data-editor-origin /></div>
+            <div class="admin-field"><label for="manufacturing-year">Năm sản xuất</label><input id="manufacturing-year" name="year" type="number" inputmode="numeric" min="1900" max="2100" value={editorProduct.manufacturingYear || ""} /></div>
+            <div class="admin-field"><label for="product-warranty">Bảo hành</label><input id="product-warranty" name="warranty" type="text" value={editorProduct.warranty} data-editor-warranty /></div>
+            <div class="admin-field"><label for="product-status">Trạng thái</label><select id="product-status" name="status"><option value="draft" selected={editorProduct.publishStatus === "draft"}>Bản nháp</option><option value="published" selected={editorProduct.publishStatus === "published"}>Đã xuất bản</option><option value="archived" selected={editorProduct.publishStatus === "archived"}>Lưu trữ</option></select></div>
+            <div class="admin-field admin-featured-field span-2"><label class="admin-featured-toggle"><input type="checkbox" name="featured" checked={editorProduct.featured > 0} /><span><i class="ph ph-star" aria-hidden="true"></i><span><strong>Sản phẩm nổi bật</strong><small>Ưu tiên sản phẩm tại các khu vực giới thiệu trên website.</small></span></span></label></div>
+          </div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-classification" aria-labelledby="editor-classification-title">
+          <header><div><h2 id="editor-classification-title">Phân loại</h2><p>Nhóm và chuyên khoa dùng để phân loại sản phẩm trên website.</p></div></header>
+          <div class="admin-form-grid">
+            <fieldset class="admin-field span-2"><legend>Nhóm sản phẩm</legend><div class="admin-segmented"><label><input type="radio" name="group" value="medical" checked={editorProduct.group === "medical"} /><span>Y tế</span></label><label><input type="radio" name="group" value="veterinary" checked={editorProduct.group === "veterinary"} /><span>Thú y</span></label></div></fieldset>
+            <div class="admin-field span-2"><label>Chuyên khoa</label><div class="admin-check-grid">{specialties.slice(0, 8).map((specialty) => <label><input type="checkbox" data-specialty value={specialty} checked={editorProduct.specialties.includes(specialty)} /><span>{specialty}</span></label>)}</div></div>
+          </div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-media" aria-labelledby="editor-media-title">
+          <header><div><h2 id="editor-media-title">Hình ảnh</h2><p>Quản lý ảnh đại diện và ảnh minh họa dùng trong PDF báo giá.</p></div><label class="button button-outline button-sm admin-upload-button"><input type="file" accept="image/png,image/jpeg,image/webp" multiple data-media-upload /><i class="ph ph-upload-simple" aria-hidden="true"></i>Tải ảnh</label></header>
+          <div class="admin-media-list" data-media-list>
+            {!editorDetail.gallery.length && <div class="admin-editor-empty"><i class="ph ph-image-square" aria-hidden="true"></i><div><strong>Chưa có hình ảnh</strong><span>Tải ảnh sản phẩm để dùng trên website và trong báo giá PDF.</span></div></div>}
+            {editorDetail.gallery.map((media, index) => (
+              <article class="admin-media-item" draggable="true" data-media-item>
+                <button type="button" class="admin-drag-handle" aria-label="Sắp xếp mục; dùng Alt và mũi tên lên hoặc xuống" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><i class="ph ph-dots-six-vertical" aria-hidden="true"></i></button>
+                <div class="admin-media-thumbnail">
+                  <img src={media.src} alt="" width="96" height="72" loading="lazy" data-media-image data-media-src={media.src} />
+                  <button type="button" class="admin-media-image-error" data-media-retry hidden aria-label="Thử tải lại ảnh"><i class="ph ph-arrow-clockwise" aria-hidden="true"></i><span>Tải lại ảnh</span></button>
+                </div>
+                <div class="admin-media-copy"><strong>{index === 0 ? "Ảnh đại diện" : `Ảnh sản phẩm ${index + 1}`}</strong><label>Alt text<input type="text" value={media.alt} data-media-alt /></label></div><div class="admin-media-actions">{index === 0 ? <span class="admin-cover-label"><i class="ph ph-check" aria-hidden="true"></i>Ảnh bìa</span> : <button type="button" data-set-cover>Đặt làm bìa</button>}<button type="button" data-media-preview>Preview</button><button type="button" data-media-delete aria-label="Xóa ảnh"><i class="ph ph-trash" aria-hidden="true"></i></button></div>
+                <div class="admin-media-quote-settings">
+                  <label class="admin-checkbox"><input type="checkbox" data-media-quote-enabled checked={media.quoteEnabled} /><span>Dùng ảnh này trong PDF báo giá</span></label>
+                  <label><span>Chú thích trong báo giá</span><input type="text" value={media.quoteCaption || media.alt} data-media-quote-caption /></label>
+                  <label><span>Đặt ảnh sau mục</span><select data-media-quote-after><option value="" selected={!media.quoteAfterText}>Cuối phần mô tả</option>{quotePlacementOptions.map((line) => <option value={line} selected={media.quoteAfterText === line}>{line.length > 90 ? `${line.slice(0, 87)}…` : line}</option>)}</select></label>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p class="admin-upload-help">PNG, JPG hoặc WebP · Tối đa 10 MB/ảnh · Có thể kéo để đổi thứ tự.</p>
+        </section>
+
+        <section class="admin-editor-section" id="editor-pricing" aria-labelledby="editor-pricing-title">
+          <header><div><h2 id="editor-pricing-title">Giá bán</h2><p>Chọn cách hiển thị giá phù hợp với quy trình tư vấn.</p></div></header>
+          <fieldset class="admin-field"><legend>Chế độ giá</legend><div class="admin-price-options"><label><input type="radio" name="priceMode" value="show" checked={editorProduct.priceMode === "SHOW_PRICE"} /><span><strong>Hiển thị giá</strong><small>Giá công khai trên trang sản phẩm</small></span></label><label><input type="radio" name="priceMode" value="contact" checked={editorProduct.priceMode === "CONTACT"} /><span><strong>Liên hệ</strong><small>Khách hàng liên hệ để nhận thông tin</small></span></label><label><input type="radio" name="priceMode" value="quote" checked={editorProduct.priceMode === "REQUEST_QUOTE"} /><span><strong>Yêu cầu báo giá</strong><small>Mở form báo giá theo cấu hình</small></span></label></div></fieldset>
+          <div class="admin-field admin-price-input" data-price-input hidden={editorProduct.priceMode !== "SHOW_PRICE"}><label for="product-price">Giá bán</label><div class="admin-input-suffix"><input id="product-price" name="price" type="number" inputmode="numeric" min="0" step="1000" value={editorProduct.priceVnd || ""} /><span>VNĐ</span></div></div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-description" aria-labelledby="editor-description-title">
+          <header><div><h2 id="editor-description-title">Mô tả sản phẩm</h2><p>Nội dung tổng quan hiển thị trên trang chi tiết.</p></div></header>
+          <div class="admin-field"><label for="short-description">Mô tả ngắn</label><textarea id="short-description" name="shortDescription" rows="3">{editorProduct.detail?.shortDescription || ""}</textarea></div>
+          <div class="admin-field"><label for="product-description">Mô tả chi tiết</label><div class="admin-editor-toolbar" aria-label="Định dạng văn bản"><button type="button" aria-label="In đậm"><i class="ph ph-text-b" aria-hidden="true"></i></button><button type="button" aria-label="Danh sách"><i class="ph ph-list-bullets" aria-hidden="true"></i></button><button type="button" aria-label="Chèn liên kết"><i class="ph ph-link" aria-hidden="true"></i></button></div><textarea id="product-description" name="description" rows="8">{editorDetail.overview.join("\n\n")}</textarea></div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-features" aria-labelledby="editor-features-title">
+          <header><div><h2 id="editor-features-title">Tính năng nổi bật</h2><p>Các điểm nổi bật có tiêu đề và mô tả riêng.</p></div><button class="button button-outline button-sm" type="button" data-add-feature><i class="ph ph-plus" aria-hidden="true"></i>Thêm tính năng</button></header>
+          <div class="admin-builder-list" data-feature-list>{!editorDetail.features.length && <div class="admin-editor-empty"><i class="ph ph-sparkle" aria-hidden="true"></i><div><strong>Chưa có tính năng nổi bật</strong><span>Thêm các điểm khác biệt quan trọng để khách hàng dễ đánh giá sản phẩm.</span></div></div>}{editorDetail.features.map((feature) => <div class="admin-builder-row" data-feature-row><button type="button" class="admin-drag-handle" aria-label="Sắp xếp mục; dùng Alt và mũi tên lên hoặc xuống" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><i class="ph ph-dots-six-vertical" aria-hidden="true"></i></button><input type="text" aria-label="Tên tính năng" value={feature.title} /><input type="text" aria-label="Mô tả tính năng" value={feature.description} /><button type="button" class="admin-icon-danger" data-remove-row aria-label="Xóa tính năng"><i class="ph ph-trash" aria-hidden="true"></i></button></div>)}</div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-configuration" aria-labelledby="editor-configuration-title">
+          <header><div><h2 id="editor-configuration-title">Cấu hình cung cấp</h2><p>Tách máy chính, phụ kiện, đầu dò và tùy chọn thành từng dòng.</p></div><button class="button button-outline button-sm" type="button" data-add-configuration><i class="ph ph-plus" aria-hidden="true"></i>Thêm dòng</button></header>
+          <div class="admin-configuration-head" aria-hidden="true"><span>Loại</span><span>Tên thành phần</span><span>Chi tiết</span><span>SL</span><span>Ảnh báo giá</span><span></span></div>
+          <div class="admin-configuration-list" data-configuration-list>{!editorDetail.configurations.length && <div class="admin-editor-empty"><i class="ph ph-list-plus" aria-hidden="true"></i><div><strong>Chưa có cấu hình cung cấp</strong><span>Thêm máy chính, phụ kiện, đầu dò hoặc tùy chọn đi kèm.</span></div></div>}{editorDetail.configurations.flatMap((group) => group.items.map((item) => <div class="admin-configuration-row" data-configuration-row data-image-url={item.imageUrl || ""}><button type="button" class="admin-drag-handle" aria-label="Sắp xếp mục; dùng Alt và mũi tên lên hoặc xuống" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><i class="ph ph-dots-six-vertical" aria-hidden="true"></i></button><select aria-label="Loại cấu hình"><option selected={group.title === "Máy chính"}>Máy chính</option><option selected={group.title === "Phụ kiện"}>Phụ kiện</option><option selected={group.title === "Đầu dò"}>Đầu dò</option><option selected={group.title === "Option" || group.title === "Tùy chọn"}>Tùy chọn</option></select><input type="text" aria-label="Tên thành phần" value={item.name} /><input type="text" aria-label="Chi tiết" value={item.detail || ""} /><input type="number" aria-label="Số lượng" min="1" value={item.quantity || 1} /><div class="admin-configuration-image">{item.imageUrl && <img src={item.imageUrl} alt="" width="54" height="42" loading="lazy" />}<label class="admin-config-image-button" title={item.imageUrl ? "Đổi ảnh minh họa" : "Thêm ảnh minh họa"}><input type="file" accept="image/png,image/jpeg,image/webp" data-configuration-image-upload /><i class={`ph ${item.imageUrl ? "ph-arrows-clockwise" : "ph-image-square"}`} aria-hidden="true"></i><span>{item.imageUrl ? "Đổi" : "Thêm ảnh"}</span></label>{item.imageUrl && <button type="button" data-remove-configuration-image aria-label="Bỏ ảnh minh họa"><i class="ph ph-x" aria-hidden="true"></i></button>}</div><button type="button" class="admin-icon-danger" data-remove-row aria-label="Xóa dòng"><i class="ph ph-trash" aria-hidden="true"></i></button></div>))}</div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-specifications" aria-labelledby="editor-specifications-title">
+          <header><div><h2 id="editor-specifications-title">Thông số kỹ thuật</h2><p>Nhóm các thông số để khách hàng dễ đọc và đối chiếu.</p></div><button class="button button-outline button-sm" type="button" data-add-spec-group><i class="ph ph-plus" aria-hidden="true"></i>Thêm nhóm</button></header>
+          <div class="admin-spec-groups" data-spec-groups>
+            {!editorDetail.specificationGroups.length && <div class="admin-editor-empty"><i class="ph ph-table" aria-hidden="true"></i><div><strong>Chưa có thông số kỹ thuật</strong><span>Tạo nhóm thông số để trình bày dữ liệu theo từng hệ thống hoặc bộ phận.</span></div></div>}
+            {editorDetail.specificationGroups.map((group) => (
+              <details class="admin-spec-group" open data-spec-group>
+                <summary><span class="admin-drag-handle" aria-hidden="true"><i class="ph ph-dots-six-vertical"></i></span><strong>{group.title}</strong><span>{group.items.length} thông số</span><i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+                <div class="admin-spec-group-body"><div class="admin-spec-group-tools"><label>Tên nhóm<input type="text" value={group.title} data-spec-group-name /></label><button type="button" data-duplicate-group><i class="ph ph-copy" aria-hidden="true"></i>Nhân bản</button><button type="button" class="admin-danger-text" data-delete-group><i class="ph ph-trash" aria-hidden="true"></i>Xóa nhóm</button></div><div class="admin-spec-list" data-spec-list>{group.items.map((item) => <div class="admin-spec-row" data-spec-row><button type="button" class="admin-drag-handle" aria-label="Sắp xếp mục; dùng Alt và mũi tên lên hoặc xuống" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><i class="ph ph-dots-six-vertical" aria-hidden="true"></i></button><input type="text" aria-label="Tên thông số" value={item.label} /><input type="text" aria-label="Giá trị thông số" value={item.value} /><button type="button" class="admin-icon-danger" data-remove-row aria-label="Xóa thông số"><i class="ph ph-trash" aria-hidden="true"></i></button></div>)}</div><button class="admin-add-inline" type="button" data-add-spec><i class="ph ph-plus" aria-hidden="true"></i>Thêm thông số</button></div>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-applications" aria-labelledby="editor-applications-title">
+          <header><div><h2 id="editor-applications-title">Ứng dụng</h2><p>Ứng dụng và phạm vi sử dụng của sản phẩm.</p></div></header>
+          <div class="admin-tag-editor" data-tag-editor>{editorDetail.applications.map((application) => <span>{application}<button type="button" aria-label={`Xóa ${application}`} data-remove-tag><i class="ph ph-x" aria-hidden="true"></i></button></span>)}<input type="text" aria-label="Thêm ứng dụng" placeholder="Nhập và nhấn Enter" data-tag-input /></div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-documents" aria-labelledby="editor-documents-title">
+          <header><div><h2 id="editor-documents-title">Tài liệu</h2><p>Phân loại catalogue, hướng dẫn và kiểm soát quyền truy cập.</p></div><label class="button button-outline button-sm admin-upload-button"><input type="file" accept=".pdf,.doc,.docx" multiple data-document-upload /><i class="ph ph-upload-simple" aria-hidden="true"></i>Tải tài liệu</label></header>
+          <div class="admin-document-head" aria-hidden="true"><span>Tài liệu</span><span>Loại</span><span>Quyền truy cập</span><span></span></div>
+          <div class="admin-document-list" data-document-list>{!editorDetail.documents.length && <div class="admin-editor-empty"><i class="ph ph-files" aria-hidden="true"></i><div><strong>Chưa có tài liệu</strong><span>Tải catalogue, hướng dẫn sử dụng hoặc chứng nhận của sản phẩm.</span></div></div>}{editorDetail.documents.map((document) => <div class="admin-document-row" data-href={document.href}><i class="ph ph-file-pdf" aria-hidden="true"></i><div><strong>{document.title}</strong><small>{document.format} · {document.size || "Chưa có dung lượng"}</small></div><select aria-label="Loại tài liệu"><option selected={document.title.toLowerCase().includes("catalogue")}>Catalogue</option><option>Datasheet</option><option>Manual</option><option>Certificate</option><option>Warranty</option><option>Other</option></select><select aria-label="Quyền truy cập"><option selected={document.access === "public"}>Public</option><option selected={document.access === "login"}>Registered</option><option selected={document.access === "restricted"}>Staff</option><option>Admin</option></select><button type="button" class="admin-icon-danger" data-remove-row aria-label="Xóa tài liệu"><i class="ph ph-trash" aria-hidden="true"></i></button></div>)}</div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-warranty" aria-labelledby="editor-warranty-title">
+          <header><div><h2 id="editor-warranty-title">Bảo hành và hỗ trợ</h2><p>Thông tin bảo hành, lắp đặt và hỗ trợ kỹ thuật.</p></div></header>
+          <div class="admin-form-grid"><div class="admin-field"><label for="warranty-period">Thời hạn</label><input id="warranty-period" type="text" value={editorDetail.warranty?.period || editorProduct.warranty} /></div><div class="admin-field"><label for="installation-scope">Phạm vi lắp đặt</label><input id="installation-scope" type="text" value={editorDetail.warranty?.installation || "Theo báo giá"} /></div><div class="admin-field span-2"><label for="warranty-coverage">Phạm vi bảo hành</label><textarea id="warranty-coverage" rows="3">{editorDetail.warranty?.coverage}</textarea></div><div class="admin-field span-2"><label for="technical-support">Hỗ trợ kỹ thuật</label><textarea id="technical-support" rows="3">{editorDetail.warranty?.technicalSupport}</textarea></div></div>
+        </section>
+
+        <section class="admin-editor-section" id="editor-seo" aria-labelledby="editor-seo-title">
+          <header><div><h2 id="editor-seo-title">SEO</h2><p>Tối ưu nội dung hiển thị trên kết quả tìm kiếm và chia sẻ.</p></div></header>
+          <div class="admin-seo-layout"><div class="admin-seo-fields"><div class="admin-field"><label for="seo-title">Tiêu đề SEO</label><input id="seo-title" name="seoTitle" type="text" value={editorSeoTitle} maxlength="65" placeholder="Tên sản phẩm | THIÊN LỘC GROUP" data-seo-title /><small><span data-seo-title-count>0</span>/65 ký tự</small></div><div class="admin-field"><label for="meta-description">Mô tả SEO</label><textarea id="meta-description" name="metaDescription" rows="4" maxlength="160" placeholder="Tóm tắt sản phẩm để hiển thị trên kết quả tìm kiếm" data-seo-description>{editorSeoDescription}</textarea><small><span data-seo-description-count>0</span>/160 ký tự</small></div><div class="admin-field"><label for="seo-slug">Slug</label><input id="seo-slug" type="text" value={editorProduct.slug} data-seo-slug /></div><div class="admin-field"><label for="og-image">Ảnh chia sẻ</label><div class="admin-og-control"><img src={editorProduct.detail?.seo?.ogImage || editorProduct.image} alt="" width="72" height="54" data-og-image /><button class="button button-outline button-sm" type="button" data-select-og>Chọn ảnh</button></div></div></div><aside class="admin-search-preview"><span>Xem trước trên tìm kiếm</span><div><small>thienlocgroup.com › san-pham › <b data-preview-slug>{editorProduct.slug || "ten-san-pham"}</b></small><h3 data-preview-title>{editorSeoTitle || "Tên sản phẩm | THIÊN LỘC GROUP"}</h3><p data-preview-description>{editorSeoDescription || "Mô tả ngắn gọn về sản phẩm sẽ hiển thị tại đây."}</p></div></aside></div>
+        </section>
+      </form>
+    </div>
+  </section>
+
+  <div class="admin-row-popover" popover data-row-popover>
+    {canEditProduct && <a href="/admin/san-pham?view=editor&id=p-001" data-row-edit><i class="ph ph-pencil-simple" aria-hidden="true"></i>Chỉnh sửa</a>}{canCreateQuote && <a href="/admin/bao-gia?product=p-001" data-row-quote><i class="ph ph-file-pdf" aria-hidden="true"></i>Tạo báo giá PDF</a>}<a href="/san-pham/he-thong-sieu-am-mau-sonoport-8" target="_blank" rel="noopener noreferrer" data-row-preview><i class="ph ph-eye" aria-hidden="true"></i>Xem trước</a>{canCreateProduct && <button type="button" data-row-duplicate><i class="ph ph-copy" aria-hidden="true"></i>Nhân bản</button>}{canEditProduct && <button type="button" data-row-archive><i class="ph ph-archive" aria-hidden="true"></i>Lưu trữ</button>}
+  </div>
+
+  <dialog class="admin-action-dialog" data-category-dialog aria-labelledby="category-dialog-title"><form method="dialog"><header><div><span>Thao tác hàng loạt</span><h2 id="category-dialog-title">Chuyển danh mục</h2></div><button class="icon-action" type="submit" value="cancel" aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><div><label for="bulk-category-select">Danh mục mới</label><select id="bulk-category-select">{categories.map((category) => <option>{category}</option>)}</select><p>Sản phẩm được chọn sẽ chuyển sang danh mục này.</p></div><footer><button class="button button-outline" type="submit" value="cancel">Hủy</button><button class="button button-primary" type="submit" value="confirm" data-confirm-category>Xác nhận</button></footer></form></dialog>
+
+  <dialog class="admin-media-dialog" data-media-dialog aria-labelledby="media-preview-title"><div><header><h2 id="media-preview-title">Xem trước ảnh</h2><button class="icon-action" type="button" data-media-dialog-close aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><img src={editorProduct.image} alt="Ảnh sản phẩm xem trước" width="1600" height="1200" data-media-preview-image /></div></dialog>
+
+  <div class="admin-toast" role="status" aria-live="polite" data-admin-toast hidden>Đã lưu thay đổi.</div>
+  <script>
+    import "@/scripts/admin-products";
+  </script>
+</AdminLayout>

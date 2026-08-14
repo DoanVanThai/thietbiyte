@@ -1,0 +1,97 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getContent, getSettings } from "@/lib/content-repository";
+import { projects as fallbackProjects, reasons as fallbackReasons, solutions as fallbackSolutions, trustItems as fallbackTrustItems } from "@/data/homepage";
+import "@/styles/admin-site-content.css";
+
+const settings = getSettings();
+const hero = getContent("homepage.hero", { eyebrow:"THIÊN LỘC GROUP", title:"Giải pháp thiết bị y tế dành cho chăm sóc sức khỏe hiện đại", description:"Cung cấp thiết bị, giải pháp và dịch vụ kỹ thuật cho bệnh viện, phòng khám, phòng xét nghiệm và cơ sở thú y.", image:"/images/hero-ultrasound-lab.webp", primaryCta:{label:"Khám phá thiết bị",href:"#categories"}, secondaryCta:{label:"Nhận tư vấn chuyên sâu",href:"#contact"} });
+const solutions = getContent("homepage.solutions", fallbackSolutions);
+const projects = getContent("homepage.projects", fallbackProjects);
+const trust = getContent("homepage.trust", fallbackTrustItems);
+const reasons = getContent("homepage.reasons", fallbackReasons);
+---
+
+<AdminLayout title="Cấu hình website | Thiên Lộc Admin" description="Quản lý dữ liệu dùng chung của Header, Footer và Homepage." section="Cài đặt website">
+  <section class="admin-page site-content-page" data-site-content-root aria-labelledby="site-content-title">
+    <header class="admin-page-header"><div><h1 id="site-content-title">Cấu hình website</h1><p>Header, Footer và Hero dùng trực tiếp dữ liệu này; cache Public được tăng phiên bản sau mỗi lần lưu.</p></div><a class="admin-button secondary" href="/" target="_blank"><i class="ph ph-arrow-square-out"></i>Xem website</a></header>
+    <form data-site-content-form>
+      <section class="site-content-card"><div class="section-title"><div><h2>Thông tin doanh nghiệp</h2><p>Dùng chung ở Header, Footer và các CTA liên hệ.</p></div></div><div class="site-content-grid">
+        <label><span>Tên hiển thị</span><input name="company" value={settings.company} required /></label>
+        <label><span>Logo URL</span><input name="logo" value={settings.logo} placeholder="/uploads/logo.svg" /></label>
+        <label><span>Hotline</span><input name="hotline" value={settings.hotline} required /></label>
+        <label><span>Zalo</span><input name="zalo" value={settings.zalo} /></label>
+        <label><span>Email</span><input name="email" type="email" value={settings.email} required /></label>
+        <label><span>Facebook URL</span><input name="facebook" value={settings.facebook} inputmode="url" /></label>
+        <label class="wide"><span>Địa chỉ</span><input name="address" value={settings.address} /></label>
+      </div></section>
+      <section class="site-content-card"><div class="section-title"><div><h2>Homepage Hero</h2><p>Nội dung và ảnh đầu trang, không hardcode trong template.</p></div></div><div class="site-content-grid">
+        <label><span>Eyebrow</span><input name="hero.eyebrow" value={hero.eyebrow} /></label>
+        <label class="wide"><span>Tiêu đề</span><textarea name="hero.title" rows="2" required>{hero.title}</textarea></label>
+        <label class="wide"><span>Mô tả</span><textarea name="hero.description" rows="3" required>{hero.description}</textarea></label>
+        <label class="wide"><span>Ảnh Hero</span><input name="hero.image" value={hero.image} /><input type="file" accept="image/*" data-hero-upload /></label>
+        <label><span>CTA chính</span><input name="hero.primaryLabel" value={hero.primaryCta.label} /></label><label><span>Liên kết</span><input name="hero.primaryHref" value={hero.primaryCta.href} /></label>
+        <label><span>CTA phụ</span><input name="hero.secondaryLabel" value={hero.secondaryCta.label} /></label><label><span>Liên kết</span><input name="hero.secondaryHref" value={hero.secondaryCta.href} /></label>
+      </div></section>
+      <section class="site-content-card wide-card"><div class="section-title"><div><h2>Các section nội dung Homepage</h2><p>Mỗi dòng là một mục; dùng dấu | để phân tách trường. Thứ tự dòng là thứ tự hiển thị.</p></div></div><div class="site-content-grid homepage-line-editors">
+        <section class="wide homepage-solutions-editor" data-solutions-editor aria-labelledby="solutions-editor-title">
+          <header>
+            <div><h3 id="solutions-editor-title">Giải pháp trên trang chủ</h3><p>Sửa nội dung và thay ảnh trực tiếp. Thứ tự tại đây cũng là thứ tự ngoài website.</p></div>
+            <button class="admin-button secondary" type="button" data-add-solution><i class="ph ph-plus" aria-hidden="true"></i>Thêm giải pháp</button>
+          </header>
+          <div class="solution-editor-list" data-solution-list>
+            {solutions.map(([title, description, image], index) => (
+              <article class="solution-editor-row" data-solution-item>
+                <div class="solution-image-control">
+                  <img src={image} alt="" width="320" height="220" loading="lazy" data-solution-preview />
+                  <label><input type="file" accept="image/jpeg,image/png,image/webp" data-solution-upload /><i class="ph ph-image" aria-hidden="true"></i><span>Thay ảnh</span></label>
+                  <input type="hidden" value={image} data-solution-image />
+                </div>
+                <div class="solution-copy-fields">
+                  <span class="solution-row-label" data-solution-label>Giải pháp {index + 1}</span>
+                  <label><span>Tiêu đề</span><input value={title} maxlength="100" required data-solution-title /></label>
+                  <label><span>Mô tả</span><textarea rows="2" maxlength="220" required data-solution-description>{description}</textarea></label>
+                  <p data-solution-status aria-live="polite"></p>
+                </div>
+                <div class="solution-row-actions">
+                  <button class="icon-button subtle" type="button" data-solution-up aria-label="Chuyển giải pháp lên"><i class="ph ph-arrow-up" aria-hidden="true"></i></button>
+                  <button class="icon-button subtle" type="button" data-solution-down aria-label="Chuyển giải pháp xuống"><i class="ph ph-arrow-down" aria-hidden="true"></i></button>
+                  <button class="icon-button danger" type="button" data-remove-solution aria-label="Xóa giải pháp"><i class="ph ph-trash" aria-hidden="true"></i></button>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div class="solution-editor-empty" data-solutions-empty hidden><i class="ph ph-image-square" aria-hidden="true"></i><strong>Chưa có giải pháp</strong><span>Thêm mục đầu tiên để hiển thị trên trang chủ.</span></div>
+          <template data-solution-template>
+            <article class="solution-editor-row is-new" data-solution-item>
+              <div class="solution-image-control">
+                <img src="/images/project-handover-placeholder.webp" alt="" width="320" height="220" data-solution-preview />
+                <label><input type="file" accept="image/jpeg,image/png,image/webp" data-solution-upload /><i class="ph ph-image" aria-hidden="true"></i><span>Chọn ảnh</span></label>
+                <input type="hidden" value="/images/project-handover-placeholder.webp" data-solution-image />
+              </div>
+              <div class="solution-copy-fields">
+                <span class="solution-row-label" data-solution-label>Giải pháp mới</span>
+                <label><span>Tiêu đề</span><input maxlength="100" required placeholder="Ví dụ: Phòng khám tim mạch" data-solution-title /></label>
+                <label><span>Mô tả</span><textarea rows="2" maxlength="220" required placeholder="Mô tả ngắn thiết bị và phạm vi giải pháp" data-solution-description></textarea></label>
+                <p data-solution-status aria-live="polite"></p>
+              </div>
+              <div class="solution-row-actions">
+                <button class="icon-button subtle" type="button" data-solution-up aria-label="Chuyển giải pháp lên"><i class="ph ph-arrow-up" aria-hidden="true"></i></button>
+                <button class="icon-button subtle" type="button" data-solution-down aria-label="Chuyển giải pháp xuống"><i class="ph ph-arrow-down" aria-hidden="true"></i></button>
+                <button class="icon-button danger" type="button" data-remove-solution aria-label="Xóa giải pháp"><i class="ph ph-trash" aria-hidden="true"></i></button>
+              </div>
+            </article>
+          </template>
+          <footer><span>Ảnh JPG, PNG hoặc WEBP · tối đa 15 MB</span><a href="/admin/media"><i class="ph ph-images" aria-hidden="true"></i>Mở thư viện media</a></footer>
+        </section>
+        <label class="wide"><span>Projects · Tên | Địa điểm | Thiết bị | Thời gian | Ảnh</span><textarea name="homepage.projects" rows="5">{projects.map((item) => [item.title, item.location, item.equipment, item.time, item.image].join(" | ")).join("\n")}</textarea></label>
+        <div class="wide site-content-managed"><strong>Kiến thức nổi bật</strong><span>Được lấy tự động từ các nội dung có trạng thái “Đã xuất bản”.</span><a href="/admin/noi-dung">Quản lý nội dung <i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
+        <label><span>Trust items · Icon | Nhãn</span><textarea name="homepage.trust" rows="5">{trust.map((item) => item.join(" | ")).join("\n")}</textarea></label>
+        <label><span>Lý do lựa chọn · Tiêu đề | Mô tả</span><textarea name="homepage.reasons" rows="5">{reasons.map((item) => item.join(" | ")).join("\n")}</textarea></label>
+      </div></section>
+      <section class="site-integration-map" aria-labelledby="integration-map-title"><div class="section-title"><div><h2 id="integration-map-title">Các section tự đồng bộ</h2><p>Không cần nhập lại dữ liệu đã có ở module nguồn.</p></div></div><ul><li><strong>Sản phẩm nổi bật</strong><span>Sản phẩm · Featured + Published</span></li><li><strong>Thương hiệu</strong><span>Thương hiệu · Đang dùng</span></li><li><strong>Chuyên khoa</strong><span>Chuyên khoa · Đang dùng</span></li><li><strong>Danh mục</strong><span>Danh mục · Thứ tự + trạng thái</span></li></ul></section>
+      <div class="site-content-actions"><p data-site-content-feedback aria-live="polite"></p><button class="admin-button primary" type="submit"><i class="ph ph-floppy-disk"></i>Lưu và cập nhật Public</button></div>
+    </form>
+  </section>
+  <script>import "@/scripts/admin-site-content";</script>
+</AdminLayout>

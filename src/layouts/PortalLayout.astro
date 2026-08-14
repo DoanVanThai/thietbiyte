@@ -1,0 +1,53 @@
+---
+import "@/styles/fonts.css";
+import "@/styles/icons.css";
+import "@/styles/global.css";
+import "@/styles/portal.css";
+import { getSettings } from "@/lib/content-repository";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const settings = getSettings();
+const principal = Astro.locals.auth;
+const displayName = principal?.name || "Khách hàng";
+const shortName = displayName.split(/\s+/).slice(-2).join(" ");
+const initials = displayName.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(-2).join("").toLocaleUpperCase("vi");
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#f9fafc" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23006fb6%22/><path d=%22M14 7h4v7h7v4h-7v7h-4v-7H7v-4h7z%22 fill=%22white%22/></svg>" />
+    <title>{title}</title>
+  </head>
+  <body class="portal-body">
+    <a class="skip-link" href="#main-content">Chuyển đến nội dung chính</a>
+    <header class="portal-topbar">
+      <div class="portal-topbar-inner">
+        <a class="wordmark" href="/" aria-label="THIÊN LỘC GROUP - Trang chủ">
+          <img class="wordmark-logo" src={settings.logo || "/images/tl-group-logo.png"} alt="" width="112" height="67" />
+        </a>
+        <span class="portal-product-name">Tài khoản của tôi</span>
+        <div class="portal-account-compact">
+          <span class="portal-avatar" aria-hidden="true">{initials}</span>
+          <span><strong>{shortName}</strong><small>Khách hàng</small></span>
+          <a href="/api/auth/logout" data-auth-logout aria-label="Đăng xuất" title="Đăng xuất"><i class="ph ph-sign-out" aria-hidden="true"></i></a>
+        </div>
+      </div>
+    </header>
+    <slot />
+    <script>
+      import "@/scripts/portal";
+      import "@/scripts/session-controls";
+    </script>
+  </body>
+</html>

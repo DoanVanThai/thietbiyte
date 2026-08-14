@@ -1,0 +1,19 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import AuthShell from "@/components/AuthShell.astro";
+import { isCustomerOnly } from "@/server/auth/permissions";
+const permission = Astro.url.searchParams.get("permission");
+const destination = isCustomerOnly(Astro.locals.auth) ? "/tai-khoan" : "/admin";
+---
+
+<AuthLayout title="Không có quyền truy cập | THIÊN LỘC GROUP" description="Tài khoản không có quyền truy cập khu vực này.">
+  <AuthShell title="Không có quyền truy cập" description="Tài khoản của bạn chưa được cấp quyền cho khu vực hoặc thao tác này.">
+    <div class="auth-state auth-state-panel" data-tone="danger">
+      <div class="auth-state-icon"><i class="ph ph-shield-warning" aria-hidden="true"></i></div>
+      <h2>Truy cập bị từ chối</h2>
+      <p>{permission ? `Quyền cần thiết: ${permission}.` : "Hãy liên hệ quản trị viên nếu bạn cho rằng đây là nhầm lẫn."}</p>
+      <a class="button button-primary" href={destination}>Quay lại khu vực của tôi</a>
+      <a class="auth-link" href="/">Về trang chủ</a>
+    </div>
+  </AuthShell>
+</AuthLayout>

@@ -1,0 +1,56 @@
+---
+interface Props { section?: string; }
+import { can } from "@/server/auth/permissions";
+import { crmViewQuoteNotifications } from "@/server/crm-view";
+const { section = "Dashboard" } = Astro.props;
+const principal = Astro.locals.auth;
+const initials = principal?.name.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(-2).join("").toLocaleUpperCase("vi") || "AD";
+const roleLabel = principal?.roleIds[0]?.replaceAll("-", " ") || "staff";
+const notifications = principal && can(principal, "quote.view")
+  ? await crmViewQuoteNotifications(principal)
+  : { count: 0, items: [] };
+---
+<header class="admin-topbar">
+  <div class="admin-topbar-context">
+    <button class="admin-mobile-menu" type="button" data-admin-menu-open aria-label="Mở điều hướng" aria-expanded="false" aria-controls="admin-sidebar"><i class="ph ph-list" aria-hidden="true"></i></button>
+    <nav aria-label="Đường dẫn quản trị"><a href="/admin?section=tong-quan">Admin</a><i class="ph ph-caret-right" aria-hidden="true"></i><span aria-current="page" data-admin-breadcrumb>{section}</span></nav>
+  </div>
+
+  <div class="admin-search" data-admin-search>
+    <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+    <label class="sr-only" for="admin-global-search">Tìm kiếm trong Admin</label>
+    <input id="admin-global-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="admin-search-results" placeholder="Tìm chức năng, nội dung, tài liệu..." autocomplete="off" data-admin-search-input />
+    <kbd aria-hidden="true">⌘ K</kbd>
+    <div id="admin-search-results" class="admin-search-results" role="listbox" data-admin-search-results hidden></div>
+  </div>
+
+  <div class="admin-topbar-actions">
+    <button class="admin-mobile-search" type="button" data-admin-search-toggle aria-label="Mở tìm kiếm Admin" aria-expanded="false" aria-controls="admin-global-search">
+      <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+    </button>
+    <details class="admin-topbar-menu admin-notification-menu">
+      <summary aria-label={notifications.count ? `${notifications.count} yêu cầu mới` : "Thông báo"}><i class="ph ph-bell" aria-hidden="true"></i><span data-notification-dot hidden={notifications.count === 0}></span></summary>
+      <div class="admin-menu-panel">
+        <header><strong>Yêu cầu mới</strong><span data-notification-count>{notifications.count} yêu cầu</span></header>
+        <div class="admin-notification-empty" data-notification-empty hidden={notifications.count > 0}><i class="ph ph-bell-simple" aria-hidden="true"></i><span>Chưa có yêu cầu mới.</span></div>
+        <div data-notification-list hidden={notifications.count === 0}>
+          {notifications.items.map((request) => (
+            <a href="/admin/crm/quotes">
+              <i class="ph ph-phone" aria-hidden="true"></i>
+              <span><strong>{request.customer}</strong><small>{request.phone || "Chưa có số điện thoại"} · {request.created}</small></span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </details>
+
+    <details class="admin-topbar-menu admin-user-menu">
+      <summary aria-label="Menu người dùng"><span class="admin-avatar" aria-hidden="true">{initials}</span><span class="admin-user-copy"><strong>{principal?.name || "Quản trị viên"}</strong><small>{roleLabel}</small></span><i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+      <div class="admin-menu-panel">
+        {principal && can(principal, "user.view") && <a href={`/admin/users/${principal.id}`}><i class="ph ph-user-circle" aria-hidden="true"></i>Hồ sơ quản trị</a>}
+        {can(principal, "settings.view") && <a href="/admin?section=cai-dat"><i class="ph ph-gear" aria-hidden="true"></i>Cài đặt</a>}
+        <a href="/api/auth/logout" data-auth-logout><i class="ph ph-sign-out" aria-hidden="true"></i>Đăng xuất</a>
+      </div>
+    </details>
+  </div>
+</header>

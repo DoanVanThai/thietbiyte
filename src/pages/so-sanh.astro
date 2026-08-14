@@ -1,0 +1,468 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import { productService } from "@/server/services/product-service";
+
+const catalogProducts = await productService.listPublicCatalog();
+const compareData = await Promise.all(catalogProducts.map(async (product) => {
+  const detail = await productService.getPublicDetail(product.slug);
+  return {
+    id: product.id,
+    name: product.name,
+    shortName: detail?.shortName || product.model.replace(" (minh họa)", ""),
+    model: product.model,
+    brand: product.brand,
+    category: product.category,
+    group: product.group === "medical" ? "Y tế" : "Thú y",
+    origin: product.origin,
+    warranty: detail?.warranty?.period || product.warranty || "Chưa có dữ liệu",
+    price: detail?.priceMode === "SHOW_PRICE" && detail.priceVnd ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(detail.priceVnd) : "Liên hệ",
+    applications: detail?.applications.join(", ") || product.applications.join(", ") || "Chưa có dữ liệu",
+    image: product.image,
+    href: `/san-pham/${product.slug}`,
+    features: detail?.features.map((feature) => `${feature.title}: ${feature.description}`).join("\n") || product.specs.join("\n") || "Chưa có dữ liệu",
+    specifications: detail
+      ? Object.fromEntries(detail.specificationGroups.flatMap((group) => group.items.map((item) => [
+        `${group.title}|||${item.label}`,
+        item.value,
+      ])))
+      : Object.fromEntries(product.specs.map((value, index) => [`Thông tin catalog|||Thông tin ${index + 1}`, value])),
+  };
+}));
+---
+
+<BaseLayout title="So sánh sản phẩm | THIÊN LỘC GROUP" description="So sánh tối đa 4 thiết bị theo thông tin, ứng dụng và thông số kỹ thuật.">
+  <Header />
+  <main id="main-content" class="compare-page" data-compare-page>
+    <script id="compare-page-data" type="application/json" is:inline set:html={JSON.stringify(compareData)} />
+    <section class="compare-page-intro" aria-labelledby="compare-page-title">
+      <div class="container">
+        <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "So sánh" }]} />
+        <div class="compare-title-row">
+          <div>
+            <h1 id="compare-page-title">So sánh sản phẩm</h1>
+            <p>Đối chiếu thông tin chính, ứng dụng và thông số kỹ thuật của tối đa 4 thiết bị.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="compare-page-content">
+      <div class="container">
+        <div class="compare-error-state" data-compare-error hidden>
+          <i class="ph ph-warning-circle" aria-hidden="true"></i>
+          <h2>Chưa thể đọc danh sách so sánh</h2>
+          <p>Dữ liệu lưu trong trình duyệt có thể đang bị chặn. Hãy thử lại hoặc chọn lại sản phẩm.</p>
+          <button class="button button-outline" type="button" data-compare-retry>Thử lại</button>
+        </div>
+
+        <div class="compare-empty-state" data-compare-empty hidden>
+          <div class="compare-empty-copy">
+            <i class="ph ph-arrows-left-right" aria-hidden="true"></i>
+            <h2>Chưa có sản phẩm để so sánh</h2>
+            <p>Chọn từ 2 đến 4 sản phẩm. Bạn có thể bắt đầu với các model thường được tra cứu.</p>
+            <a class="button button-outline" href="/san-pham">Xem tất cả sản phẩm</a>
+          </div>
+          <div class="compare-suggestion-panel">
+            <div class="compare-suggestion-heading">
+              <strong>Bắt đầu nhanh</strong>
+              <span>Chọn một model gợi ý, sau đó thêm sản phẩm thứ hai.</span>
+            </div>
+            <div class="compare-empty-suggestions" aria-label="Sản phẩm gợi ý">
+              {catalogProducts.slice(0, 4).map((product) => (
+                <button type="button" data-compare-product data-product-id={product.id} aria-pressed="false">
+                  <img src={product.image} alt="" width="72" height="56" />
+                  <span><strong>{product.model.replace(" (minh họa)", "")}</strong><small>{product.brand} · {product.category}</small></span>
+                  <i class="ph ph-plus" aria-hidden="true"></i>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div class="compare-workspace" data-compare-workspace hidden>
+          <div class="compare-workspace-bar">
+            <div class="compare-selection-status">
+              <strong><span data-compare-selected-count>0</span>/4 sản phẩm</strong>
+              <span data-compare-selection-hint>Chọn thêm ít nhất một sản phẩm để bắt đầu đối chiếu.</span>
+            </div>
+            <label class="difference-toggle">
+              <input type="checkbox" data-differences-only />
+              <span aria-hidden="true"></span>
+              <strong>Chỉ xem điểm khác nhau</strong>
+            </label>
+          </div>
+
+          <div class="compare-category-notice" data-category-notice hidden>
+            <i class="ph ph-info" aria-hidden="true"></i>
+            <span>Các sản phẩm thuộc danh mục khác nhau. Một số thông số sẽ không có giá trị đối chiếu trực tiếp.</span>
+          </div>
+
+          <div class="compare-product-selector">
+            <div class="compare-selected-products" data-compare-selected aria-label="Sản phẩm đang so sánh"></div>
+            <div class="compare-product-actions">
+              <button class="button button-outline" type="button" data-open-compare-picker><i class="ph ph-plus" aria-hidden="true"></i> Thêm sản phẩm</button>
+              <a class="button button-primary" href="/yeu-cau-bao-gia?source=compare" data-quote-compared><i class="ph ph-file-text" aria-hidden="true"></i>Yêu cầu báo giá</a>
+            </div>
+          </div>
+          <p class="compare-full-message" data-compare-full hidden><i class="ph ph-check-circle" aria-hidden="true"></i> Đã chọn tối đa 4 sản phẩm.</p>
+
+          <div class="compare-minimum-state" data-compare-minimum hidden>
+            <i class="ph ph-plus-circle" aria-hidden="true"></i>
+            <div>
+              <strong>Chọn thêm 1 sản phẩm để đối chiếu</strong>
+              <span>Dùng nút “Thêm sản phẩm” phía trên; bảng đối chiếu sẽ xuất hiện khi có ít nhất hai thiết bị.</span>
+            </div>
+          </div>
+
+          <div data-compare-results hidden>
+            <div class="mobile-product-window">
+              <div class="mobile-product-window-header">
+                <strong>Xem tối đa 2 sản phẩm</strong>
+                <span>Chạm để đổi cột đang hiển thị</span>
+              </div>
+              <div class="mobile-product-selector" data-mobile-product-selector></div>
+            </div>
+
+            <div class="compare-table-wrap" data-compare-desktop aria-live="polite"></div>
+            <div class="compare-mobile-groups" data-compare-mobile aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <dialog class="compare-picker-dialog" data-compare-picker aria-labelledby="compare-picker-title">
+      <div class="compare-picker-header">
+        <div><h2 id="compare-picker-title">Thêm sản phẩm</h2><span data-picker-count>Chọn tối đa 4 sản phẩm</span></div>
+        <button class="icon-action" type="button" data-close-compare-picker aria-label="Đóng danh sách"><i class="ph ph-x" aria-hidden="true"></i></button>
+      </div>
+      <div class="compare-picker-search">
+        <label class="sr-only" for="compare-picker-search">Tìm sản phẩm để so sánh</label>
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+        <input id="compare-picker-search" type="search" placeholder="Tìm theo tên, model hoặc hãng..." data-compare-picker-search />
+      </div>
+      <div class="compare-picker-list" data-compare-picker-list>
+        {catalogProducts.map((product) => (
+          <button type="button" data-picker-product data-product-id={product.id} data-picker-text={`${product.name} ${product.model} ${product.brand} ${product.category}`}>
+            <img src={product.image} alt="" width="64" height="52" loading="lazy" />
+            <span><strong>{product.name}</strong><small>{product.brand} · {product.model}</small></span>
+            <i class="ph ph-plus" aria-hidden="true"></i>
+          </button>
+        ))}
+      </div>
+      <div class="compare-picker-empty" data-compare-picker-empty hidden>
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+        <strong>Không tìm thấy sản phẩm</strong>
+        <span>Thử tìm bằng model, tên thiết bị hoặc hãng khác.</span>
+      </div>
+    </dialog>
+  </main>
+  <Footer />
+
+<script>
+  type CompareProduct = {
+    id: string; name: string; shortName: string; model: string; brand: string; category: string; group: string;
+    origin: string; warranty: string; price: string; applications: string; image: string; href: string; features: string;
+    specifications: Record<string, string>;
+  };
+  const root = document.querySelector<HTMLElement>("[data-compare-page]");
+  if (root) {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let products: CompareProduct[] = [];
+    try { products = JSON.parse(document.getElementById("compare-page-data")?.textContent || "[]") as CompareProduct[]; } catch { products = []; }
+    const productMap = new Map(products.map((product) => [product.id, product]));
+    const empty = root.querySelector<HTMLElement>("[data-compare-empty]");
+    const workspace = root.querySelector<HTMLElement>("[data-compare-workspace]");
+    const error = root.querySelector<HTMLElement>("[data-compare-error]");
+    const selectedRoot = root.querySelector<HTMLElement>("[data-compare-selected]");
+    const desktopRoot = root.querySelector<HTMLElement>("[data-compare-desktop]");
+    const mobileRoot = root.querySelector<HTMLElement>("[data-compare-mobile]");
+    const mobileSelector = root.querySelector<HTMLElement>("[data-mobile-product-selector]");
+    const differenceToggle = root.querySelector<HTMLInputElement>("[data-differences-only]");
+    const categoryNotice = root.querySelector<HTMLElement>("[data-category-notice]");
+    const fullMessage = root.querySelector<HTMLElement>("[data-compare-full]");
+    const minimumState = root.querySelector<HTMLElement>("[data-compare-minimum]");
+    const results = root.querySelector<HTMLElement>("[data-compare-results]");
+    const selectedCount = root.querySelector<HTMLElement>("[data-compare-selected-count]");
+    const selectionHint = root.querySelector<HTMLElement>("[data-compare-selection-hint]");
+    const quoteCompared = root.querySelector<HTMLAnchorElement>("[data-quote-compared]");
+    const picker = root.querySelector<HTMLDialogElement>("[data-compare-picker]");
+    const pickerSearch = root.querySelector<HTMLInputElement>("[data-compare-picker-search]");
+    const pickerEmpty = root.querySelector<HTMLElement>("[data-compare-picker-empty]");
+    let mobileIds: string[] = [];
+
+    const readIds = () => {
+      const raw = JSON.parse(sessionStorage.getItem("tlm-compared-products") || "[]") as unknown;
+      return Array.isArray(raw) ? raw.filter((id): id is string => typeof id === "string" && productMap.has(id)).slice(0, 4) : [];
+    };
+    const writeIds = (ids: string[]) => sessionStorage.setItem("tlm-compared-products", JSON.stringify(ids));
+    const text = (tag: string, value: string, className?: string) => {
+      const element = document.createElement(tag);
+      element.textContent = value;
+      if (className) element.className = className;
+      return element;
+    };
+    const valuesDifferent = (values: string[]) => new Set(values.map((value) => value.trim().toLocaleLowerCase("vi"))).size > 1;
+    const baseGroups = (selected: CompareProduct[]) => {
+      const basic = [
+        { group: "Thông tin", label: "Danh mục", values: selected.map((product) => product.category) },
+        { group: "Thông tin", label: "Nhóm", values: selected.map((product) => product.group) },
+        { group: "Thông tin", label: "Model", values: selected.map((product) => product.model) },
+        { group: "Giá", label: "Giá tham khảo", values: selected.map((product) => product.price) },
+        { group: "Thương hiệu", label: "Hãng", values: selected.map((product) => product.brand) },
+        { group: "Xuất xứ", label: "Quốc gia", values: selected.map((product) => product.origin) },
+        { group: "Bảo hành", label: "Thời hạn", values: selected.map((product) => product.warranty) },
+        { group: "Ứng dụng", label: "Phạm vi ứng dụng", values: selected.map((product) => product.applications) },
+        { group: "Tính năng", label: "Tính năng chính", values: selected.map((product) => product.features) },
+      ];
+      const specKeys = [...new Set(selected.flatMap((product) => Object.keys(product.specifications)))];
+      const specs = specKeys.map((key) => {
+        const [sourceGroup, label] = key.split("|||");
+        return { group: `Thông số · ${sourceGroup}`, label, values: selected.map((product) => product.specifications[key] || "Chưa có dữ liệu") };
+      });
+      return [...basic, ...specs];
+    };
+
+    const createProductHeader = (product: CompareProduct, removable = true) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "compare-product-head";
+      const image = document.createElement("img");
+      image.src = product.image;
+      image.alt = "";
+      image.width = 180;
+      image.height = 130;
+      const link = document.createElement("a");
+      link.href = product.href;
+      link.textContent = product.shortName;
+      const meta = text("span", `${product.brand} · ${product.category}`);
+      wrapper.append(image, link, meta);
+      if (removable) {
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.dataset.removeComparePage = product.id;
+        remove.setAttribute("aria-label", `Bỏ ${product.name} khỏi so sánh`);
+        remove.innerHTML = '<i class="ph ph-x" aria-hidden="true"></i>';
+        wrapper.append(remove);
+      }
+      return wrapper;
+    };
+
+    const renderDesktop = (selected: CompareProduct[], rows: ReturnType<typeof baseGroups>) => {
+      if (!desktopRoot) return;
+      desktopRoot.replaceChildren();
+      const table = document.createElement("table");
+      table.className = "compare-table";
+      const caption = document.createElement("caption");
+      caption.className = "sr-only";
+      caption.textContent = `So sánh ${selected.length} sản phẩm`;
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      const corner = document.createElement("th");
+      corner.scope = "col";
+      corner.textContent = "Tiêu chí";
+      headerRow.append(corner);
+      selected.forEach((product) => {
+        const cell = document.createElement("th");
+        cell.scope = "col";
+        cell.append(createProductHeader(product));
+        headerRow.append(cell);
+      });
+      thead.append(headerRow);
+      const tbody = document.createElement("tbody");
+      let currentGroup = "";
+      rows.forEach((row) => {
+        const different = valuesDifferent(row.values);
+        if (differenceToggle?.checked && !different) return;
+        if (row.group !== currentGroup) {
+          currentGroup = row.group;
+          const groupRow = document.createElement("tr");
+          groupRow.className = "compare-group-row";
+          const groupCell = document.createElement("th");
+          groupCell.colSpan = selected.length + 1;
+          groupCell.scope = "colgroup";
+          groupCell.textContent = row.group;
+          groupRow.append(groupCell);
+          tbody.append(groupRow);
+        }
+        const tr = document.createElement("tr");
+        tr.classList.toggle("is-different", different);
+        const label = document.createElement("th");
+        label.scope = "row";
+        label.textContent = row.label;
+        tr.append(label);
+        row.values.forEach((value) => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          if (value === "Chưa có dữ liệu") cell.className = "is-missing";
+          tr.append(cell);
+        });
+        tbody.append(tr);
+      });
+      table.append(caption, thead, tbody);
+      desktopRoot.append(table);
+    };
+
+    const renderMobile = (selected: CompareProduct[]) => {
+      if (!mobileRoot || !mobileSelector) return;
+      if (!mobileIds.length) mobileIds = selected.slice(0, 2).map((product) => product.id);
+      mobileIds = mobileIds.filter((id) => selected.some((product) => product.id === id)).slice(0, 2);
+      selected.forEach((product) => { if (mobileIds.length < 2 && !mobileIds.includes(product.id)) mobileIds.push(product.id); });
+      const visible = mobileIds.map((id) => productMap.get(id)).filter(Boolean) as CompareProduct[];
+      mobileSelector.replaceChildren();
+      selected.forEach((product) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.mobileProduct = product.id;
+        button.setAttribute("aria-pressed", String(mobileIds.includes(product.id)));
+        const image = document.createElement("img");
+        image.src = product.image;
+        image.alt = "";
+        image.width = 40;
+        image.height = 40;
+        button.append(image, text("span", product.shortName));
+        mobileSelector.append(button);
+      });
+      mobileRoot.replaceChildren();
+      const headers = document.createElement("div");
+      headers.className = "compare-mobile-product-heads";
+      headers.dataset.items = String(visible.length);
+      visible.forEach((product) => headers.append(createProductHeader(product, false)));
+      mobileRoot.append(headers);
+      const rows = baseGroups(visible);
+      let currentGroup = "";
+      let groupElement: HTMLDetailsElement | null = null;
+      rows.forEach((row) => {
+        const different = valuesDifferent(row.values);
+        if (differenceToggle?.checked && !different) return;
+        if (row.group !== currentGroup) {
+          currentGroup = row.group;
+          groupElement = document.createElement("details");
+          groupElement.className = "compare-mobile-group";
+          groupElement.open = true;
+          const summary = document.createElement("summary");
+          summary.append(text("span", row.group), text("i", ""));
+          summary.querySelector("i")!.className = "ph ph-caret-down";
+          groupElement.append(summary);
+          mobileRoot.append(groupElement);
+        }
+        const item = document.createElement("div");
+        item.className = "compare-mobile-row";
+        item.classList.toggle("is-different", different);
+        item.append(text("strong", row.label, "compare-mobile-label"));
+        const values = document.createElement("div");
+        values.dataset.items = String(row.values.length);
+        row.values.forEach((value) => {
+          const cell = text("p", value);
+          if (value === "Chưa có dữ liệu") cell.className = "is-missing";
+          values.append(cell);
+        });
+        item.append(values);
+        groupElement?.append(item);
+      });
+    };
+
+    const render = () => {
+      const explicitError = new URL(window.location.href).searchParams.get("state") === "error";
+      let ids: string[] = [];
+      try { ids = readIds(); } catch { error!.hidden = false; empty!.hidden = true; workspace!.hidden = true; return; }
+      if (explicitError) { error!.hidden = false; empty!.hidden = true; workspace!.hidden = true; return; }
+      error!.hidden = true;
+      const selected = ids.map((id) => productMap.get(id)).filter(Boolean) as CompareProduct[];
+      empty!.hidden = selected.length > 0;
+      workspace!.hidden = selected.length === 0;
+      minimumState!.hidden = selected.length !== 1;
+      results!.hidden = selected.length < 2;
+      if (selectedCount) selectedCount.textContent = String(selected.length);
+      if (selectionHint) {
+        selectionHint.textContent = selected.length === 1
+          ? "Chọn thêm ít nhất một sản phẩm để bắt đầu đối chiếu."
+          : selected.length === 4
+            ? "Đã đủ sản phẩm. Bạn có thể lọc để chỉ xem điểm khác nhau."
+            : "Đối chiếu theo từng nhóm thông tin; có thể thêm sản phẩm bất cứ lúc nào.";
+      }
+      if (selected.length < 2 && differenceToggle) differenceToggle.checked = false;
+      differenceToggle!.disabled = selected.length < 2;
+      fullMessage!.hidden = selected.length < 4;
+      root.querySelector<HTMLButtonElement>("[data-open-compare-picker]")!.disabled = selected.length >= 4;
+      if (quoteCompared) {
+        quoteCompared.hidden = selected.length === 0;
+        quoteCompared.href = `/yeu-cau-bao-gia?products=${encodeURIComponent(ids.join(","))}&source=compare`;
+      }
+      categoryNotice!.hidden = selected.length < 2 || new Set(selected.map((product) => product.category)).size <= 1;
+      selectedRoot!.replaceChildren();
+      selected.forEach((product) => selectedRoot!.append(createProductHeader(product)));
+      const rows = baseGroups(selected);
+      renderDesktop(selected, rows);
+      renderMobile(selected);
+      root.querySelectorAll<HTMLButtonElement>("[data-picker-product]").forEach((button) => {
+        const active = ids.includes(button.dataset.productId || "");
+        button.disabled = !active && ids.length >= 4;
+        button.classList.toggle("is-selected", active);
+        button.setAttribute("aria-pressed", String(active));
+        button.setAttribute("aria-label", `${active ? "Bỏ" : "Thêm"} ${button.querySelector("strong")?.textContent || "sản phẩm"} ${active ? "khỏi" : "vào"} danh sách so sánh`);
+        button.querySelector("i")!.className = `ph ${active ? "ph-check" : "ph-plus"}`;
+      });
+      const pickerCount = root.querySelector<HTMLElement>("[data-picker-count]");
+      if (pickerCount) pickerCount.textContent = `${ids.length}/4 sản phẩm đã chọn`;
+      if (selected.length > 0 && !reduceMotion.matches) {
+        workspace?.animate([
+          { opacity: .72 },
+          { opacity: 1 },
+        ], { duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" });
+      }
+    };
+
+    root.addEventListener("click", (event) => {
+      const remove = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-remove-compare-page]");
+      if (!remove?.dataset.removeComparePage) return;
+      try {
+        writeIds(readIds().filter((id) => id !== remove.dataset.removeComparePage));
+        window.dispatchEvent(new CustomEvent("tlm:compare-change"));
+        window.dispatchEvent(new CustomEvent("tlm:toast", { detail: { message: "Đã bỏ sản phẩm khỏi so sánh." } }));
+      } catch { window.dispatchEvent(new CustomEvent("tlm:toast", { detail: { message: "Không thể cập nhật danh sách so sánh.", tone: "error" } })); }
+    });
+    root.querySelectorAll("[data-open-compare-picker]").forEach((button) => button.addEventListener("click", () => {
+      picker?.showModal();
+      requestAnimationFrame(() => pickerSearch?.focus());
+    }));
+    root.querySelector("[data-close-compare-picker]")?.addEventListener("click", () => picker?.close());
+    picker?.addEventListener("click", (event) => { if (event.target === picker) picker.close(); });
+    root.querySelector("[data-compare-picker-list]")?.addEventListener("click", (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-picker-product]");
+      const id = button?.dataset.productId;
+      if (!id) return;
+      try {
+        const ids = readIds();
+        const next = ids.includes(id) ? ids.filter((item) => item !== id) : ids.length < 4 ? [...ids, id] : ids;
+        writeIds(next);
+        window.dispatchEvent(new CustomEvent("tlm:compare-change"));
+      } catch { window.dispatchEvent(new CustomEvent("tlm:toast", { detail: { message: "Không thể cập nhật danh sách so sánh.", tone: "error" } })); }
+    });
+    pickerSearch?.addEventListener("input", () => {
+      const query = pickerSearch.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi");
+      let visibleCount = 0;
+      root.querySelectorAll<HTMLElement>("[data-picker-product]").forEach((item) => {
+        const value = (item.dataset.pickerText || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi");
+        item.hidden = query.length > 0 && !value.includes(query);
+        if (!item.hidden) visibleCount += 1;
+      });
+      if (pickerEmpty) pickerEmpty.hidden = visibleCount > 0;
+    });
+    mobileSelector?.addEventListener("click", (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-mobile-product]");
+      const id = button?.dataset.mobileProduct;
+      if (!id || mobileIds.includes(id)) return;
+      mobileIds = mobileIds.length < 2 ? [...mobileIds, id] : [mobileIds[1], id];
+      render();
+    });
+    differenceToggle?.addEventListener("change", render);
+    window.addEventListener("tlm:compare-change", render as EventListener);
+    root.querySelector("[data-compare-retry]")?.addEventListener("click", () => {
+      const url = new URL(window.location.href); url.searchParams.delete("state"); window.location.href = url.toString();
+    });
+    render();
+  }
+</script>
+</BaseLayout>

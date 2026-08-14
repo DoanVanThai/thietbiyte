@@ -1,0 +1,41 @@
+---
+import AdminLayout from "@/layouts/AdminAccessLayout.astro";
+import { permissionGroups } from "@/data/admin-access";
+import { getRolesForAdmin } from "@/server/auth/admin-data";
+import { can } from "@/server/auth/permissions";
+
+const adminRoles = await getRolesForAdmin();
+const canManageRoles = can(Astro.locals.auth, "role.manage");
+
+const matrixRoleIds = ["super-admin", "admin", "sales-manager", "product-manager", "technical-staff"];
+const matrixRoles = matrixRoleIds.map((id) => adminRoles.find((role) => role.id === id)!);
+---
+
+<AdminLayout title="Ma trận quyền | Admin THIÊN LỘC GROUP" description="So sánh quyền giữa các vai trò quản trị." activePath="permissions">
+  <section class="admin-page admin-matrix-page" aria-labelledby="permission-matrix-title">
+    <header class="admin-page-header">
+      <div><h1 id="permission-matrix-title">Ma trận quyền</h1><p>So sánh và điều chỉnh quyền theo vai trò, được nhóm theo nghiệp vụ.</p></div>
+      <div class="admin-page-actions"><span class="admin-demo-label">{permissionGroups.length} nhóm quyền</span>{canManageRoles && <button class="button button-primary" type="button" data-save-matrix><i class="ph ph-floppy-disk" aria-hidden="true"></i>Lưu thay đổi</button>}</div>
+    </header>
+
+    <div class="admin-notice"><i class="ph ph-lock-key" aria-hidden="true"></i><div><strong>Super Admin luôn được khóa</strong><span>Cột Super Admin chỉ để tham chiếu. UI không thể cấp quyền vượt quá policy backend và mọi request vẫn phải được authorization phía server.</span></div></div>
+
+    <div class="admin-matrix-legend"><span><i class="ph ph-check-square" aria-hidden="true"></i>Được cấp</span><span><i class="ph ph-lock" aria-hidden="true"></i>Quyền hệ thống khóa</span><span><i class="ph ph-warning-circle" aria-hidden="true"></i>Quyền nhạy cảm</span></div>
+
+    <div class="admin-matrix-groups">
+      {permissionGroups.map((group) => (
+        <details class="admin-matrix-group" data-matrix-group={group.id} open>
+          <summary><span><strong>{group.label}</strong><small>{group.description}</small></span><span><b>{group.permissions.length} quyền</b><i class="ph ph-caret-down" aria-hidden="true"></i></span></summary>
+          <div class="admin-matrix-toolbar"><span>Áp dụng nhanh cho từng vai trò trong nhóm.</span><div>{canManageRoles && matrixRoles.filter((role) => !role.immutable).map((role) => <span><b>{role.name}</b><button type="button" data-matrix-select={role.id}>Chọn</button><button type="button" data-matrix-clear={role.id}>Xóa</button></span>)}</div></div>
+          <div class="admin-matrix-wrap">
+            <table class="admin-matrix-table">
+              <caption class="sr-only">Ma trận quyền nhóm {group.label}</caption>
+              <thead><tr><th scope="col">Quyền</th>{matrixRoles.map((role) => <th scope="col">{role.name}{role.immutable && <i class="ph ph-lock" aria-label="Cột được khóa"></i>}</th>)}</tr></thead>
+              <tbody>{group.permissions.map((permission) => <tr><th scope="row"><span><strong>{permission.label}{permission.sensitive && <i class="ph ph-warning-circle" aria-label="Quyền nhạy cảm"></i>}</strong><small>{permission.id}</small></span></th>{matrixRoles.map((role) => <td><label class="admin-matrix-check"><input type="checkbox" checked={role.permissionIds.includes(permission.id)} disabled={role.immutable || !canManageRoles} data-matrix-checkbox data-role={role.id} data-permission={permission.id} /><span aria-hidden="true"><i class={`ph ${role.immutable ? "ph-lock" : "ph-check"}`}></i></span><span class="sr-only">{role.name}: {permission.label}</span></label></td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </details>
+      ))}
+    </div>
+  </section>
+</AdminLayout>

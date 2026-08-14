@@ -1,0 +1,81 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import "@/styles/admin-audit.css";
+import { getAuditEventsForAdmin } from "@/server/auth/admin-data";
+
+const events = await getAuditEventsForAdmin();
+const actionLabels: Record<string, string> = {
+  "auth.login": "Đăng nhập",
+  "auth.login_failed": "Đăng nhập thất bại",
+  "auth.logout": "Đăng xuất",
+  "auth.register": "Đăng ký tài khoản",
+  "auth.password_reset": "Đặt lại mật khẩu",
+  "auth.password_change": "Đổi mật khẩu",
+  "auth.email_verified": "Xác minh email",
+  "rbac.role_assignment": "Thay đổi vai trò",
+  "rbac.role_created": "Tạo vai trò",
+  "rbac.role_deleted": "Xóa vai trò",
+  "rbac.permissions_changed": "Thay đổi quyền",
+  "user.status_changed": "Đổi trạng thái người dùng",
+  "quote.create": "Tạo yêu cầu báo giá",
+  "quote.assign": "Phân công báo giá",
+  "quote.edit": "Cập nhật báo giá",
+  "lead.assign": "Phân công lead",
+  "lead.edit": "Cập nhật lead",
+};
+const outcomeLabels: Record<string, string> = { success: "Thành công", denied: "Bị từ chối", disabled: "Tài khoản khóa", failed: "Thất bại" };
+const actionGroups = [...new Set(events.map((event) => event.action.split(".")[0]))].sort();
+const groupLabels: Record<string, string> = { auth: "Xác thực", rbac: "Phân quyền", user: "Người dùng", quote: "Báo giá", lead: "CRM" };
+const now = Date.now();
+const lastDayCount = events.filter((event) => now - Date.parse(event.createdAt) <= 86_400_000).length;
+const warningCount = events.filter((event) => event.outcome !== "success").length;
+const actorCount = new Set(events.map((event) => event.actorId).filter(Boolean)).size;
+---
+
+<AdminLayout title="Audit Logs | Thiên Lộc Group Admin" description="Theo dõi lịch sử thao tác và sự kiện bảo mật." section="Audit Logs">
+  <section class="audit-page" aria-labelledby="audit-title" data-audit-page>
+    <header class="admin-page-header">
+      <div><h1 id="audit-title">Audit Logs</h1><p>Lịch sử bất biến của đăng nhập, phân quyền và các thay đổi nhạy cảm trong hệ thống.</p></div>
+      <button class="button button-outline" type="button" data-audit-export><i class="ph ph-export" aria-hidden="true"></i>Xuất CSV</button>
+    </header>
+
+    <div class="audit-summary" aria-label="Tổng quan audit log">
+      <div><span>Sự kiện gần nhất</span><strong>{events.length}</strong><small>Tối đa 100 bản ghi</small></div>
+      <div><span>Trong 24 giờ</span><strong>{lastDayCount}</strong><small>Hoạt động mới</small></div>
+      <div><span>Cần chú ý</span><strong>{warningCount}</strong><small>Bị từ chối hoặc thất bại</small></div>
+      <div><span>Người thực hiện</span><strong>{actorCount}</strong><small>Không tính tác vụ hệ thống</small></div>
+    </div>
+
+    <form class="audit-filterbar" data-audit-filters>
+      <label class="audit-search"><span>Tìm kiếm</span><div><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input type="search" autocomplete="off" placeholder="Người dùng, hành động, tài nguyên..." data-audit-search /></div></label>
+      <label><span>Nhóm sự kiện</span><select data-audit-group><option value="">Tất cả nhóm</option>{actionGroups.map((group) => <option value={group}>{groupLabels[group] || group}</option>)}</select></label>
+      <label><span>Kết quả</span><select data-audit-outcome><option value="">Tất cả kết quả</option><option value="success">Thành công</option><option value="denied">Bị từ chối</option><option value="disabled">Tài khoản khóa</option><option value="failed">Thất bại</option></select></label>
+      <label><span>Từ ngày</span><input type="date" data-audit-date /></label>
+      <button class="audit-reset" type="reset"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Đặt lại</button>
+    </form>
+
+    <div class="audit-result-meta"><span><strong data-audit-count>{events.length}</strong> sự kiện</span><span>Múi giờ Asia/Ho_Chi_Minh</span></div>
+    <div class="admin-table-wrap audit-table-wrap">
+      <table class="admin-table audit-table">
+        <caption class="sr-only">Lịch sử thao tác quản trị</caption>
+        <thead><tr><th scope="col">Thời gian</th><th scope="col">Người thực hiện</th><th scope="col">Hành động</th><th scope="col">Tài nguyên</th><th scope="col">Kết quả</th><th scope="col">Chi tiết</th></tr></thead>
+        <tbody>
+          {events.map((event) => (
+            <tr data-audit-row data-search={`${event.actor} ${event.actorEmail} ${event.action} ${event.resource}`.toLocaleLowerCase("vi")} data-group={event.action.split(".")[0]} data-outcome={event.outcome} data-date={event.createdAt.slice(0, 10)}>
+              <td><time datetime={event.createdAt}>{event.createdLabel}</time></td>
+              <td><span class="audit-actor"><b>{event.actor.slice(0, 1).toLocaleUpperCase("vi")}</b><span><strong>{event.actor}</strong><small>{event.actorEmail || "Tác vụ tự động"}</small></span></span></td>
+              <td><strong>{actionLabels[event.action] || event.action}</strong><small class="audit-code">{event.action}</small></td>
+              <td><code>{event.resource}</code></td>
+              <td><span class:list={["audit-outcome", event.outcome === "success" ? "is-success" : "is-warning"]}><i aria-hidden="true"></i>{outcomeLabels[event.outcome] || event.outcome}</span></td>
+              <td><details class="audit-details"><summary>Kiểm tra<i class="ph ph-caret-down" aria-hidden="true"></i></summary><dl><div><dt>Mã sự kiện</dt><dd>{event.id}</dd></div><div><dt>Đối tượng</dt><dd>{event.subjectId || "Không có"}</dd></div><div><dt>Dấu vân tay mạng</dt><dd>{event.ipFingerprint}</dd></div>{event.metadata && <div><dt>Metadata</dt><dd><pre>{event.metadata}</pre></dd></div>}</dl></details></td>
+            </tr>
+          ))}
+          <tr class="audit-empty" data-audit-empty hidden><td colspan="6"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><strong>Không có sự kiện phù hợp</strong><span>Thử từ khóa khác hoặc đặt lại bộ lọc.</span></td></tr>
+          {!events.length && <tr class="audit-empty"><td colspan="6"><i class="ph ph-list-magnifying-glass" aria-hidden="true"></i><strong>Chưa có audit log</strong><span>Các sự kiện bảo mật và thay đổi nhạy cảm sẽ xuất hiện tại đây.</span></td></tr>}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div class="admin-toast" role="status" aria-live="polite" data-admin-toast hidden></div>
+  <script>import "@/scripts/admin-audit";</script>
+</AdminLayout>

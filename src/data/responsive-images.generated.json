@@ -1,0 +1,148 @@
+{
+  "/images/category-endoscopy-surgery.webp": {
+    "width": 1400,
+    "height": 1050,
+    "variants": [
+      {
+        "width": 320,
+        "src": "/_astro/media/category-endoscopy-surgery-ffe13a2dc3-320.webp"
+      },
+      {
+        "width": 640,
+        "src": "/_astro/media/category-endoscopy-surgery-ffe13a2dc3-640.webp"
+      },
+      {
+        "width": 960,
+        "src": "/_astro/media/category-endoscopy-surgery-ffe13a2dc3-960.webp"
+      },
+      {
+        "width": 1280,
+        "src": "/_astro/media/category-endoscopy-surgery-ffe13a2dc3-1280.webp"
+      }
+    ]
+  },
+  "/images/category-laboratory.webp": {
+    "width": 1400,
+    "height": 1050,
+    "variants": [
+      {
+        "width": 320,
+        "src": "/_astro/media/category-laboratory-d5ba222e51-320.webp"
+      },
+      {
+        "width": 640,
+        "src": "/_astro/media/category-laboratory-d5ba222e51-640.webp"
+      },
+      {
+        "width": 960,
+        "src": "/_astro/media/category-laboratory-d5ba222e51-960.webp"
+      },
+      {
+        "width": 1280,
+        "src": "/_astro/media/category-laboratory-d5ba222e51-1280.webp"
+      }
+    ]
+  },
+  "/images/category-xray.webp": {
+    "width": 1400,
+    "height": 1050,
+    "variants": [
+      {
+        "width": 320,
+        "src": "/_astro/media/category-xray-1a6b267421-320.webp"
+      },
+      {
+        "width": 640,
+        "src": "/_astro/media/category-xray-1a6b267421-640.webp"
+      },
+      {
+        "width": 960,
+        "src": "/_astro/media/category-xray-1a6b267421-960.webp"
+      },
+      {
+        "width": 1280,
+        "src": "/_astro/media/category-xray-1a6b267421-1280.webp"
+      }
+    ]
+  },
+  "/images/hero-ultrasound-lab.webp": {
+    "width": 1600,
+    "height": 1067,
+    "variants": [
+      {
+        "width": 320,
+        "src": "/_astro/media/hero-ultrasound-lab-bdf488b0d3-320.webp"
+      },
+      {
+        "width": 640,
+        "src": "/_astro/media/hero-ultrasound-lab-bdf488b0d3-640.webp"
+      },
+      {
+        "width": 960,
+        "src": "/_astro/media/hero-ultrasound-lab-bdf488b0d3-960.webp"
+      },
+      {
+        "width": 1280,
+        "src": "/_astro/media/hero-ultrasound-lab-bdf488b0d3-1280.webp"
+      }
+    ]
+  },
+  "/images/project-handover-placeholder.webp": {
+    "width": 1400,
+    "height": 934,
+    "variants": [
+      {
+        "width": 320,
+        "src": "/_astro/media/project-handover-placeholder-33247c3628-320.webp"
+      },
+      {
+        "width": 640,
+        "src": "/_astro/media/project-handover-placeholder-33247c3628-640.webp"
+      },
+      {
+        "width": 960,
+        "src": "/_astro/media/project-handover-placeholder-33247c3628-960.webp"
+      },
+      {
+        "width": 1280,
+        "src": "/_astro/media/project-handover-placeholder-33247c3628-1280.webp"
+      }
+    ]
+  },
+  "/images/tl-group-logo.png": {
+    "width": 900,
+    "height": 539,
+    "variants": [
+      {
+        "width": 320,
+        "src": "/_astro/media/tl-group-logo-7fa04fd78e-320.webp"
+      },
+      {
+        "width": 640,
+        "src": "/_astro/media/tl-group-logo-7fa04fd78e-640.webp"
+      }
+    ]
+  },
+  "/images/veterinary-diagnostic-room.webp": {
+    "width": 1400,
+    "height": 934,
+    "variants": [
+      {
+        "width": 320,
+        "src": "/_astro/media/veterinary-diagnostic-room-1378c7e733-320.webp"
+      },
+      {
+        "width": 640,
+        "src": "/_astro/media/veterinary-diagnostic-room-1378c7e733-640.webp"
+      },
+      {
+        "width": 960,
+        "src": "/_astro/media/veterinary-diagnostic-room-1378c7e733-960.webp"
+      },
+      {
+        "width": 1280,
+        "src": "/_astro/media/veterinary-diagnostic-room-1378c7e733-1280.webp"
+      }
+    ]
+  }
+}

@@ -1,0 +1,247 @@
+---
+import PortalLayout from "@/layouts/PortalLayout.astro";
+import { db } from "@/server/db";
+import { productService } from "@/server/services/product-service";
+import { getSettings } from "@/lib/content-repository";
+
+const principal = Astro.locals.auth!;
+const settings = getSettings();
+const supportTel = `tel:${settings.hotline.replace(/\D/g, "")}`;
+const customer = await db.user.findUniqueOrThrow({ where: { id: principal.id } });
+const quoteRows = await db.quoteRequest.findMany({ where: { customer: { userId: principal.id } }, include: { items: { include: { product: true } } }, orderBy: { createdAt: "desc" } });
+const favoriteRows = await db.favorite.findMany({ where: { userId: principal.id }, orderBy: { createdAt: "desc" } });
+const documentRows = await db.productDocument.findMany({ where: { access: { in: ["PUBLIC", "REGISTERED"] } }, include: { product: true }, orderBy: { createdAt: "desc" } });
+const displayName = customer.name.split(/\s+/).slice(-2).join(" ");
+const initials = customer.name.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(-2).join("").toLocaleUpperCase("vi");
+const dateFormat = new Intl.DateTimeFormat("vi-VN");
+
+const navItems = [
+  ["squares-four", "Tổng quan", "tong-quan"],
+  ["bookmark-simple", "Sản phẩm đã lưu", "san-pham-da-luu"],
+  ["arrows-left-right", "So sánh", "so-sanh"],
+  ["file-text", "Yêu cầu báo giá", "bao-gia"],
+  ["folder-open", "Tài liệu", "tai-lieu"],
+  ["user-circle", "Thông tin tài khoản", "thong-tin"],
+  ["shield-check", "Bảo mật", "bao-mat"],
+] as const;
+
+const quoteStatus: Record<string, [string, string]> = { RECEIVED: ["Đã tiếp nhận", "received"], CONSULTING: ["Đang tư vấn", "consulting"], QUOTE_SENT: ["Đã gửi báo giá", "sent"], NEGOTIATING: ["Đang trao đổi", "discussing"], COMPLETED: ["Hoàn tất", "complete"], CANCELLED: ["Đã kết thúc", "cancelled"] };
+const quotes = quoteRows.map((quote) => ({ id: quote.id, code: quote.quoteNumber, date: dateFormat.format(quote.createdAt), product: quote.items.map((item) => item.product.name).join(", "), status: quoteStatus[quote.status]?.[0] || quote.status, tone: quoteStatus[quote.status]?.[1] || "received" }));
+
+const favoriteIds = new Set(favoriteRows.map(({ productId }) => productId));
+const favoriteProducts = (await productService.listPublicCatalog()).filter((product) => favoriteIds.has(product.id));
+const comparedProducts = favoriteProducts.slice(0, 4);
+
+const documents = documentRows.map((document) => ({ title: document.name, product: document.product.name, productKey: document.productId, type: document.type, typeKey: document.type.toLocaleLowerCase("en-US"), date: dateFormat.format(document.createdAt), sortDate: document.createdAt.toISOString().slice(0, 10) }));
+---
+
+<PortalLayout title="Tài khoản của tôi | THIÊN LỘC GROUP" description="Quản lý sản phẩm đã lưu, báo giá, tài liệu và thông tin tài khoản.">
+  <div class="portal-shell">
+    <aside class="portal-sidebar" aria-label="Điều hướng tài khoản">
+      <div class="portal-sidebar-heading">
+        <span class="portal-avatar" aria-hidden="true">{initials}</span>
+        <div><strong>{displayName}</strong><span>{customer.email}</span></div>
+      </div>
+      <nav class="portal-nav">
+        {navItems.map(([icon, label, id], index) => (
+          <a href={`#${id}`} data-portal-nav={id} aria-current={index === 0 ? "page" : undefined}>
+            <i class={`ph ph-${icon}`} aria-hidden="true"></i><span>{label}</span>
+          </a>
+        ))}
+      </nav>
+      <div class="portal-sidebar-help">
+        <i class="ph ph-headset" aria-hidden="true"></i>
+        <div><strong>Cần hỗ trợ?</strong><a href={supportTel}>{settings.hotline}</a></div>
+      </div>
+    </aside>
+
+    <main id="main-content" class="portal-main">
+      <div class="portal-mobile-context">
+        <div><span>Tài khoản</span><strong data-mobile-view-title>Tổng quan</strong></div>
+        <button class="button button-outline button-sm" type="button" data-portal-menu-open aria-expanded="false" aria-controls="portal-mobile-navigation">
+          <i class="ph ph-list" aria-hidden="true"></i> Menu
+        </button>
+      </div>
+
+      <section class="portal-view" id="tong-quan" data-portal-view="tong-quan" aria-labelledby="overview-title">
+        <header class="portal-view-header portal-welcome">
+          <div><p>{dateFormat.format(new Date())}</p><h1 id="overview-title">Xin chào, {displayName}</h1><span>Đây là những cập nhật gần đây trong tài khoản của bạn.</span></div>
+          <button class="button button-primary" type="button" data-quote-open data-product=""><i class="ph ph-plus" aria-hidden="true"></i>Tạo yêu cầu báo giá</button>
+        </header>
+
+        <div class="portal-summary" aria-label="Tóm tắt tài khoản">
+          <a href="#bao-gia" data-portal-nav="bao-gia"><span>Yêu cầu báo giá</span><strong data-quote-count>{quotes.length}</strong><small>Xem tất cả</small></a>
+          <a href="#bao-gia" data-portal-nav="bao-gia"><span>Đang xử lý</span><strong data-processing-count>{quotes.filter((quote) => quote.status !== "Hoàn tất").length}</strong><small>Cần theo dõi</small></a>
+          <a href="#san-pham-da-luu" data-portal-nav="san-pham-da-luu"><span>Sản phẩm đã lưu</span><strong data-favorite-count>{favoriteProducts.length}</strong><small>Xem danh sách</small></a>
+          <a href="#tai-lieu" data-portal-nav="tai-lieu"><span>Tài liệu</span><strong data-document-count>{documents.length}</strong><small>Được cấp quyền</small></a>
+        </div>
+
+        <section class="portal-content-section" aria-labelledby="recent-quotes-title">
+          <div class="portal-section-heading">
+            <div><h2 id="recent-quotes-title">Yêu cầu báo giá gần đây</h2><p>Theo dõi tiến độ trao đổi với đội ngũ tư vấn.</p></div>
+            <a class="text-link" href="#bao-gia" data-portal-nav="bao-gia">Xem tất cả<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+          </div>
+          <div data-empty-scope="quotes">
+            <div class="portal-table-wrap portal-table-desktop">
+              <table class="portal-table">
+                <caption class="sr-only">Ba yêu cầu báo giá gần đây</caption>
+                <thead><tr><th scope="col">Mã</th><th scope="col">Ngày</th><th scope="col">Sản phẩm</th><th scope="col">Trạng thái</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+                <tbody>
+                  {quotes.slice(0, 3).map((quote) => (
+                    <tr><td><strong>{quote.code}</strong></td><td>{quote.date}</td><td>{quote.product}</td><td><span class={`portal-status status-${quote.tone}`}>{quote.status}</span></td><td><button class="portal-row-action" type="button" data-quote-detail data-quote-id={quote.id} data-code={quote.code} data-date={quote.date} data-product={quote.product} data-status={quote.status}>Xem</button></td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div class="portal-mobile-list">
+              {quotes.slice(0, 3).map((quote) => (
+                <article class="portal-mobile-quote">
+                  <div><strong>{quote.code}</strong><span class={`portal-status status-${quote.tone}`}>{quote.status}</span></div>
+                  <p>{quote.product}</p><small>{quote.date}</small>
+                  <button class="portal-row-action" type="button" data-quote-detail data-quote-id={quote.id} data-code={quote.code} data-date={quote.date} data-product={quote.product} data-status={quote.status}>Xem chi tiết</button>
+                </article>
+              ))}
+            </div>
+          </div>
+          <div class="portal-empty" data-empty-state="quotes" hidden>
+            <i class="ph ph-file-text" aria-hidden="true"></i><h3>Bạn chưa có yêu cầu báo giá nào.</h3><p>Khám phá danh mục và gửi sản phẩm bạn đang quan tâm cho đội ngũ tư vấn.</p><a class="button button-primary" href="/san-pham">Khám phá thiết bị</a>
+          </div>
+        </section>
+      </section>
+
+      <section class="portal-view" id="san-pham-da-luu" data-portal-view="san-pham-da-luu" aria-labelledby="favorites-title" hidden>
+        <header class="portal-view-header"><div><h2 id="favorites-title">Sản phẩm đã lưu</h2><p>Xem lại thiết bị bạn quan tâm và chuyển sang so sánh hoặc yêu cầu báo giá.</p></div><span class="portal-count"><strong data-favorite-count>{favoriteProducts.length}</strong> sản phẩm</span></header>
+        <div class="portal-product-list" data-empty-scope="favorites">
+          {favoriteProducts.map((product) => (
+            <article class="portal-saved-product" data-favorite-item data-product-id={product.id}>
+              <img src={product.image} alt="" width="160" height="120" loading="lazy" />
+              <div class="portal-saved-copy"><span>{product.category}</span><h2>{product.name}</h2><p>{product.brand} · {product.model}</p></div>
+              <div class="portal-saved-actions">
+                <a class="button button-outline button-sm" href={`/san-pham/${product.slug}`}>Xem</a>
+                <a class="button button-outline button-sm" href="/so-sanh" data-portal-compare={product.id}>So sánh</a>
+                <button class="button button-primary button-sm" type="button" data-quote-open data-product-id={product.id}>Yêu cầu báo giá</button>
+                <button class="portal-remove-action" type="button" data-favorite-remove aria-label={`Xóa ${product.name} khỏi sản phẩm đã lưu`}><i class="ph ph-trash" aria-hidden="true"></i>Xóa</button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div class="portal-empty" data-empty-state="favorites" hidden>
+          <i class="ph ph-bookmark-simple" aria-hidden="true"></i><h2>Bạn chưa lưu sản phẩm nào.</h2><p>Lưu thiết bị để xem lại, so sánh và yêu cầu báo giá nhanh hơn.</p><a class="button button-primary" href="/san-pham">Khám phá thiết bị</a>
+        </div>
+      </section>
+
+      <section class="portal-view" id="so-sanh" data-portal-view="so-sanh" aria-labelledby="compare-title" hidden>
+        <header class="portal-view-header"><div><h2 id="compare-title">So sánh</h2><p>Các sản phẩm đang được giữ trong danh sách so sánh của bạn.</p></div><a class="button button-primary" href="/so-sanh">Mở trang so sánh</a></header>
+        <div class="portal-compare-list" data-empty-scope="compare">
+          {comparedProducts.map((product, index) => (
+            <article><span>{String(index + 1).padStart(2, "0")}</span><img src={product.image} alt="" width="120" height="90" loading="lazy" /><div><strong>{product.name}</strong><small>{product.brand} · {product.model}</small></div><a class="text-link" href={`/san-pham/${product.slug}`}>Xem sản phẩm<i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></article>
+          ))}
+        </div>
+        <div class="portal-empty" data-empty-state="compare" hidden>
+          <i class="ph ph-arrows-left-right" aria-hidden="true"></i><h2>Danh sách so sánh đang trống.</h2><p>Chọn từ 2 đến 4 sản phẩm để đối chiếu thông tin và cấu hình.</p><a class="button button-primary" href="/san-pham">Chọn sản phẩm</a>
+        </div>
+      </section>
+
+      <section class="portal-view" id="bao-gia" data-portal-view="bao-gia" aria-labelledby="quotes-title" hidden>
+        <header class="portal-view-header"><div><h2 id="quotes-title">Yêu cầu báo giá</h2><p>Theo dõi toàn bộ yêu cầu và trạng thái tư vấn.</p></div><button class="button button-primary" type="button" data-quote-open data-product=""><i class="ph ph-plus" aria-hidden="true"></i>Tạo yêu cầu</button></header>
+        <div data-empty-scope="quotes">
+          <div class="portal-table-wrap portal-table-desktop">
+            <table class="portal-table">
+              <caption class="sr-only">Toàn bộ yêu cầu báo giá</caption>
+              <thead><tr><th scope="col">Mã</th><th scope="col">Ngày</th><th scope="col">Sản phẩm</th><th scope="col">Trạng thái</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+              <tbody>
+                {quotes.map((quote) => (
+                  <tr><td><strong>{quote.code}</strong></td><td>{quote.date}</td><td>{quote.product}</td><td><span class={`portal-status status-${quote.tone}`}>{quote.status}</span></td><td><button class="portal-row-action" type="button" data-quote-detail data-quote-id={quote.id} data-code={quote.code} data-date={quote.date} data-product={quote.product} data-status={quote.status}>Xem</button></td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div class="portal-mobile-list">
+            {quotes.map((quote) => (
+              <article class="portal-mobile-quote"><div><strong>{quote.code}</strong><span class={`portal-status status-${quote.tone}`}>{quote.status}</span></div><p>{quote.product}</p><small>{quote.date}</small><button class="portal-row-action" type="button" data-quote-detail data-quote-id={quote.id} data-code={quote.code} data-date={quote.date} data-product={quote.product} data-status={quote.status}>Xem chi tiết</button></article>
+            ))}
+          </div>
+        </div>
+        <div class="portal-empty" data-empty-state="quotes" hidden>
+          <i class="ph ph-file-text" aria-hidden="true"></i><h2>Bạn chưa có yêu cầu báo giá nào.</h2><p>Khi bạn gửi yêu cầu, tiến độ tư vấn sẽ được cập nhật tại đây.</p><a class="button button-primary" href="/san-pham">Khám phá thiết bị</a>
+        </div>
+      </section>
+
+      <section class="portal-view" id="tai-lieu" data-portal-view="tai-lieu" aria-labelledby="documents-title" hidden>
+        <header class="portal-view-header"><div><h2 id="documents-title">Tài liệu</h2><p>Tài liệu được cấp quyền theo sản phẩm và yêu cầu của bạn.</p></div></header>
+        <form class="portal-filters" data-document-filters>
+          <div><label for="document-product">Sản phẩm</label><select id="document-product" name="product"><option value="all">Tất cả sản phẩm</option><option value="sonoport-8">SonoPort 8</option><option value="bs-240e">BS-240E</option></select></div>
+          <div><label for="document-type">Loại tài liệu</label><select id="document-type" name="type"><option value="all">Tất cả loại</option><option value="specification">Thông số kỹ thuật</option><option value="manual">Hướng dẫn sử dụng</option><option value="brochure">Brochure</option><option value="warranty">Bảo hành</option></select></div>
+          <div><label for="document-date">Từ ngày</label><input id="document-date" name="date" type="date" /></div>
+          <button class="button button-outline" type="reset">Đặt lại</button>
+        </form>
+        <div class="portal-document-list" data-empty-scope="documents" data-document-list>
+          {documents.map((document) => (
+            <article data-document-item data-product={document.productKey} data-type={document.typeKey} data-date={document.sortDate}>
+              <i class="ph ph-file-pdf" aria-hidden="true"></i><div><h2>{document.title}</h2><p>{document.product} · {document.type}</p></div><time datetime={document.sortDate}>{document.date}</time><button class="button button-outline button-sm" type="button" data-document-download data-document-title={document.title}><i class="ph ph-download-simple" aria-hidden="true"></i>Tải xuống</button>
+            </article>
+          ))}
+        </div>
+        <div class="portal-empty" data-empty-state="documents" hidden>
+          <i class="ph ph-folder-open" aria-hidden="true"></i><h2>Bạn chưa có tài liệu được cấp quyền.</h2><p>Tài liệu sản phẩm sẽ xuất hiện tại đây sau khi được đội ngũ tư vấn chia sẻ.</p><a class="button button-primary" href="#bao-gia" data-portal-nav="bao-gia">Xem yêu cầu báo giá</a>
+        </div>
+        <div class="portal-empty portal-filter-empty" data-document-filter-empty hidden>
+          <i class="ph ph-funnel" aria-hidden="true"></i><h2>Không có tài liệu phù hợp.</h2><p>Hãy thay đổi bộ lọc hoặc đặt lại để xem toàn bộ tài liệu.</p><button class="button button-outline" type="button" data-document-reset>Đặt lại bộ lọc</button>
+        </div>
+      </section>
+
+      <section class="portal-view" id="thong-tin" data-portal-view="thong-tin" aria-labelledby="profile-title" hidden>
+        <header class="portal-view-header"><div><h2 id="profile-title">Thông tin tài khoản</h2><p>Cập nhật thông tin liên hệ phục vụ tư vấn và báo giá.</p></div></header>
+        <form class="portal-form" data-profile-form novalidate>
+          <div class="portal-form-grid">
+            <div class="portal-field"><label for="profile-name">Họ và tên</label><input id="profile-name" name="name" type="text" autocomplete="name" value={customer.name} required aria-describedby="profile-name-error" aria-errormessage="profile-name-error" /><p id="profile-name-error" data-field-error aria-live="polite"></p></div>
+            <div class="portal-field"><label for="profile-phone">Số điện thoại</label><input id="profile-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" value={customer.phone || ""} pattern="[0-9+() .-]{9,18}" required aria-describedby="profile-phone-error" aria-errormessage="profile-phone-error" /><p id="profile-phone-error" data-field-error aria-live="polite"></p></div>
+            <div class="portal-field"><label for="profile-email">Email</label><input id="profile-email" name="email" type="email" value={customer.email} readonly aria-describedby="profile-email-help" /><small id="profile-email-help">Liên hệ hỗ trợ nếu bạn cần thay đổi email đăng nhập.</small></div>
+            <div class="portal-field"><label for="profile-organization">Tổ chức</label><input id="profile-organization" name="organization" type="text" autocomplete="organization" value={customer.organization || ""} /></div>
+            <div class="portal-field"><label for="profile-customer-type">Loại khách hàng</label><select id="profile-customer-type" name="customerType"><option value="doctor" selected={customer.customerType === "doctor"}>Bác sĩ/Cá nhân</option><option value="clinic" selected={customer.customerType === "clinic"}>Phòng khám</option><option value="hospital" selected={customer.customerType === "hospital"}>Bệnh viện</option><option value="laboratory" selected={customer.customerType === "laboratory"}>Phòng xét nghiệm</option><option value="dealer" selected={customer.customerType === "dealer"}>Đại lý</option><option value="vet-clinic" selected={customer.customerType === "vet-clinic"}>Phòng khám thú y</option><option value="vet-hospital" selected={customer.customerType === "vet-hospital"}>Bệnh viện thú y</option></select></div>
+            <div class="portal-field"><label for="profile-province">Tỉnh/Thành phố</label><select id="profile-province" name="province"><option selected={customer.province === "TP. Hồ Chí Minh"}>TP. Hồ Chí Minh</option><option selected={customer.province === "Hà Nội"}>Hà Nội</option><option selected={customer.province === "Đà Nẵng"}>Đà Nẵng</option><option selected={customer.province === "Cần Thơ"}>Cần Thơ</option><option selected={!customer.province || customer.province === "Khác"}>Khác</option></select></div>
+          </div>
+          <div class="portal-form-actions"><span data-profile-status role="status" aria-live="polite"></span><button class="button button-primary" type="submit"><i class="ph ph-circle-notch portal-button-loader" aria-hidden="true"></i><span>Lưu thay đổi</span></button></div>
+        </form>
+      </section>
+
+      <section class="portal-view" id="bao-mat" data-portal-view="bao-mat" aria-labelledby="security-title" hidden>
+        <header class="portal-view-header"><div><h2 id="security-title">Bảo mật</h2><p>Quản lý mật khẩu và các lớp bảo vệ tài khoản.</p></div></header>
+        <div class="portal-security-layout">
+          <section class="portal-security-section" aria-labelledby="change-password-title">
+            <div><h2 id="change-password-title">Đổi mật khẩu</h2><p>Mật khẩu mới nên khác mật khẩu bạn đã dùng trước đây.</p></div>
+            <form class="portal-form portal-password-form" data-password-form novalidate>
+              <div class="portal-field"><label for="current-password">Mật khẩu hiện tại</label><div class="portal-password-control"><input id="current-password" name="currentPassword" type="password" autocomplete="current-password" required aria-describedby="current-password-error" aria-errormessage="current-password-error" /><button type="button" data-portal-password-toggle aria-label="Hiện mật khẩu hiện tại" aria-pressed="false"><i class="ph ph-eye" aria-hidden="true"></i></button></div><p id="current-password-error" data-field-error aria-live="polite"></p></div>
+              <div class="portal-field"><label for="new-password">Mật khẩu mới</label><div class="portal-password-control"><input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="10" required data-new-password aria-describedby="new-password-rules new-password-error" aria-errormessage="new-password-error" /><button type="button" data-portal-password-toggle aria-label="Hiện mật khẩu mới" aria-pressed="false"><i class="ph ph-eye" aria-hidden="true"></i></button></div><p id="new-password-error" data-field-error aria-live="polite"></p></div>
+              <div class="portal-field"><label for="confirm-password">Xác nhận mật khẩu mới</label><div class="portal-password-control"><input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="10" required data-confirm-password aria-describedby="confirm-password-error" aria-errormessage="confirm-password-error" /><button type="button" data-portal-password-toggle aria-label="Hiện mật khẩu xác nhận" aria-pressed="false"><i class="ph ph-eye" aria-hidden="true"></i></button></div><p id="confirm-password-error" data-field-error aria-live="polite"></p></div>
+              <ul class="portal-password-rules" id="new-password-rules" aria-label="Yêu cầu mật khẩu"><li data-rule="length"><i class="ph ph-circle" aria-hidden="true"></i>Ít nhất 10 ký tự</li><li data-rule="letter"><i class="ph ph-circle" aria-hidden="true"></i>Có chữ cái</li><li data-rule="number"><i class="ph ph-circle" aria-hidden="true"></i>Có chữ số</li><li data-rule="symbol"><i class="ph ph-circle" aria-hidden="true"></i>Có ký tự đặc biệt</li></ul>
+              <div class="portal-form-actions"><span data-password-status role="status" aria-live="polite"></span><button class="button button-primary" type="submit"><i class="ph ph-circle-notch portal-button-loader" aria-hidden="true"></i><span>Đổi mật khẩu</span></button></div>
+            </form>
+          </section>
+          <section class="portal-security-section" aria-labelledby="sessions-title">
+            <div><h2 id="sessions-title">Phiên đăng nhập</h2><p>Thiết bị đang sử dụng tài khoản này.</p></div>
+            <div class="portal-session"><i class="ph ph-laptop" aria-hidden="true"></i><div><strong>Trình duyệt hiện tại</strong><span>TP. Hồ Chí Minh · Hoạt động lúc này</span></div><span class="portal-current-session">Hiện tại</span></div>
+            <p class="portal-feature-note"><i class="ph ph-info" aria-hidden="true"></i>Phiên đăng nhập hiện tại được xác định theo trình duyệt đang sử dụng.</p>
+          </section>
+          <section class="portal-security-section portal-security-inline" aria-labelledby="two-factor-title">
+            <div><h2 id="two-factor-title">Xác thực hai bước</h2><p>Thêm một lớp xác minh khi đăng nhập từ thiết bị mới.</p></div><span class="portal-availability">Chưa khả dụng</span>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="portal-mobile-drawer" id="portal-mobile-navigation" aria-labelledby="portal-mobile-nav-title" data-portal-mobile-drawer>
+    <header><div><span>Tài khoản</span><h2 id="portal-mobile-nav-title">Điều hướng</h2></div><button class="icon-action" type="button" data-portal-menu-close aria-label="Đóng menu"><i class="ph ph-x" aria-hidden="true"></i></button></header>
+    <nav class="portal-nav">
+      {navItems.map(([icon, label, id], index) => <a href={`#${id}`} data-portal-nav={id} aria-current={index === 0 ? "page" : undefined}><i class={`ph ph-${icon}`} aria-hidden="true"></i><span>{label}</span></a>)}
+    </nav>
+    <a class="portal-drawer-logout" href="/api/auth/logout" data-auth-logout><i class="ph ph-sign-out" aria-hidden="true"></i>Đăng xuất</a>
+  </dialog>
+
+  <dialog class="portal-dialog portal-detail-dialog" data-quote-detail-dialog aria-labelledby="quote-detail-title">
+    <div class="portal-dialog-form"><header><div><span>Chi tiết yêu cầu</span><h2 id="quote-detail-title" data-detail-code></h2></div><button class="icon-action" type="button" data-detail-close aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><dl class="portal-detail-list"><div><dt>Ngày gửi</dt><dd data-detail-date></dd></div><div><dt>Sản phẩm</dt><dd data-detail-product></dd></div><div><dt>Trạng thái</dt><dd data-detail-status></dd></div></dl><div class="portal-detail-updates" data-detail-updates aria-live="polite"></div><a class="button button-outline" href={`mailto:${settings.email}?subject=Trao đổi yêu cầu báo giá`}>Liên hệ tư vấn</a></div>
+  </dialog>
+
+  <div class="portal-toast" role="status" aria-live="polite" data-portal-toast hidden><span data-toast-message></span><button type="button" data-toast-undo hidden>Hoàn tác</button></div>
+</PortalLayout>
