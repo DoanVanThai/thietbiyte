@@ -1,3 +1,5 @@
+import { ADMIN_IMAGE_ACCEPT, validateAdminImage } from "@/lib/admin-image-upload";
+
 export {};
 
 type ProductSource = { id: string; name: string; model: string; price: number; description: string; images: Array<{ url: string; caption: string; afterText: string }> };
@@ -69,7 +71,7 @@ if (root) {
     const anchorLabel = document.createElement("label"); const anchorTitle = document.createElement("span"); anchorTitle.textContent = "Đặt ảnh sau mục";
     const anchor = document.createElement("select"); anchor.dataset.quoteImageAnchor = ""; anchorLabel.append(anchorTitle, anchor); fields.append(captionLabel, anchorLabel);
     const actions = document.createElement("div"); actions.className = "quote-image-actions";
-    const replace = document.createElement("label"); replace.className = "quote-image-file-action"; replace.title = "Đổi ảnh"; replace.innerHTML = '<input type="file" accept="image/png,image/jpeg,image/webp" data-quote-image-upload data-upload-mode="replace"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i><span>Đổi</span>';
+    const replace = document.createElement("label"); replace.className = "quote-image-file-action"; replace.title = "Đổi ảnh"; replace.innerHTML = `<input type="file" accept="${ADMIN_IMAGE_ACCEPT}" data-quote-image-upload data-upload-mode="replace"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i><span>Đổi</span>`;
     const remove = document.createElement("button"); remove.type = "button"; remove.dataset.removeQuoteImage = ""; remove.innerHTML = '<i class="ph ph-trash" aria-hidden="true"></i><span>Xóa</span>';
     actions.append(replace, remove); card.append(toggle, preview, fields, actions);
     item.querySelector<HTMLElement>("[data-quote-image-list]")?.append(card);
@@ -83,7 +85,7 @@ if (root) {
     const heading = document.createElement("div"); heading.className = "quote-inline-images-heading";
     const copy = document.createElement("div"); const title = document.createElement("strong"); title.textContent = "Ảnh minh họa trong báo giá";
     const help = document.createElement("span"); help.textContent = "Thêm ảnh rồi chọn chính xác mục sẽ đặt ảnh phía sau."; copy.append(title, help);
-    const add = document.createElement("label"); add.className = "button button-outline button-sm quote-image-add"; add.innerHTML = '<input type="file" accept="image/png,image/jpeg,image/webp" data-quote-image-upload data-upload-mode="add"><i class="ph ph-plus" aria-hidden="true"></i>Thêm ảnh';
+    const add = document.createElement("label"); add.className = "button button-outline button-sm quote-image-add"; add.innerHTML = `<input type="file" accept="${ADMIN_IMAGE_ACCEPT}" data-quote-image-upload data-upload-mode="add"><i class="ph ph-plus" aria-hidden="true"></i>Thêm ảnh`;
     heading.append(copy, add);
     const list = document.createElement("div"); list.className = "quote-inline-images-list"; list.dataset.quoteImageList = "";
     const empty = document.createElement("p"); empty.className = "quote-inline-images-empty"; empty.dataset.quoteImagesEmpty = ""; empty.textContent = "Chưa có ảnh. Bạn có thể thêm ảnh trực tiếp cho báo giá này.";
@@ -187,7 +189,8 @@ if (root) {
     const input = (event.target as Element).closest<HTMLInputElement>("[data-quote-image-upload]");
     const item = input?.closest<HTMLElement>("[data-quote-item]"); const file = input?.files?.[0];
     if (!input || !item || !file) return;
-    if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) { if (feedback) feedback.textContent = "Ảnh phải là PNG, JPG hoặc WebP dưới 10 MB."; input.value = ""; return; }
+    const validationError = validateAdminImage(file);
+    if (validationError) { if (feedback) feedback.textContent = validationError; input.value = ""; return; }
     input.disabled = true; if (feedback) feedback.textContent = "Đang tải ảnh minh họa…";
     try {
       const formData = new FormData(); formData.append("file", file);

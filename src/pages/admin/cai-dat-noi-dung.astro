@@ -3,6 +3,7 @@ import AdminLayout from "@/layouts/AdminLayout.astro";
 import { getContent, getSettings } from "@/lib/content-repository";
 import { projects as fallbackProjects, reasons as fallbackReasons, solutions as fallbackSolutions, trustItems as fallbackTrustItems } from "@/data/homepage";
 import "@/styles/admin-site-content.css";
+import { ADMIN_IMAGE_ACCEPT } from "@/lib/admin-image-upload";
 
 const settings = getSettings();
 const hero = getContent("homepage.hero", { eyebrow:"THIÊN LỘC GROUP", title:"Giải pháp thiết bị y tế dành cho chăm sóc sức khỏe hiện đại", description:"Cung cấp thiết bị, giải pháp và dịch vụ kỹ thuật cho bệnh viện, phòng khám, phòng xét nghiệm và cơ sở thú y.", image:"/images/hero-ultrasound-lab.webp", primaryCta:{label:"Khám phá thiết bị",href:"#categories"}, secondaryCta:{label:"Nhận tư vấn chuyên sâu",href:"#contact"} });
@@ -29,7 +30,7 @@ const reasons = getContent("homepage.reasons", fallbackReasons);
         <label><span>Eyebrow</span><input name="hero.eyebrow" value={hero.eyebrow} /></label>
         <label class="wide"><span>Tiêu đề</span><textarea name="hero.title" rows="2" required>{hero.title}</textarea></label>
         <label class="wide"><span>Mô tả</span><textarea name="hero.description" rows="3" required>{hero.description}</textarea></label>
-        <label class="wide"><span>Ảnh Hero</span><input name="hero.image" value={hero.image} /><input type="file" accept="image/*" data-hero-upload /></label>
+        <label class="wide"><span>Ảnh Hero</span><input name="hero.image" value={hero.image} /><input type="file" accept={ADMIN_IMAGE_ACCEPT} data-hero-upload /></label>
         <label><span>CTA chính</span><input name="hero.primaryLabel" value={hero.primaryCta.label} /></label><label><span>Liên kết</span><input name="hero.primaryHref" value={hero.primaryCta.href} /></label>
         <label><span>CTA phụ</span><input name="hero.secondaryLabel" value={hero.secondaryCta.label} /></label><label><span>Liên kết</span><input name="hero.secondaryHref" value={hero.secondaryCta.href} /></label>
       </div></section>
@@ -44,7 +45,7 @@ const reasons = getContent("homepage.reasons", fallbackReasons);
               <article class="solution-editor-row" data-solution-item>
                 <div class="solution-image-control">
                   <img src={image} alt="" width="320" height="220" loading="lazy" data-solution-preview />
-                  <label><input type="file" accept="image/jpeg,image/png,image/webp" data-solution-upload /><i class="ph ph-image" aria-hidden="true"></i><span>Thay ảnh</span></label>
+                  <label><input type="file" accept={ADMIN_IMAGE_ACCEPT} data-solution-upload /><i class="ph ph-image" aria-hidden="true"></i><span>Thay ảnh</span></label>
                   <input type="hidden" value={image} data-solution-image />
                 </div>
                 <div class="solution-copy-fields">
@@ -66,7 +67,7 @@ const reasons = getContent("homepage.reasons", fallbackReasons);
             <article class="solution-editor-row is-new" data-solution-item>
               <div class="solution-image-control">
                 <img src="/images/project-handover-placeholder.webp" alt="" width="320" height="220" data-solution-preview />
-                <label><input type="file" accept="image/jpeg,image/png,image/webp" data-solution-upload /><i class="ph ph-image" aria-hidden="true"></i><span>Chọn ảnh</span></label>
+                <label><input type="file" accept={ADMIN_IMAGE_ACCEPT} data-solution-upload /><i class="ph ph-image" aria-hidden="true"></i><span>Chọn ảnh</span></label>
                 <input type="hidden" value="/images/project-handover-placeholder.webp" data-solution-image />
               </div>
               <div class="solution-copy-fields">

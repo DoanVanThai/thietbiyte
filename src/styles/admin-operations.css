@@ -81,9 +81,10 @@
 .ops-permission-note { display: flex; gap: 7px; margin: 6px 0 0; color: var(--color-muted-foreground); font-size: .68rem; }
 .ops-permission-note i { color: var(--color-success); font-size: .9rem; }
 
+.ops-upload-zone, .ops-upload-button { position: relative; overflow: hidden; touch-action: manipulation; }
 .ops-upload-zone { min-height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; margin-bottom: 18px; padding: 16px; border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-subtle); color: var(--color-muted-foreground); text-align: center; }
 .ops-upload-zone:hover, .ops-upload-zone:focus-within { border-color: var(--color-primary); background: var(--color-primary-subtle); }
-.ops-upload-zone input, .ops-upload-button input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.ops-upload-zone input, .ops-upload-button input { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; min-height: 0; opacity: 0; cursor: pointer; }
 .ops-upload-zone i { color: var(--color-primary); font-size: 1.55rem; }
 .ops-upload-zone strong { color: var(--color-foreground); }
 .ops-upload-zone span { font-size: .7rem; }
@@ -127,6 +128,7 @@
 }
 @media (max-width: 720px) {
   .ops-page-header { align-items: flex-start; flex-direction: column; }
+  .ops-page-header .ops-upload-button { width: 100%; min-height: 44px; }
   .ops-summary { grid-template-columns: 1fr 1fr; }
   .ops-summary button:nth-child(3), .ops-summary button:nth-child(4), .ops-summary > div:nth-child(3), .ops-summary > div:nth-child(4) { border-top: 1px solid var(--ops-rule); }
   .ops-summary button:nth-child(3), .ops-summary > div:nth-child(3) { border-left: 0; }
@@ -148,6 +150,7 @@
   .media-editor-fields { border-top: 1px solid var(--color-border); border-left: 0; }
   .ops-dialog-form > footer { flex-wrap: wrap; padding: 12px 16px; }
   .ops-dialog-form > footer p { width: 100%; flex-basis: 100%; }
+  .ops-field input, .ops-field textarea, .ops-search input, .ops-toolbar select, .ops-media-bar select { font-size: 16px; }
 }
 @media (max-width: 440px) { .ops-media-grid { grid-template-columns: 1fr; } .ops-summary button, .ops-summary > div { min-height: 66px; padding: 12px; } }
 @media (prefers-reduced-motion: reduce) { .ops-media-thumb img { transition-duration: .01ms; } }

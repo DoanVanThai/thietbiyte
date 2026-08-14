@@ -328,22 +328,28 @@
 }
 
 .quote-form-grid .quote-image-add {
+  position: relative;
   width: auto;
   min-height: 38px;
   flex-direction: row;
   align-items: center;
   gap: 6px;
   cursor: pointer;
+  overflow: hidden;
 }
+
+.quote-image-file-action { position: relative; overflow: hidden; touch-action: manipulation; }
 
 .quote-image-add input,
 .quote-image-file-action input {
   position: absolute;
-  width: 1px !important;
-  height: 1px;
+  z-index: 1;
+  inset: 0;
+  width: 100% !important;
+  height: 100%;
   min-height: 0 !important;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
+  opacity: 0;
+  cursor: pointer;
 }
 
 .quote-image-add:has(input:focus-visible),
@@ -682,6 +688,10 @@
     grid-template-columns: 1fr;
   }
 
+  .quote-form-grid input:not([type="checkbox"]):not([type="file"]),
+  .quote-form-grid select,
+  .quote-form-grid textarea { font-size: 16px; }
+
   .quote-form-grid .span-2 {
     grid-column: auto;
   }
@@ -721,6 +731,8 @@
   .quote-image-actions {
     flex-direction: column;
   }
+
+  .quote-image-actions > * { min-height: 44px; justify-content: center; }
 
   .quote-builder-side {
     border-radius: var(--radius-lg);

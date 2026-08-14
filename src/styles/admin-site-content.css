@@ -7,10 +7,10 @@
 .solution-editor-row.is-new { animation: solution-row-enter 180ms var(--ease-enter); }
 .solution-image-control { position: relative; min-width: 0; align-self: start; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
 .solution-image-control > img { width: 100%; aspect-ratio: 4 / 3; display: block; object-fit: cover; }
-.solution-image-control > label { min-height: 42px; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px; padding: 7px 10px; border-top: 1px solid var(--color-border); background: white; color: var(--color-primary); font-size: .75rem; font-weight: 650; cursor: pointer; }
+.solution-image-control > label { position: relative; min-height: 44px; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px; padding: 7px 10px; overflow: hidden; border-top: 1px solid var(--color-border); background: white; color: var(--color-primary); font-size: .75rem; font-weight: 650; cursor: pointer; touch-action: manipulation; }
 .solution-image-control > label:hover { background: var(--color-primary-subtle); }
 .solution-image-control > label:focus-within { outline: 3px solid var(--color-focus-ring); outline-offset: -3px; }
-.solution-image-control input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.solution-image-control input[type="file"] { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; min-height: 0; opacity: 0; cursor: pointer; }
 .solution-editor-row.is-uploading .solution-image-control { opacity: .68; }
 .solution-editor-row.is-uploading .solution-image-control::after { position: absolute; inset: 0 0 42px; display: grid; place-items: center; padding: 10px; background: oklch(.18 .025 250 / .58); color: white; font-size: .72rem; font-weight: 650; content: "Đang tải ảnh…"; }
 .solution-editor-row.has-new-image .solution-image-control { border-color: var(--color-success); }
@@ -39,6 +39,7 @@
   .solution-row-actions { grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; }
   .solution-image-control > label span { display: none; }
   .homepage-solutions-editor > footer { align-items: flex-start; flex-direction: column; padding-block: 10px; }
+  .solution-copy-fields input, .solution-copy-fields textarea { font-size: 16px; }
 }
 @media (max-width: 480px) {
   .solution-editor-row { grid-template-columns: 1fr; }

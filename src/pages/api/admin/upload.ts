@@ -6,8 +6,9 @@ import sharp from "sharp";
 import { isResponse, requirePermission } from "@/server/auth/http";
 import { getPublicUploadDirectory, getPublicUploadPath, publicUploadUrl } from "@/server/uploads/public-upload-storage";
 
-const allowed = new Set([".jpg", ".jpeg", ".png", ".webp", ".pdf", ".doc", ".docx"]);
-const imageExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);
+const documentExtensions = new Set([".pdf", ".doc", ".docx"]);
+const imageExtensions = new Set([".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif", ".avif"]);
+const imageMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/avif"]);
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const MAX_IMAGE_PIXELS = 40_000_000;
 const MAX_IMAGE_WIDTH = 2_000;
@@ -19,14 +20,15 @@ export const POST: APIRoute = async (context) => {
   const data = await context.request.formData(); const file = data.get("file");
   if (!(file instanceof File)) return Response.json({ error: "Không có tệp." }, { status: 400 });
   const extension = extname(file.name).toLowerCase();
-  if (!allowed.has(extension) || file.size > MAX_FILE_BYTES) return Response.json({ error: "Định dạng không hỗ trợ hoặc tệp vượt 15 MB." }, { status: 400 });
+  const isImage = imageExtensions.has(extension) || imageMimeTypes.has(file.type.toLowerCase());
+  if ((!isImage && !documentExtensions.has(extension)) || file.size > MAX_FILE_BYTES) return Response.json({ error: "Chỉ hỗ trợ ảnh JPG, PNG, WebP, HEIC/HEIF, AVIF hoặc tài liệu PDF/DOC/DOCX tối đa 15 MB." }, { status: 400 });
 
   const directory = getPublicUploadDirectory();
   await mkdir(directory, { recursive: true });
   const id = `${Date.now()}-${randomUUID().slice(0, 8)}`;
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  if (!imageExtensions.has(extension)) {
+  if (!isImage) {
     const name = `${id}${extension}`;
     await writeFile(getPublicUploadPath(name)!, bytes);
     return Response.json({ url: publicUploadUrl(name), name: file.name, size: file.size, type: file.type }, { status: 201, headers: { "Cache-Control": "no-store" } });
@@ -57,6 +59,6 @@ export const POST: APIRoute = async (context) => {
       placeholder: `data:image/webp;base64,${placeholder.toString("base64")}`,
     }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch {
-    return Response.json({ error: "Ảnh không hợp lệ, quá lớn hoặc không thể xử lý." }, { status: 400, headers: { "Cache-Control": "no-store" } });
+    return Response.json({ error: "Ảnh không hợp lệ hoặc máy chủ chưa đọc được định dạng này. Nếu là HEIC, hãy thử chọn ảnh JPG/PNG từ thư viện." }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 };

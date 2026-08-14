@@ -3,6 +3,7 @@ import AdminLayout from "@/layouts/AdminLayout.astro";
 import { can } from "@/server/auth/permissions";
 import { listMedia } from "@/server/repositories/operations-repository";
 import "@/styles/admin-operations.css";
+import { ADMIN_IMAGE_ACCEPT } from "@/lib/admin-image-upload";
 const media = await listMedia();
 const canManage = can(Astro.locals.auth, "document.manage");
 const formatSize = (size: number) => size < 1024 * 1024 ? `${Math.max(1, Math.round(size / 1024))} KB` : `${(size / 1024 / 1024).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} MB`;
@@ -10,7 +11,7 @@ const formatSize = (size: number) => size < 1024 * 1024 ? `${Math.max(1, Math.ro
 <AdminLayout title="Thư viện media | Thiên Lộc Admin" description="Quản lý hình ảnh dùng chung trên website." section="Thư viện media">
   <section class="ops-page" data-ops-module="media" data-can-manage={String(canManage)} aria-labelledby="ops-title">
     <script id="ops-media-data" type="application/json" is:inline set:html={JSON.stringify(media)} />
-    <header class="admin-page-header ops-page-header"><div><span class="ops-eyebrow">Vận hành · Media</span><h1 id="ops-title">Thư viện media</h1><p>Tải một lần, bổ sung alt và tái sử dụng trên sản phẩm, nội dung, báo giá.</p></div>{canManage && <label class="admin-button primary ops-upload-button"><input type="file" accept="image/jpeg,image/png,image/webp" multiple data-media-upload /><i class="ph ph-upload-simple" aria-hidden="true"></i>Tải ảnh</label>}</header>
+    <header class="admin-page-header ops-page-header"><div><span class="ops-eyebrow">Vận hành · Media</span><h1 id="ops-title">Thư viện media</h1><p>Tải một lần, bổ sung alt và tái sử dụng trên sản phẩm, nội dung, báo giá. Hỗ trợ cả ảnh HEIC/HEIF trên điện thoại.</p></div>{canManage && <label class="admin-button primary ops-upload-button"><input type="file" accept={ADMIN_IMAGE_ACCEPT} multiple data-media-upload /><i class="ph ph-upload-simple" aria-hidden="true"></i>Tải ảnh</label>}</header>
     <div class="ops-media-bar"><label class="ops-search"><span class="sr-only">Tìm media</span><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input type="search" placeholder="Tìm theo tên file hoặc mô tả alt…" data-ops-search /></label><label><span>Nguồn</span><select data-ops-source><option value="all">Tất cả nguồn</option><option value="upload">Đã tải lên</option><option value="public">Ảnh hệ thống</option></select></label><div class="view-toggle" role="group" aria-label="Kiểu hiển thị"><button type="button" aria-pressed="true" data-media-view="grid" aria-label="Dạng lưới"><i class="ph ph-squares-four" aria-hidden="true"></i></button><button type="button" aria-pressed="false" data-media-view="list" aria-label="Dạng danh sách"><i class="ph ph-list" aria-hidden="true"></i></button></div></div>
     <div class="ops-media-status"><span><strong data-ops-visible>{media.length}</strong> tài nguyên</span><span data-upload-progress aria-live="polite"></span></div>
     <div class="ops-media-grid" data-media-library data-view="grid" data-ops-rows>

@@ -1,3 +1,5 @@
+import { ADMIN_IMAGE_ACCEPT, validateAdminImage } from "@/lib/admin-image-upload";
+
 export {};
 
 let productLifecycle: AbortController | undefined;
@@ -25,6 +27,16 @@ const showToast = (message: string) => {
     toast.classList.remove("is-visible");
     window.setTimeout(() => { toast.hidden = true; }, 150);
   }, 2800);
+};
+
+type UploadedAdminImage = { url: string; name?: string; type?: string; width?: number; height?: number };
+const uploadAdminImage = async (file: File): Promise<UploadedAdminImage> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
+  const uploaded = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(uploaded.error || `Không thể tải ${file.name}.`);
+  return uploaded as UploadedAdminImage;
 };
 
 const listView = document.querySelector<HTMLElement>("[data-products-list-view]");
@@ -471,7 +483,7 @@ const textInput = (label: string, placeholder = "") => { const input = document.
 const configurationImageControl = () => {
   const wrap = document.createElement("div"); wrap.className = "admin-configuration-image";
   const label = document.createElement("label"); label.className = "admin-config-image-button"; label.title = "Thêm ảnh minh họa";
-  const input = document.createElement("input"); input.type = "file"; input.accept = "image/png,image/jpeg,image/webp"; input.dataset.configurationImageUpload = "";
+  const input = document.createElement("input"); input.type = "file"; input.accept = ADMIN_IMAGE_ACCEPT; input.dataset.configurationImageUpload = "";
   const icon = document.createElement("i"); icon.className = "ph ph-image-square"; icon.setAttribute("aria-hidden", "true");
   const copy = document.createElement("span"); copy.textContent = "Thêm ảnh";
   label.append(input, icon, copy); wrap.append(label); return wrap;
@@ -511,16 +523,16 @@ document.addEventListener("change", async (event) => {
   const input = (event.target as Element).closest<HTMLInputElement>("[data-configuration-image-upload]");
   const row = input?.closest<HTMLElement>("[data-configuration-row]"); const file = input?.files?.[0];
   if (!input || !row || !file) return;
-  if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) { showToast("Ảnh minh họa phải là PNG, JPG hoặc WebP dưới 10 MB."); input.value = ""; return; }
+  const validationError = validateAdminImage(file);
+  if (validationError) { showToast(validationError); input.value = ""; return; }
   input.disabled = true;
+  input.closest("label")?.classList.add("is-uploading");
   try {
-    const formData = new FormData(); formData.append("file", file);
-    const response = await fetch("/api/admin/upload", { method: "POST", body: formData }); const uploaded = await response.json();
-    if (!response.ok) throw new Error(uploaded.error || "Không thể tải ảnh minh họa.");
+    const uploaded = await uploadAdminImage(file);
     renderConfigurationImage(row, uploaded.url); markDirty(); showToast("Đã gắn ảnh minh họa vào mục cấu hình.");
   } catch (error) { showToast(error instanceof Error ? error.message : "Không thể tải ảnh minh họa."); }
-  finally { input.disabled = false; input.value = ""; }
-});
+  finally { input.disabled = false; input.value = ""; input.closest("label")?.classList.remove("is-uploading"); }
+}, { signal });
 
 const makeSpecRow = () => {
   const row = document.createElement("div"); row.className = "admin-spec-row"; row.dataset.specRow = "";
@@ -624,18 +636,32 @@ const createMediaQuoteSettings = (caption: string) => {
 };
 document.querySelector<HTMLInputElement>("[data-media-upload]")?.addEventListener("change", async (event) => {
   const input = event.currentTarget as HTMLInputElement;
-  for (const file of [...(input.files || [])]) {
-    if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) { showToast(`${file.name}: ảnh phải dưới 10 MB.`); return; }
-    const formData=new FormData();formData.append("file",file);const response=await fetch("/api/admin/upload",{method:"POST",body:formData});const uploaded=await response.json();if(!response.ok){showToast(uploaded.error||`Không thể tải ${file.name}.`);continue;}
+  const label = input.closest<HTMLLabelElement>("label");
+  const status = document.querySelector<HTMLElement>("[data-media-upload-status]");
+  const files = [...(input.files || [])];
+  input.disabled = true;
+  label?.classList.add("is-uploading");
+  label?.setAttribute("aria-busy", "true");
+  let uploadedCount = 0;
+  let failedCount = 0;
+  for (const [index, file] of files.entries()) {
+    if (status) status.textContent = `Đang tải ${index + 1}/${files.length}: ${file.name}`;
+    const validationError = validateAdminImage(file);
+    if (validationError) { failedCount += 1; showToast(`${file.name}: ${validationError}`); continue; }
+    let uploaded: UploadedAdminImage;
+    try { uploaded = await uploadAdminImage(file); }
+    catch (error) { failedCount += 1; showToast(error instanceof Error ? error.message : `Không thể tải ${file.name}.`); continue; }
     const article = document.createElement("article"); article.className = "admin-media-item"; article.draggable = true; article.dataset.mediaItem = "";
     const thumbnail = document.createElement("div"); thumbnail.className = "admin-media-thumbnail";
     const image = document.createElement("img"); image.src = uploaded.url; image.dataset.mediaSrc = uploaded.url; image.dataset.mediaImage = ""; image.alt = ""; image.width = 96; image.height = 72;
     const retry = document.createElement("button"); retry.type = "button"; retry.className = "admin-media-image-error"; retry.dataset.mediaRetry = ""; retry.hidden = true; retry.setAttribute("aria-label", "Thử tải lại ảnh"); retry.innerHTML = '<i class="ph ph-arrow-clockwise" aria-hidden="true"></i><span>Tải lại ảnh</span>'; thumbnail.append(image, retry); bindMediaImage(image);
     const copy = document.createElement("div"); copy.className = "admin-media-copy"; const name = document.createElement("strong"); name.textContent = file.name; const altLabel = document.createElement("label"); altLabel.append(document.createTextNode("Alt text")); const alt = document.createElement("input"); alt.type = "text"; alt.value = file.name.replace(/\.[^.]+$/, ""); alt.dataset.mediaAlt = ""; altLabel.append(alt); copy.append(name, altLabel);
     const actions = document.createElement("div"); actions.className = "admin-media-actions"; actions.innerHTML = '<button type="button" data-set-cover>Đặt làm bìa</button><button type="button" data-media-preview>Preview</button><button type="button" data-media-delete aria-label="Xóa ảnh"><i class="ph ph-trash" aria-hidden="true"></i></button>';
-    article.append(dragButton(), thumbnail, copy, actions, createMediaQuoteSettings(file.name.replace(/\.[^.]+$/, ""))); mediaList?.append(article); markDirty();
-  } input.value = "";
-});
+    article.append(dragButton(), thumbnail, copy, actions, createMediaQuoteSettings(file.name.replace(/\.[^.]+$/, ""))); mediaList?.append(article); markDirty(); uploadedCount += 1;
+  }
+  if (status) status.textContent = failedCount ? `Đã tải ${uploadedCount} ảnh, ${failedCount} ảnh lỗi.` : `Đã tải ${uploadedCount} ảnh.`;
+  input.disabled = false; input.value = ""; label?.classList.remove("is-uploading"); label?.removeAttribute("aria-busy");
+}, { signal });
 mediaList?.addEventListener("click", (event) => {
   const target = event.target as HTMLElement;
   const item = target.closest<HTMLElement>("[data-media-item]"); if (!item) return;

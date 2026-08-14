@@ -1,3 +1,5 @@
+import { validateAdminImage } from "@/lib/admin-image-upload";
+
 export {};
 
 let siteContentLifecycle: AbortController | undefined;
@@ -76,6 +78,8 @@ if (root) {
     const status = item.querySelector<HTMLElement>("[data-solution-status]");
     const preview = item.querySelector<HTMLImageElement>("[data-solution-preview]");
     const imageValue = item.querySelector<HTMLInputElement>("[data-solution-image]");
+    const validationError = validateAdminImage(file);
+    if (validationError) { if (status) status.textContent = validationError; input.value = ""; return; }
     activeSolutionUploads += 1;
     item.classList.add("is-uploading");
     input.disabled = true;
@@ -105,6 +109,8 @@ if (root) {
   upload?.addEventListener("change", async () => {
     const file = upload.files?.[0];
     if (!file) return;
+    const validationError = validateAdminImage(file);
+    if (validationError) { if (feedback) feedback.textContent = validationError; upload.value = ""; return; }
     const data = new FormData();
     data.set("file", file);
     if (feedback) feedback.textContent = "Đang tải ảnh Hero…";
