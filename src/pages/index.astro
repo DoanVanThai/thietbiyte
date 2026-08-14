@@ -10,6 +10,7 @@ import {
   veterinaryGroups,
 } from "@/data/homepage";
 import { homepageContent } from "@/lib/public-content";
+import { solutionSlug } from "@/lib/solutions";
 
 const home = await homepageContent();
 const { hero, categories, featuredProducts, brands, specialties, solutions, projects, knowledge: articles, reasons, settings } = home;
@@ -132,7 +133,7 @@ const telHref = `tel:${settings.hotline.replace(/\D/g, "")}`;
               <div>
                 <h3>{title}</h3>
                 <p>{description}</p>
-                <a class="text-link" href={`/?solution=${encodeURIComponent(title)}#contact`}>Xem giải pháp<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+                <a class="text-link" href={`/giai-phap/${solutionSlug(title)}`}>Xem giải pháp<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
               </div>
             </article>
           ))}

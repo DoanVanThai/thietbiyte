@@ -5,6 +5,7 @@ import Footer from "@/components/Footer.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 import MedicalProductSection from "@/components/MedicalProductSection.astro";
 import ResponsiveImage from "@/components/ResponsiveImage.astro";
+import { solutionSlug } from "@/lib/solutions";
 import { articles, solutions } from "@/data/homepage";
 import type { MedicalSpecialtyConfig } from "@/data/medical";
 import { productService } from "@/server/services/product-service";
@@ -94,7 +95,7 @@ const catalogHref = `/san-pham?group=medical&specialty=${specialty.slug}`;
             {relatedSolutions.map(([title, description, image]) => (
               <article>
                 <ResponsiveImage src={image} alt={`Ảnh minh họa ${title}`} width={560} height={373} sourceWidth={image.includes("hero-ultrasound") ? 1600 : 1400} sizes="(max-width: 767px) 100vw, 280px" />
-                <div><h3>{title}</h3><p>{description}</p><a href={`/?solution=${encodeURIComponent(title)}#solutions`}>Xem giải pháp<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
+                <div><h3>{title}</h3><p>{description}</p><a href={`/giai-phap/${solutionSlug(title)}`}>Xem giải pháp<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
               </article>
             ))}
           </div>

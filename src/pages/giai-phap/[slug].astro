@@ -1,0 +1,99 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import ResponsiveImage from "@/components/ResponsiveImage.astro";
+import CatalogProductCard from "@/components/CatalogProductCard.astro";
+import { homepageContent, publicProducts } from "@/lib/public-content";
+import { solutionProfile, solutionSlug } from "@/lib/solutions";
+import "@/styles/catalog.css";
+import "@/styles/solution-detail.css";
+
+const slug = Astro.params.slug || "";
+const home = await homepageContent();
+const solution = home.solutions.find(([title]) => solutionSlug(title) === slug);
+if (!solution) return Astro.redirect("/#solutions", 302);
+
+const [title, description, image] = solution;
+const profile = solutionProfile(title);
+const products = await publicProducts();
+const matchedProducts = products.filter(profile.matches).slice(0, 3);
+const relatedProducts = matchedProducts.length ? matchedProducts : products.filter((product) => product.featured > 0).slice(0, 3);
+const quoteNeed = `Tôi cần tư vấn ${title}. Mong được hỗ trợ xây dựng danh mục và cấu hình thiết bị phù hợp.`;
+const quoteHref = `/yeu-cau-bao-gia?source=solution-${encodeURIComponent(slug)}&need=${encodeURIComponent(quoteNeed)}`;
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: title,
+  description,
+  provider: { "@type": "Organization", name: "THIÊN LỘC GROUP" },
+};
+---
+
+<BaseLayout title={`${title} | THIÊN LỘC GROUP`} description={description} image={image} structuredData={structuredData}>
+  <Header />
+  <main id="main-content" class="solution-detail-page">
+    <section class="solution-detail-hero" aria-labelledby="solution-title">
+      <div class="container">
+        <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Giải pháp", href: "/#solutions" }, { label: title }]} />
+        <div class="solution-detail-hero-grid">
+          <div class="solution-detail-copy">
+            <p class="solution-detail-label">{profile.label}</p>
+            <h1 id="solution-title">{title}</h1>
+            <p class="solution-detail-lead">{description}</p>
+            <div class="solution-detail-actions">
+              <a class="button button-primary button-lg" href={quoteHref}>Nhận cấu hình đề xuất<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+              <a class="button button-outline button-lg" href={profile.catalogHref}>Xem thiết bị phù hợp</a>
+            </div>
+          </div>
+          <figure class="solution-detail-visual">
+            <ResponsiveImage src={image} alt={`Không gian minh họa cho ${title}`} width={1200} height={800} sourceWidth={image.includes("hero-ultrasound") ? 1600 : 1400} sizes="(max-width: 767px) 100vw, 52vw" loading="eager" fetchpriority="high" />
+            <figcaption>Hình ảnh minh họa; cấu hình thực tế được xác định sau khi khảo sát nhu cầu.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section solution-detail-overview" aria-labelledby="solution-overview-title">
+      <div class="container solution-detail-overview-grid">
+        <div class="solution-detail-priorities">
+          <h2 id="solution-overview-title">Cấu hình bắt đầu từ nhu cầu vận hành</h2>
+          <p>{profile.overview}</p>
+          <ul>
+            {profile.priorities.map((priority) => <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>{priority}</span></li>)}
+          </ul>
+        </div>
+        <aside class="solution-detail-preparation" aria-labelledby="solution-preparation-title">
+          <h2 id="solution-preparation-title">Thông tin nên chuẩn bị</h2>
+          <p>Những dữ liệu này giúp rút ngắn thời gian tư vấn và tránh chọn cấu hình vượt hoặc thiếu nhu cầu.</p>
+          <dl>
+            {profile.preparation.map(([label, value]) => <div><dt>{label}</dt><dd>{value}</dd></div>)}
+          </dl>
+        </aside>
+      </div>
+    </section>
+
+    {relatedProducts.length > 0 && (
+      <section class="section solution-related-products" aria-labelledby="solution-products-title">
+        <div class="container">
+          <header class="solution-section-heading">
+            <div><h2 id="solution-products-title">Thiết bị có thể đưa vào cấu hình</h2><p>Danh sách tham khảo ban đầu; model và số lượng sẽ được xác nhận theo nhu cầu thực tế.</p></div>
+            <a class="text-link" href={profile.catalogHref}>Xem toàn bộ thiết bị<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+          </header>
+          <div class="solution-products-grid">
+            {relatedProducts.map((product) => <CatalogProductCard product={product} headingLevel="h3" />)}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="solution-consultation" aria-labelledby="solution-consultation-title">
+      <div class="container solution-consultation-layout">
+        <div><h2 id="solution-consultation-title">Trao đổi trực tiếp về cấu hình của cơ sở bạn</h2><p>Gửi nhu cầu ban đầu, đội ngũ phụ trách sẽ liên hệ để làm rõ phạm vi chuyên môn, mặt bằng và kế hoạch đầu tư.</p></div>
+        <a class="button button-primary button-lg" href={quoteHref}>Yêu cầu tư vấn giải pháp<i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
