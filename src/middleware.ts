@@ -1,5 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { getPrincipal, SESSION_COOKIE } from "@/server/auth/service";
+import { resolveCsrfOrigin } from "@/server/auth/csrf";
 import { can, isCustomerOnly, isStaff, ROUTE_PERMISSIONS } from "@/server/auth/permissions";
 import type { Permission } from "@/server/auth/permissions";
 import { getCacheVersion } from "@/lib/content-repository";
@@ -25,7 +26,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (unsafeMethods.has(context.request.method) && pathname.startsWith("/api/")) {
     const origin = context.request.headers.get("origin");
     const fetchSite = context.request.headers.get("sec-fetch-site");
-    if ((origin && origin !== context.url.origin) || fetchSite === "cross-site") return new Response(JSON.stringify({ ok: false, code: "CSRF_REJECTED", message: "Nguồn yêu cầu không hợp lệ." }), { status: 403, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+    const trustedOrigin = resolveCsrfOrigin(context.url, context.site, context.request.headers);
+    if ((origin && origin !== trustedOrigin) || fetchSite === "cross-site") return new Response(JSON.stringify({ ok: false, code: "CSRF_REJECTED", message: "Nguồn yêu cầu không hợp lệ." }), { status: 403, headers: { "content-type": "application/json", "cache-control": "no-store" } });
   }
 
   if (authPages.has(pathname) && principal && !pathname.includes("dat-lai") && !pathname.includes("xac-minh")) return context.redirect(isCustomerOnly(principal) ? "/tai-khoan" : "/admin");
