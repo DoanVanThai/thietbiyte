@@ -28,7 +28,7 @@ export type ResolvedQuoteItem = SalesQuotePdfInput["items"][number] & {
   images?: ResolvedQuoteImage[];
 };
 
-export const quoteFileName = (value: string) => value
+const quoteFileStem = (value: string) => value
   .normalize("NFD")
   .replace(/[\u0300-\u036f]/g, "")
   .replace(/đ/g, "d")
@@ -36,6 +36,19 @@ export const quoteFileName = (value: string) => value
   .replace(/[^a-zA-Z0-9]+/g, "-")
   .replace(/^-|-$/g, "")
   .toLocaleLowerCase("en-US") || "bao-gia";
+
+export const quoteFileName = (value: string) => {
+  const quoteNumber = value.trim()
+    .replaceAll("/", "／")
+    .replace(/[\\:*?"<>]/g, "-") || "Báo giá";
+  return `Thiên Lộc Group | ${quoteNumber}`;
+};
+
+export const quoteContentDisposition = (quoteNumber: string, extension: "pdf" | "docx") => {
+  const displayName = `${quoteFileName(quoteNumber)}.${extension}`;
+  const fallbackName = `thien-loc-group-${quoteFileStem(quoteNumber)}.${extension}`;
+  return `attachment; filename="${fallbackName}"; filename*=UTF-8''${encodeURIComponent(displayName)}`;
+};
 
 const cleanQuoteText = (value: string) => value
   .replace(/[\u2010-\u2015\u2212]/g, "-")

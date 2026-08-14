@@ -288,7 +288,10 @@ if (root) {
       }
       const blob = await response.blob();
       const disposition = response.headers.get("content-disposition") || "";
-      const name = disposition.match(/filename="([^"]+)"/)?.[1] || `bao-gia.${format === "word" ? "docx" : "pdf"}`;
+      const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+      let name = `bao-gia.${format === "word" ? "docx" : "pdf"}`;
+      try { name = encodedName ? decodeURIComponent(encodedName) : disposition.match(/filename="([^"]+)"/)?.[1] || name; }
+      catch { name = disposition.match(/filename="([^"]+)"/)?.[1] || name; }
       const url = URL.createObjectURL(blob);
       const download = document.createElement("a");
       download.href = url; download.download = name; document.body.append(download); download.click(); download.remove();

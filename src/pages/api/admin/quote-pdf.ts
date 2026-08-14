@@ -4,7 +4,7 @@ import { getSettings } from "@/lib/content-repository";
 import { isResponse, requestIp, requirePermission } from "@/server/auth/http";
 import { audit } from "@/server/auth/service";
 import { createSalesQuotePdf } from "@/server/services/sales-quote-pdf";
-import { quoteFileName, resolveQuoteItems } from "@/server/services/sales-quote-document";
+import { quoteContentDisposition, resolveQuoteItems } from "@/server/services/sales-quote-document";
 import { salesQuotePdfInput } from "@/server/validation/sales-quote";
 
 export const POST: APIRoute = async (context) => {
@@ -27,7 +27,7 @@ export const POST: APIRoute = async (context) => {
     return new Response(body.buffer, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${quoteFileName(input.quoteNumber)}.pdf"`,
+        "Content-Disposition": quoteContentDisposition(input.quoteNumber, "pdf"),
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
       },

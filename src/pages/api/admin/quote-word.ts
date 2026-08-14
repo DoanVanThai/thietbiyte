@@ -4,7 +4,7 @@ import { getSettings } from "@/lib/content-repository";
 import { isResponse, requestIp, requirePermission } from "@/server/auth/http";
 import { audit } from "@/server/auth/service";
 import { createSalesQuoteDocx } from "@/server/services/sales-quote-docx";
-import { quoteFileName, resolveQuoteItems } from "@/server/services/sales-quote-document";
+import { quoteContentDisposition, resolveQuoteItems } from "@/server/services/sales-quote-document";
 import { salesQuotePdfInput } from "@/server/validation/sales-quote";
 
 export const POST: APIRoute = async (context) => {
@@ -27,7 +27,7 @@ export const POST: APIRoute = async (context) => {
     return new Response(body.buffer, {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename="${quoteFileName(input.quoteNumber)}.docx"`,
+        "Content-Disposition": quoteContentDisposition(input.quoteNumber, "docx"),
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
       },

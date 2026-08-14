@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createSalesQuoteDocx } from "../../src/server/services/sales-quote-docx";
+import { quoteContentDisposition, quoteFileName } from "../../src/server/services/sales-quote-document";
 import { createSalesQuotePdf } from "../../src/server/services/sales-quote-pdf";
 import { numberToVietnameseMoney } from "../../src/server/services/vietnamese-money";
 
@@ -10,6 +11,11 @@ test("Vietnamese money words cover zero, inner groups and quote-sized totals", (
   assert.equal(numberToVietnameseMoney(21_004), "Hai mươi mốt nghìn không trăm lẻ bốn đồng chẵn");
   assert.equal(numberToVietnameseMoney(430_000_000), "Bốn trăm ba mươi triệu đồng chẵn");
   assert.equal(numberToVietnameseMoney(1_000_000_005), "Một tỷ không trăm lẻ năm đồng chẵn");
+});
+
+test("sales quote downloads use the company name and preserve the quote number", () => {
+  assert.equal(quoteFileName("5021/BG/2026"), "Thiên Lộc Group | 5021／BG／2026");
+  assert.match(quoteContentDisposition("5021/BG/2026", "pdf"), /filename\*=UTF-8''Thi%C3%AAn%20L%E1%BB%99c%20Group%20%7C%205021%EF%BC%8FBG%EF%BC%8F2026\.pdf/);
 });
 
 test("sales quote PDF supports Vietnamese and long product descriptions", async () => {
