@@ -30,6 +30,8 @@ test("document and media repositories support create, update and delete", async 
   assert.equal(repository.saveDocument({ ...document, version: "1.1" }).version, "1.1");
   assert.equal((await productService.getPublicDetail(product.slug))?.documents.some(({ href }) => href === document.url), true, "library document must appear on the linked public product");
   assert.equal(repository.deleteDocument(document.id), true);
+  assert.equal(content.deleteProduct(product.id), true);
+  assert.equal(content.getProductById(product.id), undefined);
 
   const media = repository.saveMedia({ name: "media-test.webp", url: "/uploads/media-test.webp", source: "upload", alt: "Ảnh kiểm thử" });
   assert.equal(repository.getMedia(media.id)?.alt, "Ảnh kiểm thử");

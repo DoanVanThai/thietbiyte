@@ -3,11 +3,12 @@ import test from "node:test";
 import { ProductRepository } from "../../src/server/repositories/product-repository";
 import { QuoteService } from "../../src/server/services/quote-service";
 
-test("product repository exposes CRUD and archive operations", () => {
+test("product repository exposes CRUD, archive and delete operations", () => {
   assert.equal(typeof ProductRepository.prototype.create, "function");
   assert.equal(typeof ProductRepository.prototype.findById, "function");
   assert.equal(typeof ProductRepository.prototype.update, "function");
   assert.equal(typeof ProductRepository.prototype.archive, "function");
+  assert.equal(typeof ProductRepository.prototype.delete, "function");
 });
 
 test("quote service rejects duplicate product lines before persistence", async () => {

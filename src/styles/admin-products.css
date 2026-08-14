@@ -27,6 +27,9 @@
 .admin-bulk-bar > div { display: flex; flex-wrap: wrap; gap: 2px; }
 .admin-bulk-bar > div button, .admin-bulk-clear { min-height: 36px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-foreground); font-size: .75rem; font-weight: 600; cursor: pointer; }
 .admin-bulk-bar > div button:hover, .admin-bulk-clear:hover { background: oklch(1 0 0 / .65); }
+.admin-bulk-bar > div button:disabled, .admin-bulk-clear:disabled { cursor: wait; opacity: .55; }
+.admin-bulk-bar > div .admin-bulk-danger { color: var(--color-danger); }
+.admin-bulk-bar > div .admin-bulk-danger:hover { background: oklch(.95 .035 25); }
 .admin-bulk-clear { width: 36px; justify-content: center; margin-left: auto; padding: 0; }
 
 .admin-products-table-wrap { position: relative; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
@@ -265,6 +268,8 @@
 .admin-row-popover::backdrop { background: transparent; }
 .admin-row-popover a, .admin-row-popover button { width: 100%; min-height: 36px; display: flex; align-items: center; gap: var(--space-2); padding: 7px 8px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-foreground); font-size: .75rem; text-align: left; cursor: pointer; }
 .admin-row-popover :is(a, button):hover { background: var(--color-surface-subtle); }
+.admin-row-popover .admin-row-danger { margin-top: 4px; border-top: 1px solid var(--color-border); border-radius: 0 0 var(--radius-sm) var(--radius-sm); color: var(--color-danger); }
+.admin-row-popover .admin-row-danger:hover { background: oklch(.95 .035 25); }
 .admin-action-dialog, .admin-media-dialog { max-height: calc(100dvh - 32px); padding: 0; overflow: auto; border: 0; border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-foreground); }
 .admin-action-dialog::backdrop, .admin-media-dialog::backdrop { background: var(--color-overlay); }
 .admin-action-dialog { width: min(calc(100% - 32px), 440px); }
@@ -275,6 +280,12 @@
 .admin-action-dialog label { display: block; margin-bottom: 7px; font-size: .8125rem; font-weight: 600; }
 .admin-action-dialog p { margin: var(--space-2) 0 0; color: var(--color-muted-foreground); font-size: .75rem; }
 .admin-action-dialog footer { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--color-border); }
+.admin-delete-dialog [data-delete-dialog-message] { margin-top: 0; color: var(--color-foreground); font-size: .8125rem; line-height: 1.55; }
+.admin-delete-dialog .admin-delete-dialog-note { display: flex; align-items: flex-start; gap: 8px; margin-top: var(--space-4); padding: 10px 12px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); line-height: 1.5; }
+.admin-delete-dialog-note i { flex: 0 0 auto; margin-top: 2px; color: var(--color-primary); font-size: .875rem; }
+.admin-button-danger { border-color: var(--color-danger); background: var(--color-danger); color: white; }
+.admin-button-danger:hover { background: oklch(.4 .15 25); }
+.admin-button-danger:disabled { cursor: wait; opacity: .65; }
 .admin-media-dialog { width: min(calc(100% - 32px), 900px); }
 .admin-media-dialog > div > img { width: 100%; max-height: 72vh; object-fit: contain; background: var(--color-surface-subtle); }
 @keyframes admin-spin { to { transform: rotate(360deg); } }

@@ -200,4 +200,8 @@ export class ProductRepository {
   archive(id: string) {
     return this.client.product.update({ where: { id }, data: { status: "ARCHIVED" }, include: productRelations });
   }
+
+  delete(id: string) {
+    return this.client.product.delete({ where: { id } });
+  }
 }

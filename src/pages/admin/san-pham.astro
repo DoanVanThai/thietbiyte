@@ -9,6 +9,7 @@ import type { CmsProduct } from "@/lib/content-repository";
 
 const canCreateProduct = can(Astro.locals.auth, "product.create");
 const canEditProduct = can(Astro.locals.auth, "product.edit");
+const canDeleteProduct = can(Astro.locals.auth, "product.delete");
 const canPublishProduct = can(Astro.locals.auth, "product.publish");
 const canCreateQuote = can(Astro.locals.auth, "quote.edit");
 
@@ -98,11 +99,12 @@ const editorSections = [
     <div class="admin-bulk-bar" data-bulk-bar hidden>
       <span><strong data-selected-count>0</strong> sản phẩm đã chọn</span>
       <div>
-        {canPublishProduct && <button type="button" data-bulk-action="Xuất bản"><i class="ph ph-check-circle" aria-hidden="true"></i>Xuất bản</button>}
-        {canPublishProduct && <button type="button" data-bulk-action="Gỡ xuất bản"><i class="ph ph-eye-slash" aria-hidden="true"></i>Gỡ xuất bản</button>}
+        {canPublishProduct && <button type="button" data-bulk-action="published" data-bulk-label="Xuất bản"><i class="ph ph-check-circle" aria-hidden="true"></i>Xuất bản</button>}
+        {canPublishProduct && <button type="button" data-bulk-action="unpublish" data-bulk-label="Gỡ xuất bản"><i class="ph ph-eye-slash" aria-hidden="true"></i>Gỡ xuất bản</button>}
         {canEditProduct && <button type="button" data-bulk-category><i class="ph ph-folder" aria-hidden="true"></i>Chuyển danh mục</button>}
-        {canEditProduct && <button type="button" data-bulk-action="Đặt nổi bật"><i class="ph ph-star" aria-hidden="true"></i>Nổi bật</button>}
-        {canEditProduct && <button type="button" data-bulk-action="Lưu trữ"><i class="ph ph-archive" aria-hidden="true"></i>Lưu trữ</button>}
+        {canEditProduct && <button type="button" data-bulk-action="featured" data-bulk-label="Đặt nổi bật"><i class="ph ph-star" aria-hidden="true"></i>Nổi bật</button>}
+        {canEditProduct && <button type="button" data-bulk-action="archived" data-bulk-label="Lưu trữ"><i class="ph ph-archive" aria-hidden="true"></i>Lưu trữ</button>}
+        {canDeleteProduct && <button class="admin-bulk-danger" type="button" data-bulk-delete><i class="ph ph-trash" aria-hidden="true"></i>Xóa</button>}
       </div>
       <button class="admin-bulk-clear" type="button" data-clear-selection aria-label="Bỏ chọn tất cả"><i class="ph ph-x" aria-hidden="true"></i></button>
     </div>
@@ -280,10 +282,12 @@ const editorSections = [
   </section>
 
   <div class="admin-row-popover" popover data-row-popover>
-    {canEditProduct && <a href="/admin/san-pham?view=editor&id=p-001" data-row-edit><i class="ph ph-pencil-simple" aria-hidden="true"></i>Chỉnh sửa</a>}{canCreateQuote && <a href="/admin/bao-gia?product=p-001" data-row-quote><i class="ph ph-file-pdf" aria-hidden="true"></i>Tạo báo giá PDF</a>}<a href="/san-pham/he-thong-sieu-am-mau-sonoport-8" target="_blank" rel="noopener noreferrer" data-row-preview><i class="ph ph-eye" aria-hidden="true"></i>Xem trước</a>{canCreateProduct && <button type="button" data-row-duplicate><i class="ph ph-copy" aria-hidden="true"></i>Nhân bản</button>}{canEditProduct && <button type="button" data-row-archive><i class="ph ph-archive" aria-hidden="true"></i>Lưu trữ</button>}
+    {canEditProduct && <a href="/admin/san-pham?view=editor&id=p-001" data-row-edit><i class="ph ph-pencil-simple" aria-hidden="true"></i>Chỉnh sửa</a>}{canCreateQuote && <a href="/admin/bao-gia?product=p-001" data-row-quote><i class="ph ph-file-pdf" aria-hidden="true"></i>Tạo báo giá PDF</a>}<a href="/san-pham/he-thong-sieu-am-mau-sonoport-8" target="_blank" rel="noopener noreferrer" data-row-preview><i class="ph ph-eye" aria-hidden="true"></i>Xem trước</a>{canCreateProduct && <button type="button" data-row-duplicate><i class="ph ph-copy" aria-hidden="true"></i>Nhân bản</button>}{canEditProduct && <button type="button" data-row-archive><i class="ph ph-archive" aria-hidden="true"></i>Lưu trữ</button>}{canDeleteProduct && <button class="admin-row-danger" type="button" data-row-delete><i class="ph ph-trash" aria-hidden="true"></i>Xóa sản phẩm</button>}
   </div>
 
-  <dialog class="admin-action-dialog" data-category-dialog aria-labelledby="category-dialog-title"><form method="dialog"><header><div><span>Thao tác hàng loạt</span><h2 id="category-dialog-title">Chuyển danh mục</h2></div><button class="icon-action" type="submit" value="cancel" aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><div><label for="bulk-category-select">Danh mục mới</label><select id="bulk-category-select">{categories.map((category) => <option>{category}</option>)}</select><p>Sản phẩm được chọn sẽ chuyển sang danh mục này.</p></div><footer><button class="button button-outline" type="submit" value="cancel">Hủy</button><button class="button button-primary" type="submit" value="confirm" data-confirm-category>Xác nhận</button></footer></form></dialog>
+  <dialog class="admin-action-dialog" data-category-dialog aria-labelledby="category-dialog-title"><form method="dialog"><header><div><span>Thao tác hàng loạt</span><h2 id="category-dialog-title">Chuyển danh mục</h2></div><button class="icon-action" type="submit" value="cancel" aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><div><label for="bulk-category-select">Danh mục mới</label><select id="bulk-category-select">{categories.map((category) => <option>{category}</option>)}</select><p>Sản phẩm được chọn sẽ chuyển sang danh mục này.</p></div><footer><button class="button button-outline" type="submit" value="cancel">Hủy</button><button class="button button-primary" type="button" data-confirm-category>Chuyển danh mục</button></footer></form></dialog>
+
+  <dialog class="admin-action-dialog admin-delete-dialog" data-delete-dialog aria-labelledby="delete-dialog-title"><form method="dialog"><header><div><span>Thao tác không thể hoàn tác</span><h2 id="delete-dialog-title">Xóa sản phẩm?</h2></div><button class="icon-action" type="submit" value="cancel" aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><div><p data-delete-dialog-message>Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.</p><p class="admin-delete-dialog-note"><i class="ph ph-info" aria-hidden="true"></i>Sản phẩm đã có trong yêu cầu báo giá sẽ không thể xóa; hãy dùng Lưu trữ thay thế.</p></div><footer><button class="button button-outline" type="submit" value="cancel">Giữ sản phẩm</button><button class="button admin-button-danger" type="button" data-confirm-delete>Xóa sản phẩm</button></footer></form></dialog>
 
   <dialog class="admin-media-dialog" data-media-dialog aria-labelledby="media-preview-title"><div><header><h2 id="media-preview-title">Xem trước ảnh</h2><button class="icon-action" type="button" data-media-dialog-close aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><img src={editorProduct.image} alt="Ảnh sản phẩm xem trước" width="1600" height="1200" data-media-preview-image /></div></dialog>
 

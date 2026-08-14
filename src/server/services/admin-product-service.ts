@@ -46,6 +46,7 @@ export class AdminProductService {
 
   async get(id: string) { const record = await this.repository.findById(id); return record ? databaseProductToCms(record) : null; }
   async archive(id: string) { const product = databaseProductToCms(await this.repository.archive(id)); invalidateContentCache("products"); return product; }
+  async delete(id: string) { await this.repository.delete(id); invalidateContentCache("products"); }
   async duplicate(id: string) {
     const existing = await this.get(id); if (!existing) return null;
     return this.save({ ...existing, id: undefined, name: `${existing.name} — Bản sao`, slug: `${existing.slug}-ban-sao-${Date.now().toString().slice(-4)}`, sku: `${existing.sku}-COPY-${Date.now().toString().slice(-4)}`, publishStatus: "draft", action: "draft" });

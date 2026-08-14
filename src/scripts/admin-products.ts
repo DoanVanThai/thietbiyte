@@ -127,13 +127,82 @@ applyFilters();
 selectAll?.addEventListener("change", () => { visibleCheckboxes().forEach((input) => { input.checked = selectAll.checked; }); syncSelectAll(); });
 rowCheckboxes.forEach((input) => input.addEventListener("change", syncSelectAll));
 document.querySelector<HTMLButtonElement>("[data-clear-selection]")?.addEventListener("click", () => { rowCheckboxes.forEach((input) => { input.checked = false; }); syncSelectAll(); });
-document.querySelectorAll<HTMLButtonElement>("[data-bulk-action]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.bulkAction}: đã áp dụng cho ${rowCheckboxes.filter((input) => input.checked).length} sản phẩm.`)));
+
+type ProductMutationResult = { ok?: boolean; error?: string; message?: string; code?: string };
+const selectedRows = () => rows.filter((row) => row.querySelector<HTMLInputElement>("[data-row-select]")?.checked);
+const selectedIds = () => selectedRows().map((row) => row.dataset.id).filter((id): id is string => Boolean(id));
+const productNameForRow = (row: HTMLTableRowElement) => row.querySelector<HTMLElement>(".admin-product-name strong")?.textContent?.trim() || row.dataset.id || "sản phẩm";
+const bulkButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-bulk-bar] button")];
+const setBulkBusy = (busy: boolean) => {
+  bulkBar?.setAttribute("aria-busy", String(busy));
+  bulkButtons.forEach((button) => { button.disabled = busy; });
+};
+const readMutationResult = async (response: Response) => {
+  const result = await response.json().catch(() => ({})) as ProductMutationResult;
+  if (!response.ok) throw new Error(result.error || result.message || "Không thể cập nhật sản phẩm.");
+  return result;
+};
+const mutateProducts = async (ids: string[], request: (id: string) => Promise<Response>) => {
+  const results = await Promise.all(ids.map(async (id) => {
+    try { await readMutationResult(await request(id)); return { id, ok: true as const }; }
+    catch (error) { return { id, ok: false as const, error: error instanceof Error ? error.message : "Không thể cập nhật sản phẩm." }; }
+  }));
+  const succeeded = results.filter((result) => result.ok);
+  const failed = results.filter((result) => !result.ok);
+  return { succeeded, failed };
+};
+const refreshProductList = () => {
+  const current = `${window.location.pathname}${window.location.search}`;
+  document.dispatchEvent(new CustomEvent("admin:navigate", { detail: current }));
+};
+const finishBulkMutation = (label: string, total: number, summary: Awaited<ReturnType<typeof mutateProducts>>) => {
+  if (summary.failed.length === 0) showToast(`${label} thành công cho ${summary.succeeded.length} sản phẩm.`);
+  else if (summary.succeeded.length > 0) showToast(`${label} thành công ${summary.succeeded.length}/${total} sản phẩm. ${summary.failed[0]?.error}`);
+  else showToast(summary.failed[0]?.error || `${label} không thành công. Vui lòng thử lại.`);
+  if (summary.succeeded.length > 0) window.setTimeout(refreshProductList, 900);
+  else setBulkBusy(false);
+};
+
+document.querySelectorAll<HTMLButtonElement>("[data-bulk-action]").forEach((button) => button.addEventListener("click", async () => {
+  const ids = selectedIds();
+  if (!ids.length) return showToast("Chọn ít nhất một sản phẩm để thao tác.");
+  const action = button.dataset.bulkAction || "";
+  const label = button.dataset.bulkLabel || "Cập nhật";
+  const body = action === "featured" ? { featured: 10 } : { action };
+  setBulkBusy(true);
+  const summary = await mutateProducts(ids, (id) => fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
+  finishBulkMutation(label, ids.length, summary);
+}));
 
 const categoryDialog = document.querySelector<HTMLDialogElement>("[data-category-dialog]");
 document.querySelector<HTMLButtonElement>("[data-bulk-category]")?.addEventListener("click", () => categoryDialog?.showModal());
-document.querySelector<HTMLButtonElement>("[data-confirm-category]")?.addEventListener("click", () => {
-  const category = categoryDialog?.querySelector<HTMLSelectElement>("select")?.value || "danh mục mới";
-  showToast(`Đã chuyển sản phẩm được chọn sang ${category}.`);
+document.querySelector<HTMLButtonElement>("[data-confirm-category]")?.addEventListener("click", async (event) => {
+  event.preventDefault();
+  const ids = selectedIds();
+  if (!ids.length) { categoryDialog?.close(); return showToast("Chọn ít nhất một sản phẩm để chuyển danh mục."); }
+  const category = categoryDialog?.querySelector<HTMLSelectElement>("select")?.value || "";
+  const categorySlug = category.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  setBulkBusy(true);
+  const summary = await mutateProducts(ids, (id) => fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, categorySlug }) }));
+  categoryDialog?.close();
+  finishBulkMutation(`Chuyển sang ${category}`, ids.length, summary);
+});
+
+const deleteDialog = document.querySelector<HTMLDialogElement>("[data-delete-dialog]");
+const deleteDialogMessage = deleteDialog?.querySelector<HTMLElement>("[data-delete-dialog-message]");
+const confirmDelete = deleteDialog?.querySelector<HTMLButtonElement>("[data-confirm-delete]");
+let deleteTargets: Array<{ id: string; name: string }> = [];
+const openDeleteDialog = (targets: Array<{ id: string; name: string }>) => {
+  if (!deleteDialog || targets.length === 0) return;
+  deleteTargets = targets;
+  if (deleteDialogMessage) deleteDialogMessage.textContent = targets.length === 1
+    ? `“${targets[0].name}” sẽ bị xóa vĩnh viễn khỏi hệ thống.`
+    : `${targets.length} sản phẩm đã chọn sẽ bị xóa vĩnh viễn khỏi hệ thống.`;
+  if (confirmDelete) confirmDelete.textContent = targets.length === 1 ? "Xóa sản phẩm" : `Xóa ${targets.length} sản phẩm`;
+  deleteDialog.showModal();
+};
+document.querySelector<HTMLButtonElement>("[data-bulk-delete]")?.addEventListener("click", () => {
+  openDeleteDialog(selectedRows().map((row) => ({ id: row.dataset.id || "", name: productNameForRow(row) })).filter((target) => target.id));
 });
 
 // Per-row actions use a top-layer popover to avoid table clipping.
@@ -199,14 +268,46 @@ window.addEventListener("resize", closeRowPopover, { signal });
 window.addEventListener("scroll", closeRowPopover, { capture: true, signal });
 rowPopover?.querySelector<HTMLButtonElement>("[data-row-duplicate]")?.addEventListener("click", async () => {
   const id = activeRow?.dataset.id; rowPopover.hidePopover(); if (!id) return;
-  const response = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"duplicate"}) });
-  if (!response.ok) return showToast("Không thể nhân bản sản phẩm.");
-  const result = await response.json(); showToast("Đã tạo bản sao ở trạng thái bản nháp."); window.setTimeout(() => document.dispatchEvent(new CustomEvent("admin:navigate", { detail: `/admin/san-pham?view=editor&id=${encodeURIComponent(result.product.id)}` })), 180);
+  try {
+    const response = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"duplicate"}) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Không thể nhân bản sản phẩm.");
+    showToast("Đã tạo bản sao ở trạng thái bản nháp.");
+    window.setTimeout(() => document.dispatchEvent(new CustomEvent("admin:navigate", { detail: `/admin/san-pham?view=editor&id=${encodeURIComponent(result.product.id)}` })), 300);
+  } catch (error) { showToast(error instanceof Error ? error.message : "Không thể nhân bản sản phẩm."); }
 });
 rowPopover?.querySelector<HTMLButtonElement>("[data-row-archive]")?.addEventListener("click", async () => {
   const id = activeRow?.dataset.id; rowPopover.hidePopover(); if (!id) return;
-  const response = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"archived"}) });
-  if (!response.ok) return showToast("Không thể lưu trữ sản phẩm."); activeRow?.remove(); showToast("Sản phẩm đã được lưu trữ và gỡ khỏi Public.");
+  try {
+    await readMutationResult(await fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"archived"}) }));
+    showToast("Sản phẩm đã được lưu trữ và gỡ khỏi website công khai.");
+    window.setTimeout(refreshProductList, 700);
+  } catch (error) { showToast(error instanceof Error ? error.message : "Không thể lưu trữ sản phẩm."); }
+});
+rowPopover?.querySelector<HTMLButtonElement>("[data-row-delete]")?.addEventListener("click", () => {
+  const row = activeRow;
+  rowPopover.hidePopover();
+  if (!row?.dataset.id) return;
+  openDeleteDialog([{ id: row.dataset.id, name: productNameForRow(row) }]);
+});
+
+confirmDelete?.addEventListener("click", async () => {
+  if (!deleteTargets.length) return;
+  const targets = [...deleteTargets];
+  confirmDelete.disabled = true;
+  confirmDelete.setAttribute("aria-busy", "true");
+  const originalLabel = confirmDelete.textContent || "Xóa sản phẩm";
+  confirmDelete.textContent = "Đang xóa…";
+  const summary = await mutateProducts(targets.map((target) => target.id), (id) => fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method: "DELETE" }));
+  confirmDelete.disabled = false;
+  confirmDelete.removeAttribute("aria-busy");
+  confirmDelete.textContent = originalLabel;
+  deleteDialog?.close();
+  deleteTargets = [];
+  if (summary.failed.length === 0) showToast(`Đã xóa ${summary.succeeded.length} sản phẩm.`);
+  else if (summary.succeeded.length > 0) showToast(`Đã xóa ${summary.succeeded.length}/${targets.length} sản phẩm. ${summary.failed[0]?.error}`);
+  else showToast(summary.failed[0]?.error || "Không thể xóa sản phẩm.");
+  if (summary.succeeded.length > 0) window.setTimeout(refreshProductList, 900);
 });
 
 // Editor data hydration.
