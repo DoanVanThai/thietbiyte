@@ -10,6 +10,7 @@ src/generated/prisma/
 .DS_Store
 .impeccable/
 *.log
+*.md
 coverage/
 output/
 tmp/
