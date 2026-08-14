@@ -21,7 +21,7 @@ npm run build
 
 ## Production
 
-Production dùng `docker-compose.production.yml`. Biến môi trường thật chỉ được lưu trong `.env.production` trên máy chủ và không được commit. Dữ liệu nội dung/ảnh nằm trong `storage/`, còn PostgreSQL dùng named volume để tồn tại qua các lần build lại.
+Production dùng `docker-compose.production.yml`. Biến môi trường thật chỉ được lưu trong `.env.production` trên máy chủ và không được commit. Dữ liệu nội dung/ảnh và tệp báo giá nằm trong `storage/`, còn PostgreSQL dùng named volume để tồn tại qua các lần build lại.
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.production.yml up -d --build

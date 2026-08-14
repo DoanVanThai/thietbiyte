@@ -32,7 +32,7 @@ services:
       - "127.0.0.1:4321:4321"
     volumes:
       - ./storage/content:/app/.data
-      - ./storage/uploads:/app/var/uploads/public
+      - ./storage/uploads:/app/var/uploads
     depends_on:
       database:
         condition: service_healthy
