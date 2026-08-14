@@ -12,5 +12,6 @@ tmp
 var
 public/_astro
 public/uploads
+storage
 *.log
 .DS_Store
