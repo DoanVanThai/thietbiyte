@@ -6,9 +6,13 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4321
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates openssl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY package.json package-lock.json prisma.config.ts ./
 COPY prisma ./prisma
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY . .
 RUN npm run build \
