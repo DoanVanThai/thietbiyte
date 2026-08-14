@@ -306,6 +306,10 @@
   content: "\e704";
 }
 
+.ph.ph-file-doc:before {
+  content: "\eb1e";
+}
+
 .ph.ph-file-magnifying-glass:before {
   content: "\e238";
 }

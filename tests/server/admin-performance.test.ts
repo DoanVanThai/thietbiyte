@@ -61,6 +61,9 @@ test("new product editor starts clean and keeps checkbox controls compact", asyn
   assert.match(page, /data-generate-sku/);
   assert.match(script, /slugFollowsName/);
   assert.match(script, /crypto\.getRandomValues/);
+  assert.match(page, /Giá dùng cho báo giá/);
+  assert.doesNotMatch(page, /data-price-input hidden=/);
+  assert.match(script, /priceVnd:quotePrice\?Number\(quotePrice\):undefined/);
 });
 
 test("product listing stays bounded at 50 rows for 10 through 10,000 records", async () => {

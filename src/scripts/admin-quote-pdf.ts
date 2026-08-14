@@ -9,7 +9,7 @@ if (root) {
   const form = root.querySelector<HTMLFormElement>("[data-quote-form]");
   const itemsRoot = root.querySelector<HTMLElement>("[data-quote-items]");
   const feedback = root.querySelector<HTMLElement>("[data-quote-feedback]");
-  const button = root.querySelector<HTMLButtonElement>("[data-quote-download]");
+  const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-quote-download]"));
   let products: ProductSource[] = [];
   try { products = JSON.parse(document.querySelector("#quote-product-data")?.textContent || "[]") as ProductSource[]; } catch { products = []; }
 
@@ -36,7 +36,7 @@ if (root) {
     const card = document.createElement("article"); card.className = "quote-inline-image"; card.dataset.quoteImageCard = ""; card.dataset.imageUrl = image.url;
     const toggle = document.createElement("label"); toggle.className = "quote-image-toggle";
     const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = true; checkbox.dataset.quoteImageEnabled = "";
-    const toggleCopy = document.createElement("span"); toggleCopy.textContent = "Xuất PDF"; toggle.append(checkbox, toggleCopy);
+    const toggleCopy = document.createElement("span"); toggleCopy.textContent = "Xuất tài liệu"; toggle.append(checkbox, toggleCopy);
     const preview = document.createElement("div"); preview.className = "quote-image-preview";
     const thumbnail = document.createElement("img"); thumbnail.alt = ""; thumbnail.width = 88; thumbnail.height = 70; thumbnail.loading = "lazy"; thumbnail.dataset.quoteImagePreview = "";
     const previewError = document.createElement("span"); previewError.textContent = "Không tải được ảnh"; previewError.hidden = true;
@@ -81,7 +81,7 @@ if (root) {
     const imagesRoot = item.querySelector<HTMLElement>("[data-quote-images]"); if (!imagesRoot) return;
     imagesRoot.replaceChildren();
     const heading = document.createElement("div"); heading.className = "quote-inline-images-heading";
-    const copy = document.createElement("div"); const title = document.createElement("strong"); title.textContent = "Ảnh minh họa trong PDF";
+    const copy = document.createElement("div"); const title = document.createElement("strong"); title.textContent = "Ảnh minh họa trong báo giá";
     const help = document.createElement("span"); help.textContent = "Thêm ảnh rồi chọn chính xác mục sẽ đặt ảnh phía sau."; copy.append(title, help);
     const add = document.createElement("label"); add.className = "button button-outline button-sm quote-image-add"; add.innerHTML = '<input type="file" accept="image/png,image/jpeg,image/webp" data-quote-image-upload data-upload-mode="add"><i class="ph ph-plus" aria-hidden="true"></i>Thêm ảnh';
     heading.append(copy, add);
@@ -248,6 +248,10 @@ if (root) {
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!form.reportValidity()) return;
+    const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null;
+    const format = submitter?.dataset.exportFormat === "word" ? "word" : "pdf";
+    const activeButton = submitter || buttons.find((entry) => entry.dataset.exportFormat === format) || buttons[0];
+    const formatLabel = format === "word" ? "Word" : "PDF";
     const value = (name: string) => (form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null)?.value.trim() || "";
     const payload = {
       quoteNumber: value("quoteNumber"), quoteDate: value("quoteDate"), city: value("city"),
@@ -268,38 +272,38 @@ if (root) {
       vatIncluded: Boolean((form.elements.namedItem("vatIncluded") as HTMLInputElement | null)?.checked),
       delivery: value("delivery"), payment: value("payment"), validity: value("validity"), additionalTerms: value("additionalTerms"),
     };
-    if (button) {
-      button.disabled = true;
-      button.classList.add("is-loading");
-      button.setAttribute("aria-busy", "true");
-      const label = button.querySelector<HTMLElement>("[data-quote-download-label]");
-      if (label) label.textContent = "Đang tạo PDF…";
+    buttons.forEach((button) => { button.disabled = true; });
+    if (activeButton) {
+      activeButton.classList.add("is-loading");
+      activeButton.setAttribute("aria-busy", "true");
+      const label = activeButton.querySelector<HTMLElement>("[data-quote-download-label]");
+      if (label) label.textContent = `Đang tạo ${formatLabel}…`;
     }
-    if (feedback) feedback.textContent = "Đang dàn trang và tạo PDF…";
+    if (feedback) feedback.textContent = `Đang dàn trang và tạo ${formatLabel}…`;
     try {
-      const response = await fetch("/api/admin/quote-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const response = await fetch(format === "word" ? "/api/admin/quote-word" : "/api/admin/quote-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!response.ok) {
         const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || "Không thể tạo PDF.");
+        throw new Error(result.error || `Không thể tạo ${formatLabel}.`);
       }
       const blob = await response.blob();
       const disposition = response.headers.get("content-disposition") || "";
-      const name = disposition.match(/filename="([^"]+)"/)?.[1] || "bao-gia.pdf";
+      const name = disposition.match(/filename="([^"]+)"/)?.[1] || `bao-gia.${format === "word" ? "docx" : "pdf"}`;
       const url = URL.createObjectURL(blob);
       const download = document.createElement("a");
       download.href = url; download.download = name; document.body.append(download); download.click(); download.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 2_000);
-      if (feedback) feedback.textContent = "Đã tạo PDF báo giá.";
+      if (feedback) feedback.textContent = `Đã tạo ${formatLabel} báo giá.`;
     } catch (error) {
-      if (feedback) feedback.textContent = error instanceof Error ? error.message : "Không thể tạo PDF.";
+      if (feedback) feedback.textContent = error instanceof Error ? error.message : `Không thể tạo ${formatLabel}.`;
     } finally {
-      if (button) {
+      buttons.forEach((button) => {
         button.disabled = false;
         button.classList.remove("is-loading");
         button.removeAttribute("aria-busy");
         const label = button.querySelector<HTMLElement>("[data-quote-download-label]");
-        if (label) label.textContent = "Tạo và tải PDF";
-      }
+        if (label) label.textContent = label.dataset.defaultLabel || "Tạo và tải";
+      });
     }
   });
   root.querySelectorAll<HTMLElement>("[data-quote-item]").forEach((item) => {

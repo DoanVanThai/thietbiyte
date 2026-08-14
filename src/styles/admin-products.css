@@ -57,6 +57,7 @@
 .admin-product-name strong { overflow: hidden; color: var(--color-foreground); font-size: .8125rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .admin-product-name span { margin-top: 3px; color: var(--color-muted-foreground); font-size: .6875rem; font-variant-numeric: tabular-nums; }
 .admin-group-tag, .admin-price-mode { display: inline-flex; min-height: 24px; align-items: center; padding: 3px 7px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); color: var(--color-muted-foreground); font-size: .6875rem; font-weight: 600; white-space: nowrap; }
+.admin-price-mode + small { display: block; margin-top: 4px; color: var(--color-muted-foreground); font-size: .625rem; white-space: nowrap; }
 .group-medical { background: var(--color-primary-subtle); color: var(--color-primary); }
 .group-veterinary { background: oklch(0.95 0.032 150); color: var(--color-success); }
 .admin-product-status { display: inline-flex; min-height: 25px; align-items: center; gap: 6px; font-size: .6875rem; font-weight: 600; white-space: nowrap; }
@@ -203,7 +204,6 @@
 .admin-price-options input:checked + span { border-color: var(--color-primary); background: var(--color-primary-subtle); color: var(--color-primary); }
 .admin-price-options input:focus-visible + span { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
 .admin-price-input { max-width: 360px; margin-top: var(--space-4) !important; }
-.admin-price-input[hidden] { display: none; }
 .admin-editor-toolbar { display: flex; gap: 2px; padding: 4px; border: 1px solid var(--color-border-strong); border-bottom: 0; border-radius: var(--radius-md) var(--radius-md) 0 0; background: var(--color-surface-subtle); }
 .admin-editor-toolbar button { width: 34px; height: 32px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer; }
 .admin-editor-toolbar button:hover { background: var(--color-surface); }

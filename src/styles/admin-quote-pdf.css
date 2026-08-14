@@ -567,9 +567,15 @@
   background: var(--color-primary-subtle);
 }
 
-.quote-builder-side > .button {
-  min-height: 46px;
+.quote-export-actions {
+  display: grid;
+  gap: var(--space-2);
   margin: 0 var(--space-5);
+}
+
+.quote-export-actions > .button {
+  width: 100%;
+  min-height: 46px;
 }
 
 .quote-builder-side > small {
@@ -584,11 +590,11 @@
   display: none;
 }
 
-.quote-builder-side > .button.is-loading [data-quote-download-icon] {
+.quote-export-actions > .button.is-loading [data-quote-download-icon] {
   display: none;
 }
 
-.quote-builder-side > .button.is-loading .quote-download-spinner {
+.quote-export-actions > .button.is-loading .quote-download-spinner {
   display: inline-block;
   animation: quote-spinner 800ms linear infinite;
 }

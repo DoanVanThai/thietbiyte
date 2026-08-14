@@ -3,7 +3,7 @@ import AdminLayout from "@/layouts/AdminLayout.astro";
 import "@/styles/admin-products.css";
 import { productDetailFromCms } from "@/lib/public-content";
 import { productService } from "@/server/services/product-service";
-import { buildProductQuoteDescription } from "@/server/services/sales-quote-pdf";
+import { buildProductQuoteDescription } from "@/server/services/sales-quote-document";
 import { can } from "@/server/auth/permissions";
 import type { CmsProduct } from "@/lib/content-repository";
 
@@ -32,6 +32,7 @@ const [{ products: catalogProducts, pagination }, filterOptions] = await Promise
 const { categories, brands, specialties } = filterOptions;
 const statusFor = (status: string) => status === "published" ? ["Đã xuất bản", "published"] : status === "archived" ? ["Lưu trữ", "archived"] : ["Bản nháp", "draft"];
 const priceModeFor = (mode: string) => mode === "SHOW_PRICE" ? "Hiển thị giá" : mode === "REQUEST_QUOTE" ? "Yêu cầu báo giá" : "Liên hệ";
+const formatVnd = (value?: number) => typeof value === "number" ? `${new Intl.NumberFormat("vi-VN").format(value)} ₫` : "Chưa nhập giá";
 const requestedId = Astro.url.searchParams.get("id");
 const editorActive = Astro.url.searchParams.get("view") === "editor";
 const isCreating = requestedId === "new";
@@ -129,7 +130,7 @@ const editorSections = [
                 <td class="admin-product-name"><a href={canEditProduct ? `/admin/san-pham?view=editor&id=${product.id}` : `/san-pham/${product.slug}`}><strong>{product.name}</strong><span>SKU: {product.id.toUpperCase()}</span></a></td>
                 <td>{product.model.replace(" (minh họa)", "")}</td><td>{product.brand}</td><td>{product.category}</td>
                 <td><span class={`admin-group-tag group-${product.group}`}>{product.group === "medical" ? "Y tế" : "Thú y"}</span></td>
-                <td><span class="admin-price-mode">{priceMode}</span></td>
+                <td><span class="admin-price-mode">{formatVnd(product.priceVnd)}</span><small>{priceMode}</small></td>
                 <td><span class={`admin-product-status status-${statusKey}`}><i aria-hidden="true"></i>{statusLabel}</span></td>
                 <td><time datetime={`2026-08-${String(Math.max(1, 13 - index)).padStart(2, "0")}`}>{updated}</time></td>
                 <td>{(canEditProduct || canCreateProduct) && <button class="admin-row-menu" type="button" data-row-menu aria-label={`Thao tác với ${product.name}`} aria-expanded="false"><i class="ph ph-dots-three-vertical" aria-hidden="true"></i></button>}</td>
@@ -199,7 +200,7 @@ const editorSections = [
         </section>
 
         <section class="admin-editor-section" id="editor-media" aria-labelledby="editor-media-title">
-          <header><div><h2 id="editor-media-title">Hình ảnh</h2><p>Quản lý ảnh đại diện và ảnh minh họa dùng trong PDF báo giá.</p></div><label class="button button-outline button-sm admin-upload-button"><input type="file" accept="image/png,image/jpeg,image/webp" multiple data-media-upload /><i class="ph ph-upload-simple" aria-hidden="true"></i>Tải ảnh</label></header>
+          <header><div><h2 id="editor-media-title">Hình ảnh</h2><p>Quản lý ảnh đại diện và ảnh minh họa dùng trong PDF/Word báo giá.</p></div><label class="button button-outline button-sm admin-upload-button"><input type="file" accept="image/png,image/jpeg,image/webp" multiple data-media-upload /><i class="ph ph-upload-simple" aria-hidden="true"></i>Tải ảnh</label></header>
           <div class="admin-media-list" data-media-list>
             {!editorDetail.gallery.length && <div class="admin-editor-empty"><i class="ph ph-image-square" aria-hidden="true"></i><div><strong>Chưa có hình ảnh</strong><span>Tải ảnh sản phẩm để dùng trên website và trong báo giá PDF.</span></div></div>}
             {editorDetail.gallery.map((media, index) => (
@@ -211,7 +212,7 @@ const editorSections = [
                 </div>
                 <div class="admin-media-copy"><strong>{index === 0 ? "Ảnh đại diện" : `Ảnh sản phẩm ${index + 1}`}</strong><label>Alt text<input type="text" value={media.alt} data-media-alt /></label></div><div class="admin-media-actions">{index === 0 ? <span class="admin-cover-label"><i class="ph ph-check" aria-hidden="true"></i>Ảnh bìa</span> : <button type="button" data-set-cover>Đặt làm bìa</button>}<button type="button" data-media-preview>Preview</button><button type="button" data-media-delete aria-label="Xóa ảnh"><i class="ph ph-trash" aria-hidden="true"></i></button></div>
                 <div class="admin-media-quote-settings">
-                  <label class="admin-checkbox"><input type="checkbox" data-media-quote-enabled checked={media.quoteEnabled} /><span>Dùng ảnh này trong PDF báo giá</span></label>
+                  <label class="admin-checkbox"><input type="checkbox" data-media-quote-enabled checked={media.quoteEnabled} /><span>Dùng ảnh này trong báo giá</span></label>
                   <label><span>Chú thích trong báo giá</span><input type="text" value={media.quoteCaption || media.alt} data-media-quote-caption /></label>
                   <label><span>Đặt ảnh sau mục</span><select data-media-quote-after><option value="" selected={!media.quoteAfterText}>Cuối phần mô tả</option>{quotePlacementOptions.map((line) => <option value={line} selected={media.quoteAfterText === line}>{line.length > 90 ? `${line.slice(0, 87)}…` : line}</option>)}</select></label>
                 </div>
@@ -222,9 +223,9 @@ const editorSections = [
         </section>
 
         <section class="admin-editor-section" id="editor-pricing" aria-labelledby="editor-pricing-title">
-          <header><div><h2 id="editor-pricing-title">Giá bán</h2><p>Chọn cách hiển thị giá phù hợp với quy trình tư vấn.</p></div></header>
+          <header><div><h2 id="editor-pricing-title">Giá bán và báo giá</h2><p>Lưu giá nội bộ để tự động điền khi lập báo giá; chế độ bên dưới chỉ quyết định cách hiển thị trên website.</p></div></header>
           <fieldset class="admin-field"><legend>Chế độ giá</legend><div class="admin-price-options"><label><input type="radio" name="priceMode" value="show" checked={editorProduct.priceMode === "SHOW_PRICE"} /><span><strong>Hiển thị giá</strong><small>Giá công khai trên trang sản phẩm</small></span></label><label><input type="radio" name="priceMode" value="contact" checked={editorProduct.priceMode === "CONTACT"} /><span><strong>Liên hệ</strong><small>Khách hàng liên hệ để nhận thông tin</small></span></label><label><input type="radio" name="priceMode" value="quote" checked={editorProduct.priceMode === "REQUEST_QUOTE"} /><span><strong>Yêu cầu báo giá</strong><small>Mở form báo giá theo cấu hình</small></span></label></div></fieldset>
-          <div class="admin-field admin-price-input" data-price-input hidden={editorProduct.priceMode !== "SHOW_PRICE"}><label for="product-price">Giá bán</label><div class="admin-input-suffix"><input id="product-price" name="price" type="number" inputmode="numeric" min="0" step="1000" value={editorProduct.priceVnd || ""} /><span>VNĐ</span></div></div>
+          <div class="admin-field admin-price-input" data-price-input><label for="product-price">Giá dùng cho báo giá</label><div class="admin-input-suffix"><input id="product-price" name="price" type="number" inputmode="numeric" min="0" step="1000" value={editorProduct.priceVnd || ""} placeholder="Ví dụ: 430000000" /><span>VNĐ</span></div><small class="admin-field-help">Giá này luôn được lưu để tự điền trong báo giá. Chỉ công khai khi chọn “Hiển thị giá”.</small></div>
         </section>
 
         <section class="admin-editor-section" id="editor-description" aria-labelledby="editor-description-title">

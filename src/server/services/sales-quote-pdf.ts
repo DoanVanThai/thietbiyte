@@ -2,26 +2,10 @@ import PDFDocument from "pdfkit";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import sharp from "sharp";
-import type { CmsProduct } from "@/lib/content-repository";
 import type { SalesQuotePdfInput } from "@/server/validation/sales-quote";
 import { findPublicUploadPath } from "@/server/uploads/public-upload-storage";
-
-type CompanyDetails = {
-  name: string;
-  hotline: string;
-  email: string;
-};
-
-type ResolvedQuoteItem = SalesQuotePdfInput["items"][number] & {
-  name: string;
-  sku: string;
-  model: string;
-  brand: string;
-  origin: string;
-  manufacturingYear?: string;
-  warranty: string;
-  images?: Array<{ url: string; caption: string; afterText: string; data?: Buffer; width?: number; height?: number }>;
-};
+import type { QuoteCompanyDetails, ResolvedQuoteItem } from "@/server/services/sales-quote-document";
+import { numberToVietnameseMoney } from "@/server/services/vietnamese-money";
 
 const assetFile = (folder: "fonts" | "images", name: string) => {
   const candidates = [
@@ -75,45 +59,12 @@ const clean = (value: string) => value
 
 const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
-export function buildProductQuoteDescription(product: CmsProduct) {
-  const detail = product.detail;
-  const sections: string[] = [
-    product.name.toLocaleUpperCase("vi"),
-    `Model: ${product.model || "Đang cập nhật"}`,
-    `Hãng sản xuất: ${product.brand || "Đang cập nhật"}`,
-    `Xuất xứ: ${product.origin || "Đang cập nhật"}`,
-  ];
-  if (product.manufacturingYear) sections.push(`Năm sản xuất: ${product.manufacturingYear} trở về sau`);
-  if (product.warranty) sections.push(`Bảo hành: ${product.warranty}`);
-  if (product.description?.trim()) sections.push("", product.description.trim());
-
-  if (detail?.features?.length) {
-    sections.push("", "TÍNH NĂNG NỔI BẬT");
-    detail.features.forEach((feature) => sections.push(`- ${feature.title}${feature.description ? `: ${feature.description}` : ""}`));
-  }
-  if (detail?.configurations?.length) {
-    sections.push("", "CẤU HÌNH CUNG CẤP");
-    detail.configurations.forEach((group) => {
-      sections.push(group.title.toLocaleUpperCase("vi"));
-      group.items.forEach((item) => sections.push(`- ${item.name}${item.detail ? `: ${item.detail}` : ""}`));
-    });
-  }
-  if (detail?.specificationGroups?.length) {
-    sections.push("", "THÔNG SỐ KỸ THUẬT");
-    detail.specificationGroups.forEach((group) => {
-      sections.push(group.title.toLocaleUpperCase("vi"));
-      group.items.forEach((item) => sections.push(`- ${item.label}: ${item.value}`));
-    });
-  }
-  return clean(sections.join("\n"));
-}
-
 const dateCopy = (isoDate: string, city: string) => {
   const [year, month, day] = isoDate.split("-");
   return `${city}, ngày ${day} tháng ${month} năm ${year}`;
 };
 
-const drawFirstPageHeader = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, company: CompanyDetails) => {
+const drawFirstPageHeader = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, company: QuoteCompanyDetails) => {
   const top = 30;
   const logoWidth = 126;
   const logoHeight = 72;
@@ -270,13 +221,17 @@ const ensureSpace = (doc: PDFKit.PDFDocument, height: number) => {
   doc.y = 44;
 };
 
-const drawTerms = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, grandTotal: number, company: CompanyDetails) => {
-  ensureSpace(doc, 42);
+const drawTerms = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, grandTotal: number, company: QuoteCompanyDetails) => {
+  const amountInWords = `(Bằng chữ: ${numberToVietnameseMoney(grandTotal)}.)`;
+  doc.font("Italic").fontSize(9.2);
+  const amountWordsHeight = doc.heightOfString(amountInWords, { width: contentWidth - 20, lineGap: 1.5 });
+  ensureSpace(doc, 54 + amountWordsHeight);
   const grandTotalY = doc.y;
   doc.rect(margin, grandTotalY, contentWidth, 34).fillAndStroke(pale, primary);
   doc.fillColor(primary).font("Bold").fontSize(10.5).text("TỔNG GIÁ TRỊ", margin + 10, grandTotalY + 11, { width: contentWidth - 190, lineBreak: false });
   doc.fillColor(ink).fontSize(12).text(`${money(grandTotal)} VNĐ`, margin + contentWidth - 180, grandTotalY + 9, { width: 170, align: "right", lineBreak: false });
-  doc.y = grandTotalY + 48;
+  doc.fillColor(ink).font("Italic").fontSize(9.2).text(amountInWords, margin + 10, grandTotalY + 42, { width: contentWidth - 20, lineGap: 1.5 });
+  doc.y += 14;
   const terms = [
     input.vatIncluded ? "- Giá trên đã bao gồm thuế GTGT." : "- Giá trên chưa bao gồm thuế GTGT.",
     input.delivery && `- Giao hàng: ${input.delivery}`,
@@ -300,7 +255,7 @@ const drawTerms = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, grandTota
   doc.text("(Ký tên, đóng dấu)", margin + contentWidth / 2, signatureY + 18, { width: contentWidth / 2, align: "center" });
 };
 
-export async function createSalesQuotePdf(input: SalesQuotePdfInput, company: CompanyDetails, items: ResolvedQuoteItem[]) {
+export async function createSalesQuotePdf(input: SalesQuotePdfInput, company: QuoteCompanyDetails, items: ResolvedQuoteItem[]) {
   const preparedItems = await Promise.all(items.map(async (item) => ({
     ...item,
     images: (await Promise.all((item.images || []).map(prepareQuoteImage))).filter((image): image is NonNullable<typeof image> => Boolean(image)),
@@ -334,4 +289,4 @@ export async function createSalesQuotePdf(input: SalesQuotePdfInput, company: Co
   return completed;
 }
 
-export type { ResolvedQuoteItem };
+export type { ResolvedQuoteItem } from "@/server/services/sales-quote-document";

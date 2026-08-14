@@ -3,7 +3,7 @@ import { ZodError, flattenError } from "zod";
 import { getSettings } from "@/lib/content-repository";
 import { isResponse, requestIp, requirePermission } from "@/server/auth/http";
 import { audit } from "@/server/auth/service";
-import { createSalesQuotePdf } from "@/server/services/sales-quote-pdf";
+import { createSalesQuoteDocx } from "@/server/services/sales-quote-docx";
 import { quoteFileName, resolveQuoteItems } from "@/server/services/sales-quote-document";
 import { salesQuotePdfInput } from "@/server/validation/sales-quote";
 
@@ -15,26 +15,26 @@ export const POST: APIRoute = async (context) => {
     const items = await resolveQuoteItems(input);
     if (!items) return Response.json({ error: "Có sản phẩm không còn tồn tại." }, { status: 404 });
     const settings = getSettings();
-    const pdf = await createSalesQuotePdf(input, { name: settings.company, hotline: settings.hotline, email: settings.email }, items);
-    await audit("quote.pdf_generated", actor.id, null, "sales-quote", "success", {
+    const word = await createSalesQuoteDocx(input, { name: settings.company, hotline: settings.hotline, email: settings.email }, items);
+    await audit("quote.word_generated", actor.id, null, "sales-quote", "success", {
       quoteNumber: input.quoteNumber,
       productIds: items.map((item) => item.productId),
       customer: input.customer.organization || input.customer.name,
       total: items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
-    }, { ip: requestIp(context.request), userAgent: context.request.headers.get("user-agent") }).catch((error) => console.error("Could not write quote PDF audit event.", error));
-    const body = new Uint8Array(pdf.byteLength);
-    body.set(pdf);
+    }, { ip: requestIp(context.request), userAgent: context.request.headers.get("user-agent") }).catch((error) => console.error("Could not write quote Word audit event.", error));
+    const body = new Uint8Array(word.byteLength);
+    body.set(word);
     return new Response(body.buffer, {
       headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${quoteFileName(input.quoteNumber)}.pdf"`,
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": `attachment; filename="${quoteFileName(input.quoteNumber)}.docx"`,
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {
     if (error instanceof ZodError) return Response.json({ error: "Dữ liệu báo giá chưa hợp lệ.", fields: flattenError(error).fieldErrors }, { status: 422 });
-    console.error("Quote PDF generation failed.", error);
-    return Response.json({ error: "Không thể tạo PDF báo giá." }, { status: 500 });
+    console.error("Quote Word generation failed.", error);
+    return Response.json({ error: "Không thể tạo file Word báo giá." }, { status: 500 });
   }
 };

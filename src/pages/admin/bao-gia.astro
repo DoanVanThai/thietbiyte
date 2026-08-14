@@ -1,7 +1,7 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { getSettings } from "@/lib/content-repository";
-import { buildProductQuoteDescription } from "@/server/services/sales-quote-pdf";
+import { buildProductQuoteDescription } from "@/server/services/sales-quote-document";
 import { productService } from "@/server/services/product-service";
 import "@/styles/admin-quote-pdf.css";
 
@@ -26,14 +26,14 @@ const productSources = products.map((product) => {
 });
 ---
 
-<AdminLayout title="Tạo báo giá PDF | Thiên Lộc Admin" description="Tạo báo giá thiết bị từ dữ liệu sản phẩm và xuất PDF." section="Báo giá PDF">
+<AdminLayout title="Tạo báo giá PDF & Word | Thiên Lộc Admin" description="Tạo báo giá thiết bị từ dữ liệu sản phẩm và xuất PDF hoặc Word." section="Báo giá PDF">
   <script id="quote-product-data" type="application/json" is:inline set:html={JSON.stringify(productSources)} />
   <section class="quote-builder" data-quote-builder aria-labelledby="quote-builder-title">
     <header class="admin-page-header">
       <div>
         <nav aria-label="Đường dẫn"><a href="/admin">Quản trị</a><i class="ph ph-caret-right" aria-hidden="true"></i><span>Báo giá PDF</span></nav>
         <h1 id="quote-builder-title">Tạo báo giá thiết bị</h1>
-        <p>Thông tin kỹ thuật được lấy từ sản phẩm. Bạn có thể chỉnh nội dung và giá trước khi tải PDF gửi khách hàng.</p>
+        <p>Thông tin kỹ thuật và giá được lấy từ sản phẩm. Bạn có thể chỉnh lại trước khi tải PDF hoặc Word gửi khách hàng.</p>
       </div>
       <a class="button button-outline" href="/admin/san-pham"><i class="ph ph-package" aria-hidden="true"></i>Quản lý sản phẩm</a>
     </header>
@@ -101,21 +101,28 @@ const productSources = products.map((product) => {
         <aside class="quote-builder-side">
           <section>
             <span class="quote-side-icon"><i class="ph ph-file-pdf" aria-hidden="true"></i></span>
-            <h2>PDF sẵn sàng gửi khách</h2>
-            <p>Khổ A4, tự xuống trang với cấu hình dài, có tổng giá trị, điều khoản, khu vực ký tên và số trang.</p>
+            <h2>Báo giá sẵn sàng gửi khách</h2>
+            <p>Khổ A4, có tổng tiền bằng số và bằng chữ, điều khoản, khu vực ký tên; hỗ trợ PDF và Word.</p>
             <dl>
               <div><dt>Công ty</dt><dd>{settings.company}</dd></div>
               <div><dt>Sản phẩm</dt><dd data-quote-product-summary>1 sản phẩm</dd></div>
-              <div><dt>Định dạng</dt><dd>PDF · A4</dd></div>
+              <div><dt>Định dạng</dt><dd>PDF · Word · A4</dd></div>
             </dl>
           </section>
           <p class="quote-builder-feedback" data-quote-feedback role="status" aria-live="polite"></p>
-          <button class="button button-primary button-lg" type="submit" data-quote-download>
-            <i class="ph ph-download-simple" aria-hidden="true" data-quote-download-icon></i>
-            <i class="ph ph-circle-notch quote-download-spinner" aria-hidden="true"></i>
-            <span data-quote-download-label>Tạo và tải PDF</span>
-          </button>
-          <small>PDF chỉ được tạo sau khi dữ liệu hợp lệ. Hoạt động xuất báo giá được ghi vào Audit Log.</small>
+          <div class="quote-export-actions">
+            <button class="button button-primary button-lg" type="submit" value="pdf" data-quote-download data-export-format="pdf">
+              <i class="ph ph-file-pdf" aria-hidden="true" data-quote-download-icon></i>
+              <i class="ph ph-circle-notch quote-download-spinner" aria-hidden="true"></i>
+              <span data-quote-download-label data-default-label="Tạo và tải PDF">Tạo và tải PDF</span>
+            </button>
+            <button class="button button-outline button-lg" type="submit" value="word" data-quote-download data-export-format="word">
+              <i class="ph ph-file-doc" aria-hidden="true" data-quote-download-icon></i>
+              <i class="ph ph-circle-notch quote-download-spinner" aria-hidden="true"></i>
+              <span data-quote-download-label data-default-label="Tạo và tải Word">Tạo và tải Word</span>
+            </button>
+          </div>
+          <small>Tệp chỉ được tạo sau khi dữ liệu hợp lệ. Hoạt động xuất báo giá được ghi vào Audit Log.</small>
         </aside>
       </form>
     ) : (

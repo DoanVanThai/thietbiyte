@@ -1,4 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { createSalesQuoteDocx } from "../src/server/services/sales-quote-docx";
 import { createSalesQuotePdf } from "../src/server/services/sales-quote-pdf";
 
 const description = [
@@ -37,12 +38,18 @@ const input = {
   additionalTerms: "Hướng dẫn vận hành tại cơ sở\nBảo hành theo chính sách của sản phẩm",
 };
 
-const pdf = await createSalesQuotePdf(input, {
+const company = {
   name: "THIÊN LỘC GROUP",
   hotline: "0902 137 158",
   email: "tuvan@thienlocgroup.com",
-}, [{ ...input.items[0], name: "Máy siêu âm cao cấp", sku: "US-001", model: "SonoPort 8", brand: "CHISON", origin: "Trung Quốc", manufacturingYear: "2026", warranty: "24 tháng", images: input.items[0].images }]);
+};
+const items = [{ ...input.items[0], name: "Máy siêu âm cao cấp", sku: "US-001", model: "SonoPort 8", brand: "CHISON", origin: "Trung Quốc", manufacturingYear: "2026", warranty: "24 tháng", images: input.items[0].images }];
+const [pdf, word] = await Promise.all([
+  createSalesQuotePdf(input, company, items),
+  createSalesQuoteDocx(input, company, items),
+]);
 
 await mkdir("output/pdf", { recursive: true });
 await writeFile("output/pdf/bao-gia-san-pham-mau.pdf", pdf);
-console.log("Created output/pdf/bao-gia-san-pham-mau.pdf");
+await writeFile("output/pdf/bao-gia-san-pham-mau.docx", word);
+console.log("Created sample PDF and Word quote files in output/pdf");
