@@ -37,6 +37,7 @@ const columnWidths = [600, contentWidth - 2_600, 2_000];
 const bodyHalfPoints = 24;
 const bodyHeadingHalfPoints = 26;
 const secondaryHalfPoints = 20;
+const termsRuleWidth = 3_400;
 const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 type PreparedQuoteImage = ResolvedQuoteImage & { data: Buffer; width: number; height: number };
 type PreparedQuoteItem = Omit<ResolvedQuoteItem, "images"> & { images: PreparedQuoteImage[] };
@@ -83,10 +84,12 @@ const text = (copy: string, options: { bold?: boolean; italics?: boolean; underl
   color: ink,
 });
 
-const paragraph = (copy: string, options: { bold?: boolean; italics?: boolean; size?: number; alignment?: typeof AlignmentType[keyof typeof AlignmentType]; before?: number; after?: number; line?: number; border?: IParagraphOptions["border"]; indent?: IParagraphOptions["indent"] } = {}) => new Paragraph({
+const paragraph = (copy: string, options: { bold?: boolean; italics?: boolean; size?: number; alignment?: typeof AlignmentType[keyof typeof AlignmentType]; before?: number; after?: number; line?: number; border?: IParagraphOptions["border"]; indent?: IParagraphOptions["indent"]; keepNext?: boolean; keepLines?: boolean } = {}) => new Paragraph({
   alignment: options.alignment,
   border: options.border,
   indent: options.indent,
+  keepNext: options.keepNext,
+  keepLines: options.keepLines,
   spacing: { before: options.before ?? 0, after: options.after ?? 80, line: options.line ?? 300 },
   children: [text(copy, options)],
 });
@@ -284,12 +287,19 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
           bold: true,
           italics: true,
           size: bodyHeadingHalfPoints,
-          after: 55,
-          border: { bottom: { style: BorderStyle.SINGLE, size: 10, color: ink, space: 1 } },
-          indent: { right: contentWidth - 2_840 },
+          after: 0,
+          keepNext: true,
+          keepLines: true,
         }),
-        ...terms.map((term) => paragraph(term, { italics: true, size: bodyHalfPoints, after: 55, line: 300 })),
-        new Paragraph({ spacing: { after: 160 } }),
+        new Paragraph({
+          keepNext: true,
+          border: { bottom: { style: BorderStyle.SINGLE, size: 10, color: ink, space: 1 } },
+          indent: { right: contentWidth - termsRuleWidth },
+          spacing: { before: 0, after: 55, line: 40 },
+          children: [new TextRun({ text: "", font: "Times New Roman", size: 2, color: ink })],
+        }),
+        ...terms.map((term) => paragraph(term, { italics: true, size: bodyHalfPoints, after: 55, line: 300, keepNext: true, keepLines: true })),
+        new Paragraph({ keepNext: true, spacing: { after: 160 } }),
         new Table({
           width: { size: contentWidth, type: WidthType.DXA },
           columnWidths: [contentWidth / 2, contentWidth / 2],
@@ -298,7 +308,7 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
             left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" }, right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
             insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" }, insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
           },
-          rows: [new TableRow({ children: [
+          rows: [new TableRow({ cantSplit: true, children: [
             cell([paragraph("ĐẠI DIỆN KHÁCH HÀNG", { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký và ghi rõ họ tên)", { italics: true, size: secondaryHalfPoints, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
             cell([paragraph(company.name.toLocaleUpperCase("vi"), { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký tên, đóng dấu)", { italics: true, size: secondaryHalfPoints, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
           ] })],
