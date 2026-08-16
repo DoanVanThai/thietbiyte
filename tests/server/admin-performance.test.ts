@@ -84,9 +84,13 @@ test("product search initializes reliably and searches the real SKU", async () =
   assert.match(script, /document\.addEventListener\("astro:page-load", initAdminProducts\);\s*initAdminProducts\(\);/);
   assert.match(script, /if \(requestServer && !editorActive\)[\s\S]*?else history\.replaceState/);
   assert.doesNotMatch(script, /history\.replaceState[\s\S]*?if \(requestServer && !editorActive\)/);
+  assert.match(script, /searchForm\?\.addEventListener\("submit",[\s\S]*?applyFilters\(true, 0\)/);
+  assert.doesNotMatch(script, /search\?\.addEventListener\("input"/);
   assert.match(page, /<form class="admin-product-search-form" action="\/admin\/san-pham" method="get" role="search"/);
   assert.match(page, /name="q" type="search"/);
-  assert.match(page, /<button class="button button-outline" type="submit"><span>Tìm<\/span><\/button>/);
+  assert.match(page, /oninput="[^"]*requestSubmit\(\)[^"]*"/);
+  const searchForm = page.match(/<form class="admin-product-search-form"[\s\S]*?<\/form>/)?.[0] || "";
+  assert.doesNotMatch(searchForm, /<button/);
   assert.match(page, /data-search=\{`\$\{product\.name\} \$\{product\.model\} \$\{product\.sku\} \$\{product\.id\}`/);
   assert.match(page, /SKU: \{product\.sku \|\| product\.id\.toUpperCase\(\)\}/);
 });

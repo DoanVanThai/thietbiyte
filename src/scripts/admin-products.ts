@@ -68,7 +68,7 @@ filters.forEach((filter) => { filter.value = filterUrl.searchParams.get(filter.d
 if (featuredFilter) featuredFilter.checked = filterUrl.searchParams.get("featured") === "1";
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi").trim();
-const applyFilters = (requestServer = false) => {
+const applyFilters = (requestServer = false, serverDelay = 280) => {
   const query = normalize(search?.value || "");
   const activeSelects = filters.filter((filter) => filter.value !== "all");
   let visible = 0;
@@ -99,13 +99,12 @@ const applyFilters = (requestServer = false) => {
     serverFilterTimer = window.setTimeout(() => {
       url.searchParams.set("page", "1");
       document.dispatchEvent(new CustomEvent("admin:navigate", { detail: `${url.pathname}${url.search}` }));
-    }, 280);
+    }, serverDelay);
   } else history.replaceState(history.state, "", url);
   syncSelectAll();
 };
 
-search?.addEventListener("input", () => applyFilters(true), { signal });
-searchForm?.addEventListener("submit", (event) => { event.preventDefault(); applyFilters(true); }, { signal });
+searchForm?.addEventListener("submit", (event) => { event.preventDefault(); applyFilters(true, 0); }, { signal });
 filters.forEach((filter) => filter.addEventListener("change", () => applyFilters(true), { signal }));
 featuredFilter?.addEventListener("change", () => applyFilters(true), { signal });
 
