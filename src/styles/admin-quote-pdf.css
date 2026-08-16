@@ -97,7 +97,7 @@
 
 .quote-saved-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
 }
 
@@ -129,9 +129,7 @@
 
 .quote-saved-item strong,
 .quote-saved-item small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .quote-saved-item strong {
@@ -139,12 +137,17 @@
   font-size: .875rem;
   font-weight: 700;
   line-height: 1.35;
+  white-space: normal;
 }
 .quote-saved-item small,
 .quote-saved-item > span:last-child,
 .quote-saved-empty {
   color: var(--color-muted-foreground);
   font-size: .75rem;
+}
+
+.quote-saved-item > span:last-child {
+  white-space: nowrap;
 }
 
 .quote-saved-empty { margin: var(--space-3) 0 0; }

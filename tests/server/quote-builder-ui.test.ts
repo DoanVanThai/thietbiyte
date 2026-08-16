@@ -150,6 +150,9 @@ test("quote builder formats descriptions and reopens saved quotes", async () => 
   assert.match(page, /Tìm theo tên sản phẩm/);
   assert.match(script, /savedQuoteTitle/);
   assert.match(storage, /productNames: productNamesOf\(quote\.payload\)/);
+  assert.match(styles, /\.quote-saved-list \{[\s\S]*grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(styles, /\.quote-saved-item strong \{[\s\S]*white-space: normal;/);
+  assert.match(styles, /\.quote-saved-item > span:last-child \{[\s\S]*white-space: nowrap;/);
   assert.match(styles, /\.quote-file-name-dialog > form \{[\s\S]*display: block;/);
 });
 
