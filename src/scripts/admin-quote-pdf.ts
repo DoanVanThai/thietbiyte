@@ -4,7 +4,7 @@ import { plainTextToQuoteRichText, quoteRichTextToPlainText, type QuoteRichText,
 export {};
 
 type ProductSource = { id: string; name: string; sku: string; model: string; brand: string; origin: string; manufacturingYear?: string; warranty: string; price: number; description: string; images: Array<{ url: string; caption: string; afterText: string }> };
-type SavedQuoteSummary = { id: string; quoteNumber: string; quoteDate: string; customerName: string; customerOrganization: string; total: number; status: "DRAFT" | "EXPORTED" | "ARCHIVED"; version: number; updatedAt: string };
+type SavedQuoteSummary = { id: string; quoteNumber: string; quoteDate: string; customerName: string; customerOrganization: string; productNames: string[]; total: number; status: "DRAFT" | "EXPORTED" | "ARCHIVED"; version: number; updatedAt: string };
 type QuotePayload = {
   quoteNumber: string;
   quoteDate: string;
@@ -52,6 +52,11 @@ if (root) {
 
   const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi").trim();
   const productLabel = (product: ProductSource) => `${product.name} · ${product.model}`;
+  const savedQuoteTitle = (quote: SavedQuoteSummary) => {
+    const [primaryProduct, ...otherProducts] = quote.productNames;
+    if (!primaryProduct) return `Báo giá ${quote.quoteNumber}`;
+    return `Báo giá ${primaryProduct}${otherProducts.length ? ` + ${otherProducts.length} sản phẩm` : ""}`;
+  };
   const defaultFileStem = (quoteNumber: string) => {
     const number = quoteNumber.trim().replaceAll("/", "／").replace(/[\\:*?"<>]/g, "-") || "Báo giá";
     return `Thiên Lộc Group | ${number}`;
@@ -476,7 +481,7 @@ if (root) {
     if (saveLabel) saveLabel.textContent = "Cập nhật bản báo giá";
     if (savedCurrent) {
       savedCurrent.hidden = false;
-      savedCurrent.textContent = `Đang sửa ${quote.quoteNumber} · phiên bản ${quote.version}`;
+      savedCurrent.textContent = `Đang sửa ${savedQuoteTitle(quote)} · phiên bản ${quote.version}`;
     }
     const url = new URL(window.location.href);
     url.searchParams.set("quote", quote.id);
@@ -552,12 +557,13 @@ if (root) {
   const renderSavedQuotes = () => {
     if (!savedList || !savedEmpty) return;
     const query = normalize(savedSearch?.value || "");
-    const visible = savedQuotes.filter((quote) => !query || normalize(`${quote.quoteNumber} ${quote.customerName} ${quote.customerOrganization}`).includes(query));
+    const visible = savedQuotes.filter((quote) => !query || normalize(`${savedQuoteTitle(quote)} ${quote.productNames.join(" ")} ${quote.quoteNumber} ${quote.customerName} ${quote.customerOrganization}`).includes(query));
     savedList.replaceChildren();
     visible.forEach((quote) => {
       const button = document.createElement("button"); button.type = "button"; button.className = "quote-saved-item"; button.dataset.savedQuoteId = quote.id;
-      const copy = document.createElement("span"); const number = document.createElement("strong"); const customer = document.createElement("small");
-      number.textContent = quote.quoteNumber; customer.textContent = quote.customerOrganization || quote.customerName; copy.append(number, customer);
+      const copy = document.createElement("span"); const title = document.createElement("strong"); const detail = document.createElement("small");
+      title.textContent = savedQuoteTitle(quote); title.title = title.textContent;
+      detail.textContent = [quote.quoteNumber, quote.customerOrganization || quote.customerName].filter(Boolean).join(" · "); copy.append(title, detail);
       const meta = document.createElement("span"); meta.textContent = `v${quote.version} · ${new Intl.DateTimeFormat("vi-VN").format(new Date(quote.updatedAt))}`;
       button.append(copy, meta); savedList.append(button);
     });

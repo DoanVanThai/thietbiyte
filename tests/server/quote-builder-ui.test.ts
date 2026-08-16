@@ -28,10 +28,11 @@ test("quote builder exposes purposeful loading and entry states", async () => {
 });
 
 test("quote builder formats descriptions and reopens saved quotes", async () => {
-  const [page, script, styles] = await Promise.all([
+  const [page, script, styles, storage] = await Promise.all([
     readFile(new URL("../../src/pages/admin/bao-gia.astro", import.meta.url), "utf8"),
     readFile(new URL("../../src/scripts/admin-quote-pdf.ts", import.meta.url), "utf8"),
     readFile(new URL("../../src/styles/admin-quote-pdf.css", import.meta.url), "utf8"),
+    readFile(new URL("../../src/server/services/sales-quote-storage.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page, /data-rich-command="bold"/);
   assert.match(page, /data-rich-command="underline"/);
@@ -40,6 +41,9 @@ test("quote builder formats descriptions and reopens saved quotes", async () => 
   assert.match(script, /descriptionRich:/);
   assert.match(script, /\/api\/admin\/sales-quotes/);
   assert.match(script, /openSavedQuote/);
+  assert.match(page, /Tìm theo tên sản phẩm/);
+  assert.match(script, /savedQuoteTitle/);
+  assert.match(storage, /productNames: productNamesOf\(quote\.payload\)/);
   assert.match(styles, /\.quote-file-name-dialog > form \{[\s\S]*display: block;/);
 });
 

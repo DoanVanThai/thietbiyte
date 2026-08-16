@@ -117,7 +117,12 @@
   white-space: nowrap;
 }
 
-.quote-saved-item strong { font-size: .8125rem; }
+.quote-saved-item strong {
+  color: var(--color-foreground);
+  font-size: .875rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
 .quote-saved-item small,
 .quote-saved-item > span:last-child,
 .quote-saved-empty,

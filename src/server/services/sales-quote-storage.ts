@@ -4,6 +4,13 @@ import type { SalesQuotePdfInput } from "@/server/validation/sales-quote";
 
 const totalOf = (input: SalesQuotePdfInput) => input.items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
 const jsonPayload = (input: SalesQuotePdfInput) => input as unknown as Prisma.InputJsonValue;
+const productNamesOf = (payload: Prisma.JsonValue) => {
+  const items = (payload as unknown as Partial<SalesQuotePdfInput>).items;
+  if (!Array.isArray(items)) return [];
+  return Array.from(new Set(items
+    .map((item) => item.productSnapshot?.name?.trim())
+    .filter((name): name is string => Boolean(name))));
+};
 
 const summary = (quote: {
   id: string;
@@ -17,6 +24,7 @@ const summary = (quote: {
   lastExportedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  payload: Prisma.JsonValue;
 }) => ({
   id: quote.id,
   quoteNumber: quote.quoteNumber,
@@ -24,6 +32,7 @@ const summary = (quote: {
   customerName: quote.customerName,
   customerOrganization: quote.customerOrganization || "",
   total: Number(quote.total),
+  productNames: productNamesOf(quote.payload),
   status: quote.status,
   version: quote.version,
   lastExportedAt: quote.lastExportedAt?.toISOString() || null,
