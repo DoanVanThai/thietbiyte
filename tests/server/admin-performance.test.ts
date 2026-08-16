@@ -45,6 +45,15 @@ test("Admin mutations refresh through the client router instead of location.relo
   assert.match(access, /admin:refresh/);
 });
 
+test("Admin shell toast stays out of the layout until feedback is shown", async () => {
+  const [layout, styles] = await Promise.all([
+    read("src/layouts/AdminLayout.astro"),
+    read("src/styles/admin.css"),
+  ]);
+  assert.match(layout, /data-admin-shell-toast hidden/);
+  assert.match(styles, /\.admin-toast\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
+});
+
 test("new product editor starts clean and keeps checkbox controls compact", async () => {
   const [page, styles, script] = await Promise.all([
     read("src/pages/admin/san-pham.astro"),
