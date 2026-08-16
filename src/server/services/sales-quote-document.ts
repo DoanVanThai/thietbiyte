@@ -57,6 +57,11 @@ const cleanQuoteText = (value: string) => value
   .replace(/[ \t]+\n/g, "\n")
   .trim();
 
+const compactSpecificationLine = (label: string, value: string) => {
+  const conciseValue = value.trim().replace(/^có(?:$|\s*[,;:]\s*|\s+)/iu, "");
+  return `- ${label}${conciseValue ? `: ${conciseValue}` : ""}`;
+};
+
 export function buildProductQuoteDescription(product: CmsProduct) {
   const detail = product.detail;
   const sections: string[] = [
@@ -84,7 +89,7 @@ export function buildProductQuoteDescription(product: CmsProduct) {
     sections.push("", "THÔNG SỐ KỸ THUẬT");
     detail.specificationGroups.forEach((group) => {
       sections.push(group.title.toLocaleUpperCase("vi"));
-      group.items.forEach((item) => sections.push(`- ${item.label}: ${item.value}`));
+      group.items.forEach((item) => sections.push(compactSpecificationLine(item.label, item.value)));
     });
   }
   return cleanQuoteText(sections.join("\n"));

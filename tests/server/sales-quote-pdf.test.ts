@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createSalesQuoteDocx } from "../../src/server/services/sales-quote-docx";
-import { quoteContentDisposition, quoteFileName } from "../../src/server/services/sales-quote-document";
+import { buildProductQuoteDescription, quoteContentDisposition, quoteFileName } from "../../src/server/services/sales-quote-document";
 import { createSalesQuotePdf } from "../../src/server/services/sales-quote-pdf";
 import { numberToVietnameseMoney } from "../../src/server/services/vietnamese-money";
 
@@ -16,6 +16,27 @@ test("Vietnamese money words cover zero, inner groups and quote-sized totals", (
 test("sales quote downloads use the company name and preserve the quote number", () => {
   assert.equal(quoteFileName("5021/BG/2026"), "Thiên Lộc Group | 5021／BG／2026");
   assert.match(quoteContentDisposition("5021/BG/2026", "pdf"), /filename\*=UTF-8''Thi%C3%AAn%20L%E1%BB%99c%20Group%20%7C%205021%EF%BC%8FBG%EF%BC%8F2026\.pdf/);
+});
+
+test("technical specifications omit repetitive affirmative values in quote descriptions", () => {
+  const description = buildProductQuoteDescription({
+    id: "compact-specs", slug: "compact-specs", sku: "COMPACT-01", group: "medical", category: "", categorySlug: "", specialties: [], specialtySlugs: [],
+    brand: "Thiên Lộc", brandSlug: "thien-loc", model: "C-01", origin: "Việt Nam", priceBand: "", warranty: "", applications: [], applicationSlugs: [],
+    name: "Thiết bị kiểm thử", specs: [], image: "", imagePosition: "", availability: "contact", featured: 0, createdOrder: 0,
+    description: "", priceMode: "CONTACT", publishStatus: "draft",
+    detail: {
+      gallery: [], features: [], configurations: [], documents: [],
+      specificationGroups: [{ title: "Vận hành", items: [
+        { label: "Bàn phím ảo", value: "Có" },
+        { label: "Khả năng QC", value: "Có; Mean, SD và CV" },
+        { label: "Cổng kết nối", value: "Có cổng USB" },
+      ] }],
+    },
+  });
+  assert.match(description, /- Bàn phím ảo\n/);
+  assert.match(description, /- Khả năng QC: Mean, SD và CV/);
+  assert.match(description, /- Cổng kết nối: cổng USB/);
+  assert.doesNotMatch(description, /Bàn phím ảo: Có/);
 });
 
 test("sales quote PDF supports Vietnamese and long product descriptions", async () => {

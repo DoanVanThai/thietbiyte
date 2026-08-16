@@ -614,6 +614,10 @@
   content: "\e42a";
 }
 
+.ph.ph-sliders:before {
+  content: "\e432";
+}
+
 .ph.ph-sliders-horizontal:before {
   content: "\e434";
 }
