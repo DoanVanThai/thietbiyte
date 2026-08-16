@@ -98,7 +98,7 @@ test("sales quote Word export creates a valid OOXML document", async () => {
       { runs: [{ text: "Model: SonoPort 8" }] },
       { runs: [{ text: "BẢO HÀNH 24 THÁNG", bold: true, color: "red" as const }] },
       { runs: [{ text: "- Màn hình độ phân giải cao", underline: true }] },
-    ] }, images: [] }],
+    ] }, images: [{ url: "/images/project-handover-placeholder.webp", caption: "Ảnh sản phẩm", afterText: "- Màn hình độ phân giải cao" }] }],
     vatIncluded: true,
     delivery: "Vận chuyển và lắp đặt tại nơi sử dụng.",
     payment: "Đặt cọc 50%, thanh toán phần còn lại sau bàn giao.",
@@ -107,6 +107,7 @@ test("sales quote Word export creates a valid OOXML document", async () => {
   };
   const word = await createSalesQuoteDocx(input, { name: "THIÊN LỘC GROUP", hotline: "0902 137 158", email: "tuvan@thienlocgroup.com" }, [{
     ...input.items[0], name: "Máy siêu âm cao cấp", sku: "US-001", model: "SonoPort 8", brand: "CHISON", origin: "Trung Quốc", manufacturingYear: "2026", warranty: "24 tháng",
+    images: input.items[0].images,
   }]);
   assert.equal(word.subarray(0, 2).toString(), "PK");
   assert.ok(word.byteLength > 5_000);
@@ -126,5 +127,6 @@ test("sales quote Word export creates a valid OOXML document", async () => {
   assert.match(documentXml, /<w:b\/>[\s\S]*?<w:i\/>[\s\S]*?<w:t[^>]*>ĐIỀU KHOẢN THƯƠNG MẠI<\/w:t>/);
   assert.match(documentXml, /<w:keepNext\/>[\s\S]*?<w:keepLines\/>[\s\S]*?<w:i\/>[\s\S]*?<w:t[^>]*>- Giá trên đã bao gồm thuế GTGT\.<\/w:t>/);
   assert.match(documentXml, /<w:cantSplit\/>[\s\S]*?<w:t[^>]*>ĐẠI DIỆN KHÁCH HÀNG<\/w:t>/);
+  assert.match(documentXml, /<wp:extent cx="1914525" cy="\d+"\/>/);
   assert.doesNotMatch(documentXml, /Người liên hệ:/);
 });

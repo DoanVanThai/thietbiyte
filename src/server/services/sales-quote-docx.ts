@@ -38,6 +38,9 @@ const bodyHalfPoints = 24;
 const bodyHeadingHalfPoints = 26;
 const secondaryHalfPoints = 20;
 const termsRuleWidth = 3_400;
+const twipsPerPixel = 15;
+const productCellHorizontalMargins = 240;
+const productImageWidth = Math.round(((columnWidths[1] - productCellHorizontalMargins) / 2) * (4 / 5) / twipsPerPixel);
 const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 type PreparedQuoteImage = ResolvedQuoteImage & { data: Buffer; width: number; height: number };
 type PreparedQuoteItem = Omit<ResolvedQuoteItem, "images"> & { images: PreparedQuoteImage[] };
@@ -114,7 +117,7 @@ const prepareImage = async (image: ResolvedQuoteImage): Promise<PreparedQuoteIma
 };
 
 const imageParagraphs = (image: PreparedQuoteImage) => {
-  const scale = Math.min(220 / image.width, 140 / image.height, 1);
+  const scale = productImageWidth / image.width;
   return [
     new Paragraph({
       spacing: { before: 60, after: 30 },
