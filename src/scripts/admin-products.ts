@@ -119,6 +119,171 @@ moreFilters?.addEventListener("click", () => {
   moreFilters.setAttribute("aria-expanded", String(!secondaryFilters.hidden));
 });
 
+// Strict JSON product import: parse locally, validate on the server, then create drafts.
+type ProductImportPreview = {
+  index: number; name: string; sku: string; model: string; brand: string; category: string;
+  imageCount: number; configurationCount: number; specificationCount: number;
+};
+type ProductImportError = { path: string; message: string };
+type ProductImportResponse = {
+  ok?: boolean; preview?: ProductImportPreview[]; errors?: ProductImportError[];
+  created?: Array<{ id: string; name: string; slug: string }>; message?: string;
+};
+const importDialog = document.querySelector<HTMLDialogElement>("[data-product-import-dialog]");
+const importInput = importDialog?.querySelector<HTMLInputElement>("[data-product-import-file]");
+const importDropzone = importDialog?.querySelector<HTMLElement>("[data-product-import-dropzone]");
+const importFileInfo = importDialog?.querySelector<HTMLElement>("[data-product-import-file-info]");
+const importFileName = importDialog?.querySelector<HTMLElement>("[data-product-import-file-name]");
+const importFileSize = importDialog?.querySelector<HTMLElement>("[data-product-import-file-size]");
+const importProgress = importDialog?.querySelector<HTMLElement>("[data-product-import-progress]");
+const importErrors = importDialog?.querySelector<HTMLElement>("[data-product-import-errors]");
+const importErrorList = importDialog?.querySelector<HTMLUListElement>("[data-product-import-error-list]");
+const importPreview = importDialog?.querySelector<HTMLElement>("[data-product-import-preview]");
+const importPreviewList = importDialog?.querySelector<HTMLElement>("[data-product-import-preview-list]");
+const importCount = importDialog?.querySelector<HTMLElement>("[data-product-import-count]");
+const confirmImport = importDialog?.querySelector<HTMLButtonElement>("[data-confirm-product-import]");
+let importDocument: unknown;
+let importRequest: AbortController | undefined;
+
+const formatFileSize = (bytes: number) => bytes < 1024
+  ? `${bytes} B`
+  : bytes < 1024 * 1024
+    ? `${(bytes / 1024).toFixed(1)} KB`
+    : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+const setImportBusy = (busy: boolean, label = "Đang kiểm tra cấu trúc và dữ liệu…") => {
+  if (importProgress) { importProgress.hidden = !busy; const copy = importProgress.querySelector("span"); if (copy) copy.textContent = label; }
+  if (confirmImport) { confirmImport.disabled = busy || !importDocument || importPreview?.hidden !== false; confirmImport.setAttribute("aria-busy", String(busy)); }
+  if (importInput) importInput.disabled = busy;
+};
+const clearImportResults = () => {
+  if (importErrors) importErrors.hidden = true;
+  if (importErrorList) importErrorList.replaceChildren();
+  if (importPreview) importPreview.hidden = true;
+  if (importPreviewList) importPreviewList.replaceChildren();
+  if (confirmImport) confirmImport.disabled = true;
+};
+const resetImport = () => {
+  importRequest?.abort();
+  importRequest = undefined;
+  importDocument = undefined;
+  if (importInput) { importInput.value = ""; importInput.disabled = false; }
+  if (importDropzone) { importDropzone.hidden = false; importDropzone.classList.remove("is-dragging"); }
+  if (importFileInfo) importFileInfo.hidden = true;
+  if (importProgress) importProgress.hidden = true;
+  clearImportResults();
+};
+const renderImportErrors = (errors: ProductImportError[]) => {
+  if (!importErrors || !importErrorList) return;
+  importErrorList.replaceChildren(...errors.slice(0, 100).map((error) => {
+    const row = document.createElement("li");
+    const path = document.createElement("code"); path.textContent = error.path || "file";
+    const message = document.createElement("span"); message.textContent = error.message;
+    row.append(path, message); return row;
+  }));
+  if (errors.length > 100) {
+    const row = document.createElement("li");
+    const path = document.createElement("code"); path.textContent = "…";
+    const message = document.createElement("span"); message.textContent = `Còn ${errors.length - 100} lỗi khác. Sửa các lỗi đầu tiên rồi kiểm tra lại.`;
+    row.append(path, message); importErrorList.append(row);
+  }
+  importErrors.hidden = false;
+};
+const renderImportPreview = (items: ProductImportPreview[]) => {
+  if (!importPreview || !importPreviewList) return;
+  importPreviewList.replaceChildren(...items.map((item) => {
+    const row = document.createElement("article"); row.className = "admin-import-preview-item";
+    const number = document.createElement("span"); number.textContent = String(item.index + 1);
+    const copy = document.createElement("div");
+    const name = document.createElement("strong"); name.textContent = item.name;
+    const identity = document.createElement("small"); identity.textContent = `${item.brand} · ${item.model} · SKU ${item.sku}`;
+    copy.append(name, identity);
+    const totals = document.createElement("small"); totals.textContent = `${item.imageCount} ảnh · ${item.configurationCount} cấu hình · ${item.specificationCount} thông số`;
+    row.append(number, copy, totals); return row;
+  }));
+  if (importCount) importCount.textContent = String(items.length);
+  importPreview.hidden = false;
+};
+const requestProductImport = async (action: "validate" | "import") => {
+  importRequest?.abort();
+  importRequest = new AbortController();
+  const response = await fetch("/api/admin/products/import", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, document: importDocument }),
+    signal: importRequest.signal,
+  });
+  const result = await response.json().catch(() => ({})) as ProductImportResponse;
+  if (!response.ok || !result.ok) throw Object.assign(new Error(result.errors?.[0]?.message || "Không thể xử lý file JSON."), { errors: result.errors, created: result.created });
+  return result;
+};
+const validateImportFile = async (file: File) => {
+  clearImportResults();
+  importDocument = undefined;
+  if (importDropzone) importDropzone.hidden = true;
+  if (importFileInfo) importFileInfo.hidden = false;
+  if (importFileName) importFileName.textContent = file.name;
+  if (importFileSize) importFileSize.textContent = `${formatFileSize(file.size)} · Đang chờ kiểm tra`;
+
+  if (file.size > 5 * 1024 * 1024) {
+    renderImportErrors([{ path: "file", message: "File vượt quá dung lượng tối đa 5 MB." }]);
+    if (importFileSize) importFileSize.textContent = `${formatFileSize(file.size)} · Quá dung lượng`;
+    return;
+  }
+  if (!file.name.toLocaleLowerCase("vi").endsWith(".json")) {
+    renderImportErrors([{ path: "file", message: "Vui lòng chọn đúng file có đuôi .json." }]);
+    if (importFileSize) importFileSize.textContent = `${formatFileSize(file.size)} · Sai định dạng`;
+    return;
+  }
+
+  setImportBusy(true);
+  try {
+    const source = await file.text();
+    try { importDocument = JSON.parse(source); }
+    catch { throw Object.assign(new Error("Nội dung không phải JSON hợp lệ."), { errors: [{ path: "file", message: "Sai cú pháp JSON. Kiểm tra dấu phẩy, dấu ngoặc và dấu ngoặc kép." }] }); }
+    const result = await requestProductImport("validate");
+    renderImportPreview(result.preview || []);
+    if (importFileSize) importFileSize.textContent = `${formatFileSize(file.size)} · Đã kiểm tra`;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    const typed = error as Error & { errors?: ProductImportError[] };
+    renderImportErrors(typed.errors?.length ? typed.errors : [{ path: "file", message: typed.message || "Không thể kiểm tra file." }]);
+    if (importFileSize) importFileSize.textContent = `${formatFileSize(file.size)} · Có lỗi`;
+  } finally { setImportBusy(false); }
+};
+
+document.querySelector<HTMLButtonElement>("[data-open-product-import]")?.addEventListener("click", () => { resetImport(); importDialog?.showModal(); }, { signal });
+importDialog?.querySelectorAll<HTMLButtonElement>("[data-close-product-import]").forEach((button) => button.addEventListener("click", () => importDialog.close(), { signal }));
+importDialog?.addEventListener("close", resetImport, { signal });
+importDialog?.addEventListener("click", (event) => { if (event.target === importDialog) importDialog.close(); }, { signal });
+importInput?.addEventListener("change", () => { const file = importInput.files?.[0]; if (file) void validateImportFile(file); }, { signal });
+importDialog?.querySelector<HTMLButtonElement>("[data-product-import-replace]")?.addEventListener("click", () => { if (importInput) { importInput.value = ""; importInput.click(); } }, { signal });
+if (importDropzone) {
+  importDropzone.addEventListener("dragover", (event) => { event.preventDefault(); importDropzone.classList.add("is-dragging"); }, { signal });
+  importDropzone.addEventListener("dragleave", () => importDropzone.classList.remove("is-dragging"), { signal });
+  importDropzone.addEventListener("drop", (event) => {
+    event.preventDefault(); importDropzone.classList.remove("is-dragging");
+    const file = event.dataTransfer?.files[0]; if (file) void validateImportFile(file);
+  }, { signal });
+}
+confirmImport?.addEventListener("click", async () => {
+  if (!importDocument || importPreview?.hidden !== false) return;
+  clearImportResults(); setImportBusy(true, "Đang tạo sản phẩm bản nháp…");
+  if (confirmImport) confirmImport.textContent = "Đang nhập…";
+  try {
+    const result = await requestProductImport("import");
+    importDialog?.close(); showToast(result.message || `Đã nhập ${result.created?.length || 0} sản phẩm.`);
+    window.setTimeout(() => document.dispatchEvent(new CustomEvent("admin:navigate", { detail: "/admin/san-pham?status=draft" })), 650);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    const typed = error as Error & { errors?: ProductImportError[]; created?: unknown[] };
+    renderImportErrors(typed.errors?.length ? typed.errors : [{ path: "products", message: typed.message || "Không thể nhập sản phẩm." }]);
+    if (typed.created?.length) showToast(`Đã tạo ${typed.created.length} sản phẩm trước khi xảy ra lỗi.`);
+  } finally {
+    if (confirmImport) { confirmImport.innerHTML = '<i class="ph ph-file-arrow-up" aria-hidden="true"></i>Nhập sản phẩm'; }
+    setImportBusy(false);
+  }
+}, { signal });
+
 // Row selection and bulk actions.
 const selectAll = document.querySelector<HTMLInputElement>("[data-select-all]");
 const bulkBar = document.querySelector<HTMLElement>("[data-bulk-bar]");

@@ -45,7 +45,7 @@ export const databaseProductToCms = (record: AdminProductRecord): CmsProduct => 
   publishStatus: record.status.toLocaleLowerCase("en-US") as CmsProduct["publishStatus"],
   updatedAt: record.updatedAt.toISOString(),
   detail: {
-    gallery: record.images.map((image) => ({ type: "image", src: image.url, alt: image.alt, quoteEnabled: image.quoteEnabled, quoteCaption: image.quoteCaption || undefined, quoteAfterText: image.quoteAfterText || undefined })),
+    gallery: record.images.map((image) => ({ type: "image", src: image.url, alt: image.alt, isCover: image.isCover, quoteEnabled: image.quoteEnabled, quoteCaption: image.quoteCaption || undefined, quoteAfterText: image.quoteAfterText || undefined })),
     features: record.features.map((feature) => ({ title: feature.title, description: feature.description || "" })),
     configurations: Object.entries(Object.groupBy(record.configurations, (item) => item.groupName)).map(([title, items]) => ({
       title, items: (items || []).map((item) => ({ name: item.name, detail: item.description || undefined, quantity: item.quantity, imageUrl: item.imageUrl || undefined })),
@@ -53,7 +53,7 @@ export const databaseProductToCms = (record: AdminProductRecord): CmsProduct => 
     specificationGroups: record.specificationGroups.map((group) => ({ title: group.name, items: group.specifications.map((item) => ({ label: item.label, value: item.value })) })),
     documents: record.documents.map((document) => ({
       title: document.name, type: document.type, format: document.type, size: document.fileSize ? `${document.fileSize} B` : undefined,
-      access: document.access === "PUBLIC" ? "public" : document.access === "REGISTERED" ? "login" : "restricted", href: document.url,
+      fileSize: document.fileSize || undefined, access: document.access === "PUBLIC" ? "public" : document.access === "REGISTERED" ? "login" : "restricted", href: document.url,
     })),
     shortDescription: record.shortDescription || undefined,
     seo: { title: record.seoTitle || undefined, description: record.seoDescription || undefined },

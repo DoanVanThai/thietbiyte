@@ -310,12 +310,20 @@
   content: "\e232";
 }
 
+.ph.ph-file-arrow-up:before {
+  content: "\e61e";
+}
+
 .ph.ph-file-dashed:before {
   content: "\e704";
 }
 
 .ph.ph-file-doc:before {
   content: "\eb1e";
+}
+
+.ph.ph-file-js:before {
+  content: "\eb24";
 }
 
 .ph.ph-file-magnifying-glass:before {
@@ -624,6 +632,14 @@
 
 .ph.ph-sparkle:before {
   content: "\e6a2";
+}
+
+.ph.ph-spinner:before {
+  content: "\e66a";
+}
+
+.ph.ph-spinner-gap:before {
+  content: "\e66c";
 }
 
 .ph.ph-square:before {

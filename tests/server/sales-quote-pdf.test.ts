@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import JSZip from "jszip";
 import { createSalesQuoteDocx } from "../../src/server/services/sales-quote-docx";
 import { buildProductQuoteDescription, quoteContentDisposition, quoteFileName } from "../../src/server/services/sales-quote-document";
 import { createSalesQuotePdf } from "../../src/server/services/sales-quote-pdf";
@@ -97,4 +98,19 @@ test("sales quote Word export creates a valid OOXML document", async () => {
   }]);
   assert.equal(word.subarray(0, 2).toString(), "PK");
   assert.ok(word.byteLength > 5_000);
+
+  const archive = await JSZip.loadAsync(word);
+  const documentXml = await archive.file("word/document.xml")?.async("string");
+  const footerXml = await archive.file("word/footer1.xml")?.async("string");
+  assert.ok(documentXml);
+  assert.ok(footerXml);
+
+  const runColors = [...`${documentXml}${footerXml}`.matchAll(/<w:rPr>[\s\S]*?<w:color w:val="([^"]+)"\/>[\s\S]*?<\/w:rPr>/g)].map((match) => match[1]);
+  assert.ok(runColors.length > 0);
+  assert.deepEqual([...new Set(runColors)], ["000000"]);
+  assert.equal(documentXml.match(/<w:tbl>/g)?.length, 3);
+  assert.match(documentXml, /<w:gridSpan w:val="2"\/>[\s\S]*?<w:t[^>]*>TỔNG GIÁ TRỊ<\/w:t>/);
+  assert.match(documentXml, /<w:bottom w:val="single" w:color="000000" w:sz="10" w:space="1"\/>[\s\S]*?<w:t[^>]*>ĐIỀU KHOẢN THƯƠNG MẠI<\/w:t>/);
+  assert.match(documentXml, /<w:b\/>[\s\S]*?<w:i\/>[\s\S]*?<w:t[^>]*>ĐIỀU KHOẢN THƯƠNG MẠI<\/w:t>/);
+  assert.match(documentXml, /<w:i\/>[\s\S]*?<w:t[^>]*>- Giá trên đã bao gồm thuế GTGT\.<\/w:t>/);
 });

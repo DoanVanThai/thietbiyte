@@ -75,7 +75,11 @@ const editorSections = [
   <section class="admin-products-view" data-products-list-view aria-labelledby="products-title">
     <header class="admin-page-header">
       <div><nav aria-label="Đường dẫn"><a href="/admin">Quản trị</a><i class="ph ph-caret-right" aria-hidden="true"></i><span>Sản phẩm</span></nav><h1 id="products-title">Sản phẩm</h1><p>Quản lý thông tin hiển thị trên website và dữ liệu phục vụ báo giá.</p></div>
-      {canCreateProduct && <a class="button button-primary" href="/admin/san-pham?view=editor&id=new" data-open-new-product><i class="ph ph-plus" aria-hidden="true"></i>Thêm sản phẩm</a>}
+      {canCreateProduct && <div class="admin-page-actions">
+        <a class="button button-outline" href="/api/admin/products/import-template"><i class="ph ph-download-simple" aria-hidden="true"></i>Tải JSON mẫu</a>
+        <button class="button button-outline" type="button" data-open-product-import><i class="ph ph-file-arrow-up" aria-hidden="true"></i>Nhập JSON</button>
+        <a class="button button-primary" href="/admin/san-pham?view=editor&id=new" data-open-new-product><i class="ph ph-plus" aria-hidden="true"></i>Thêm sản phẩm</a>
+      </div>}
     </header>
 
     <section class="admin-filter-region" aria-labelledby="filters-title">
@@ -290,6 +294,54 @@ const editorSections = [
   <dialog class="admin-action-dialog" data-category-dialog aria-labelledby="category-dialog-title"><form method="dialog"><header><div><span>Thao tác hàng loạt</span><h2 id="category-dialog-title">Chuyển danh mục</h2></div><button class="icon-action" type="submit" value="cancel" aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><div><label for="bulk-category-select">Danh mục mới</label><select id="bulk-category-select">{categories.map((category) => <option>{category}</option>)}</select><p>Sản phẩm được chọn sẽ chuyển sang danh mục này.</p></div><footer><button class="button button-outline" type="submit" value="cancel">Hủy</button><button class="button button-primary" type="button" data-confirm-category>Chuyển danh mục</button></footer></form></dialog>
 
   <dialog class="admin-action-dialog admin-delete-dialog" data-delete-dialog aria-labelledby="delete-dialog-title"><form method="dialog"><header><div><span>Thao tác không thể hoàn tác</span><h2 id="delete-dialog-title">Xóa sản phẩm?</h2></div><button class="icon-action" type="submit" value="cancel" aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><div><p data-delete-dialog-message>Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.</p><p class="admin-delete-dialog-note"><i class="ph ph-info" aria-hidden="true"></i>Sản phẩm đã có trong yêu cầu báo giá sẽ không thể xóa; hãy dùng Lưu trữ thay thế.</p></div><footer><button class="button button-outline" type="submit" value="cancel">Giữ sản phẩm</button><button class="button admin-button-danger" type="button" data-confirm-delete>Xóa sản phẩm</button></footer></form></dialog>
+
+  {canCreateProduct && <dialog class="admin-import-dialog" data-product-import-dialog aria-labelledby="product-import-title">
+    <div class="admin-import-shell">
+      <header>
+        <div><span>Nhập nhanh sản phẩm</span><h2 id="product-import-title">Nhập dữ liệu từ JSON</h2><p>File hợp lệ sẽ được kiểm tra trước và chỉ tạo sản phẩm ở trạng thái bản nháp.</p></div>
+        <button class="icon-action" type="button" data-close-product-import aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button>
+      </header>
+      <div class="admin-import-body">
+        <ol class="admin-import-steps" aria-label="Quy trình nhập JSON">
+          <li><span>1</span><div><strong>Tải file mẫu</strong><small>Giữ nguyên toàn bộ tên trường.</small></div></li>
+          <li><span>2</span><div><strong>Điền dữ liệu</strong><small>Không thêm hoặc xóa trường.</small></div></li>
+          <li><span>3</span><div><strong>Kiểm tra & nhập</strong><small>Hệ thống tạo bản nháp để duyệt.</small></div></li>
+        </ol>
+
+        <label class="admin-import-dropzone" data-product-import-dropzone>
+          <input type="file" accept="application/json,.json" data-product-import-file />
+          <i class="ph ph-file-json" aria-hidden="true"></i>
+          <strong>Chọn hoặc kéo file JSON vào đây</strong>
+          <span>Tối đa 5 MB · Tối đa 100 sản phẩm mỗi lần</span>
+          <span class="button button-outline button-sm">Chọn file</span>
+        </label>
+
+        <section class="admin-import-file" data-product-import-file-info hidden aria-label="File đã chọn">
+          <i class="ph ph-file-json" aria-hidden="true"></i>
+          <div><strong data-product-import-file-name></strong><span data-product-import-file-size></span></div>
+          <button type="button" data-product-import-replace>Đổi file</button>
+        </section>
+
+        <div class="admin-import-progress" data-product-import-progress hidden role="status" aria-live="polite">
+          <i class="ph ph-spinner-gap" aria-hidden="true"></i><span>Đang kiểm tra cấu trúc và dữ liệu…</span>
+        </div>
+
+        <section class="admin-import-errors" data-product-import-errors hidden aria-labelledby="product-import-errors-title">
+          <header><i class="ph ph-warning-circle" aria-hidden="true"></i><div><h3 id="product-import-errors-title">File chưa thể nhập</h3><p>Sửa các mục dưới đây rồi chọn lại file.</p></div></header>
+          <ul data-product-import-error-list></ul>
+        </section>
+
+        <section class="admin-import-preview" data-product-import-preview hidden aria-labelledby="product-import-preview-title">
+          <header><div><h3 id="product-import-preview-title">Dữ liệu đã sẵn sàng</h3><p><strong data-product-import-count>0</strong> sản phẩm sẽ được tạo dưới dạng bản nháp.</p></div><span><i class="ph ph-check-circle" aria-hidden="true"></i>Đúng cấu trúc</span></header>
+          <div class="admin-import-preview-list" data-product-import-preview-list></div>
+        </section>
+      </div>
+      <footer>
+        <a class="admin-import-template-link" href="/api/admin/products/import-template"><i class="ph ph-download-simple" aria-hidden="true"></i>Tải lại JSON mẫu</a>
+        <div><button class="button button-outline" type="button" data-close-product-import>Hủy</button><button class="button button-primary" type="button" data-confirm-product-import disabled><i class="ph ph-file-arrow-up" aria-hidden="true"></i>Nhập sản phẩm</button></div>
+      </footer>
+    </div>
+  </dialog>}
 
   <dialog class="admin-media-dialog" data-media-dialog aria-labelledby="media-preview-title"><div><header><h2 id="media-preview-title">Xem trước ảnh</h2><button class="icon-action" type="button" data-media-dialog-close aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button></header><img src={editorProduct.image} alt="Ảnh sản phẩm xem trước" width="1600" height="1200" data-media-preview-image /></div></dialog>
 

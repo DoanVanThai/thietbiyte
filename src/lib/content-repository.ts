@@ -19,11 +19,11 @@ export interface CmsProduct extends CatalogProduct {
 }
 
 export interface ProductContent {
-  gallery: { type: "image" | "video"; src: string; alt: string; position?: string; poster?: string; quoteEnabled?: boolean; quoteCaption?: string; quoteAfterText?: string }[];
+  gallery: { type: "image" | "video"; src: string; alt: string; position?: string; poster?: string; isCover?: boolean; quoteEnabled?: boolean; quoteCaption?: string; quoteAfterText?: string }[];
   features: { title: string; description: string }[];
   configurations: { title: string; description?: string; items: { name: string; detail?: string; quantity?: number; imageUrl?: string }[] }[];
   specificationGroups: { title: string; items: { label: string; value: string }[] }[];
-  documents: { title: string; type: string; format: string; size?: string; access: "public" | "login" | "restricted"; href?: string }[];
+  documents: { title: string; type: string; format: string; size?: string; fileSize?: number; access: "public" | "login" | "restricted"; href?: string }[];
   shortDescription?: string;
   seo?: { title?: string; description?: string; ogImage?: string };
   warranty?: { period?: string; coverage?: string; installation?: string; technicalSupport?: string };

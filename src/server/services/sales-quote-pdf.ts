@@ -285,10 +285,11 @@ const drawTerms = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, grandTota
   doc.font("Regular").fontSize(9.2);
   const termsHeight = doc.heightOfString(clean(terms), { width: contentWidth, lineGap: 2.2 });
   ensureSpace(doc, termsHeight + 135);
-  doc.fillColor(ink).font("Bold").fontSize(10).text("ĐIỀU KHOẢN THƯƠNG MẠI", margin, doc.y, { width: contentWidth });
-  doc.strokeColor(primary).lineWidth(0.8).moveTo(margin, doc.y + 14).lineTo(margin + 142, doc.y + 14).stroke();
-  doc.y += 20;
-  doc.font("Regular").fontSize(9.2);
+  const termsTitleY = doc.y;
+  doc.fillColor(ink).font("BoldItalic").fontSize(10).text("ĐIỀU KHOẢN THƯƠNG MẠI", margin, termsTitleY, { width: contentWidth });
+  doc.strokeColor("#000000").lineWidth(0.8).moveTo(margin, termsTitleY + 13).lineTo(margin + 142, termsTitleY + 13).stroke();
+  doc.y = termsTitleY + 18;
+  doc.font("Italic").fontSize(9.2);
   doc.text(clean(terms), margin, doc.y, { width: contentWidth, lineGap: 2.2 });
   doc.y += 24;
   const signatureY = doc.y;

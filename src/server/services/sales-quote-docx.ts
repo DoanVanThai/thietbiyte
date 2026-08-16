@@ -4,6 +4,7 @@ import {
   Document,
   Footer,
   ImageRun,
+  type IParagraphOptions,
   PageNumber,
   Packer,
   Paragraph,
@@ -26,8 +27,7 @@ import { findPublicUploadPath } from "@/server/uploads/public-upload-storage";
 
 const primary = "075AA8";
 const pale = "EAF3FA";
-const ink = "111827";
-const muted = "4B5563";
+const ink = "000000";
 const line = "64748B";
 const pageWidth = 11_906;
 const pageHeight = 16_838;
@@ -70,18 +70,20 @@ const thinBorders = (color = line) => ({
   insideVertical: { style: BorderStyle.SINGLE, size: 5, color },
 });
 
-const text = (copy: string, options: { bold?: boolean; italics?: boolean; underline?: boolean; size?: number; color?: string } = {}) => new TextRun({
+const text = (copy: string, options: { bold?: boolean; italics?: boolean; underline?: boolean; size?: number } = {}) => new TextRun({
   text: clean(copy),
   font: "Times New Roman",
   size: options.size ?? 19,
   bold: options.bold,
   italics: options.italics,
   underline: options.underline ? { type: UnderlineType.SINGLE } : undefined,
-  color: options.color ?? ink,
+  color: ink,
 });
 
-const paragraph = (copy: string, options: { bold?: boolean; italics?: boolean; size?: number; color?: string; alignment?: typeof AlignmentType[keyof typeof AlignmentType]; before?: number; after?: number; line?: number } = {}) => new Paragraph({
+const paragraph = (copy: string, options: { bold?: boolean; italics?: boolean; size?: number; alignment?: typeof AlignmentType[keyof typeof AlignmentType]; before?: number; after?: number; line?: number; border?: IParagraphOptions["border"]; indent?: IParagraphOptions["indent"] } = {}) => new Paragraph({
   alignment: options.alignment,
+  border: options.border,
+  indent: options.indent,
   spacing: { before: options.before ?? 0, after: options.after ?? 80, line: options.line ?? 260 },
   children: [text(copy, options)],
 });
@@ -116,7 +118,7 @@ const imageParagraphs = (image: PreparedQuoteImage) => {
         transformation: { width: Math.max(1, Math.round(image.width * scale)), height: Math.max(1, Math.round(image.height * scale)) },
       })],
     }),
-    ...(image.caption ? [paragraph(image.caption, { italics: true, size: 16, color: muted, after: 60, line: 220 })] : []),
+    ...(image.caption ? [paragraph(image.caption, { italics: true, size: 16, after: 60, line: 220 })] : []),
   ];
 };
 
@@ -150,7 +152,7 @@ const productContent = (item: PreparedQuoteItem) => {
         bold: run.bold,
         italics: !richText && index > 0 && heading,
         underline: run.underline ? { type: UnderlineType.SINGLE } : undefined,
-        color: run.color === "red" ? "C62828" : ink,
+        color: ink,
       })),
     }));
     item.images.filter((image) => !rendered.has(image.url) && clean(image.afterText) === copy).forEach((image) => {
@@ -162,8 +164,9 @@ const productContent = (item: PreparedQuoteItem) => {
   return children;
 };
 
-const cell = (children: Paragraph[], width: number, options: { fill?: string; align?: typeof VerticalAlignTable[keyof typeof VerticalAlignTable] } = {}) => new TableCell({
+const cell = (children: Paragraph[], width: number, options: { fill?: string; align?: typeof VerticalAlignTable[keyof typeof VerticalAlignTable]; columnSpan?: number } = {}) => new TableCell({
   width: { size: width, type: WidthType.DXA },
+  columnSpan: options.columnSpan,
   verticalAlign: options.align ?? VerticalAlignTable.CENTER,
   shading: options.fill ? { type: ShadingType.CLEAR, fill: options.fill, color: "auto" } : undefined,
   margins: { top: 100, bottom: 100, left: 120, right: 120 },
@@ -187,7 +190,7 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
       cell(productContent(item), columnWidths[1], { align: VerticalAlignTable.TOP }),
       cell([
         paragraph(money(item.unitPrice), { bold: true, alignment: AlignmentType.CENTER, after: item.quantity > 1 ? 30 : 0 }),
-        ...(item.quantity > 1 ? [paragraph(`SL: ${item.quantity}`, { italics: true, size: 16, color: muted, alignment: AlignmentType.CENTER, after: 0 })] : []),
+        ...(item.quantity > 1 ? [paragraph(`SL: ${item.quantity}`, { italics: true, size: 16, alignment: AlignmentType.CENTER, after: 0 })] : []),
       ], columnWidths[2], { align: VerticalAlignTable.TOP }),
     ],
   }));
@@ -225,7 +228,7 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
             border: { top: { style: BorderStyle.SINGLE, size: 4, color: "AAB7C4", space: 4 } },
             alignment: AlignmentType.RIGHT,
             spacing: { before: 60 },
-            children: [text(company.name, { italics: true, size: 15, color: muted }), text("  ·  Trang ", { size: 15, color: muted }), new TextRun({ children: [PageNumber.CURRENT], font: "Times New Roman", size: 15, color: muted })],
+            children: [text(company.name, { italics: true, size: 15 }), text("  ·  Trang ", { size: 15 }), new TextRun({ children: [PageNumber.CURRENT], font: "Times New Roman", size: 15, color: ink })],
           })],
         }),
       },
@@ -244,7 +247,7 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
               paragraph(company.name.toLocaleUpperCase("vi"), { bold: true, size: 23, alignment: AlignmentType.CENTER, after: 30 }),
               paragraph(input.companyTagline, { italics: true, size: 18, alignment: AlignmentType.CENTER, after: 30 }),
               ...(input.companyAddress ? [paragraph(input.companyAddress, { size: 17, alignment: AlignmentType.CENTER, after: 25 })] : []),
-              paragraph([company.hotline && `Hotline: ${company.hotline}`, company.email && `Email: ${company.email}`, input.website && `Website: ${input.website}`].filter(Boolean).join("  |  "), { bold: true, size: 16, color: primary, alignment: AlignmentType.CENTER, after: 0 }),
+              paragraph([company.hotline && `Hotline: ${company.hotline}`, company.email && `Email: ${company.email}`, input.website && `Website: ${input.website}`].filter(Boolean).join("  |  "), { bold: true, size: 16, alignment: AlignmentType.CENTER, after: 0 }),
             ], contentWidth - 2_500),
           ] })],
         }),
@@ -268,21 +271,22 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
               cell([headerParagraph("ĐƠN GIÁ\n(VNĐ)")], columnWidths[2], { fill: pale }),
             ] }),
             ...productRows,
+            new TableRow({ children: [
+              cell([paragraph("TỔNG GIÁ TRỊ", { bold: true, size: 21, after: 0 })], columnWidths[0] + columnWidths[1], { fill: pale, columnSpan: 2 }),
+              cell([paragraph(`${money(total)} VNĐ`, { bold: true, size: 24, alignment: AlignmentType.RIGHT, after: 0 })], columnWidths[2], { fill: pale }),
+            ] }),
           ],
         }),
-        new Paragraph({ spacing: { after: 100 } }),
-        new Table({
-          width: { size: contentWidth, type: WidthType.DXA },
-          columnWidths: [contentWidth - 3_400, 3_400],
-          borders: thinBorders(primary),
-          rows: [new TableRow({ children: [
-            cell([paragraph("TỔNG GIÁ TRỊ", { bold: true, size: 21, color: primary, after: 0 })], contentWidth - 3_400, { fill: pale }),
-            cell([paragraph(`${money(total)} VNĐ`, { bold: true, size: 24, alignment: AlignmentType.RIGHT, after: 0 })], 3_400, { fill: pale }),
-          ] })],
-        }),
         paragraph(`(Bằng chữ: ${numberToVietnameseMoney(total)}.)`, { italics: true, size: 19, after: 180, before: 60 }),
-        paragraph("ĐIỀU KHOẢN THƯƠNG MẠI", { bold: true, size: 21, color: primary, after: 80 }),
-        ...terms.map((term) => paragraph(term, { size: 18, after: 45, line: 260 })),
+        paragraph("ĐIỀU KHOẢN THƯƠNG MẠI", {
+          bold: true,
+          italics: true,
+          size: 21,
+          after: 55,
+          border: { bottom: { style: BorderStyle.SINGLE, size: 10, color: ink, space: 1 } },
+          indent: { right: contentWidth - 2_840 },
+        }),
+        ...terms.map((term) => paragraph(term, { italics: true, size: 18, after: 45, line: 260 })),
         new Paragraph({ spacing: { after: 160 } }),
         new Table({
           width: { size: contentWidth, type: WidthType.DXA },
@@ -293,8 +297,8 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
             insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" }, insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
           },
           rows: [new TableRow({ children: [
-            cell([paragraph("ĐẠI DIỆN KHÁCH HÀNG", { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký và ghi rõ họ tên)", { italics: true, size: 16, color: muted, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
-            cell([paragraph(company.name.toLocaleUpperCase("vi"), { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký tên, đóng dấu)", { italics: true, size: 16, color: muted, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
+            cell([paragraph("ĐẠI DIỆN KHÁCH HÀNG", { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký và ghi rõ họ tên)", { italics: true, size: 16, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
+            cell([paragraph(company.name.toLocaleUpperCase("vi"), { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký tên, đóng dấu)", { italics: true, size: 16, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
           ] })],
         }),
       ],

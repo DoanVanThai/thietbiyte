@@ -32,7 +32,8 @@ if (root) {
   const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-quote-download]"));
   const saveButton = root.querySelector<HTMLButtonElement>("[data-save-quote]");
   const saveLabel = root.querySelector<HTMLElement>("[data-save-quote-label]");
-  const savedCurrent = root.querySelector<HTMLElement>("[data-saved-quote-current]");
+  const quoteVersion = root.querySelector<HTMLElement>("[data-quote-version]");
+  const quoteVersionWrapper = root.querySelector<HTMLElement>("[data-quote-version-wrapper]");
   const savedPanel = root.querySelector<HTMLDialogElement>("[data-saved-quotes-panel]");
   const savedList = root.querySelector<HTMLElement>("[data-saved-quotes-list]");
   const savedEmpty = root.querySelector<HTMLElement>("[data-saved-quotes-empty]");
@@ -78,6 +79,13 @@ if (root) {
   const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi").trim();
   const productLabel = (product: ProductSource) => `${product.name} · ${product.model}`;
   const formatMoney = (value: number) => new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(Number.isFinite(value) ? value : 0) + "đ";
+  const parsePrice = (value: string | undefined) => Number((value || "").replace(/[^\d]/g, "")) || 0;
+  const formatPriceInput = (input: HTMLInputElement | null | undefined) => {
+    if (!input) return;
+    const value = parsePrice(input.value);
+    input.value = value ? new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value) : "0";
+    input.dataset.priceFormatted = "true";
+  };
   const showToast = (message: string, error = false) => {
     if (!toast) return;
     window.clearTimeout(toastTimer);
@@ -89,8 +97,10 @@ if (root) {
   const setSaveState = (state: "dirty" | "saving" | "saved" | "error", copy?: string) => {
     if (!saveState) return;
     saveState.className = `quote-save-state is-${state}`;
+    const icon = saveState.querySelector<HTMLElement>("i");
+    if (icon) icon.className = state === "saved" ? "ph ph-check" : state === "saving" ? "ph ph-circle-notch" : state === "error" ? "ph ph-warning-circle" : "ph ph-circle";
     const label = saveState.querySelector("span");
-    if (label) label.textContent = copy || ({ dirty: "Có thay đổi chưa lưu", saving: "Đang lưu…", saved: "Đã lưu", error: "Không thể lưu" }[state]);
+    if (label) label.textContent = copy || ({ dirty: "Chưa lưu", saving: "Đang lưu…", saved: "Đã lưu", error: "Không thể lưu" }[state]);
   };
   const markDirty = () => { quoteDirty = true; setSaveState("dirty"); };
   const savedQuoteTitle = (quote: SavedQuoteSummary) => {
@@ -363,13 +373,13 @@ if (root) {
       delete productSearch.dataset.editing;
     }
     setItemDescription(item, saved?.description || product.description, saved?.descriptionRich);
-    if (price) price.value = String(saved?.unitPrice ?? product.price ?? 0);
+    if (price) { price.value = String(saved?.unitPrice ?? product.price ?? 0); formatPriceInput(price); }
     if (quantity) quantity.value = String(saved?.quantity ?? 1);
     renderImageManager(item, saved?.images || product.images);
     const name = item.querySelector<HTMLElement>("[data-quote-item-name]");
     const meta = item.querySelector<HTMLElement>("[data-quote-item-meta]");
     if (name) name.textContent = snapshot.name;
-    if (meta) meta.textContent = [snapshot.model, snapshot.brand].filter(Boolean).join(" · ");
+    if (meta) meta.textContent = [snapshot.brand, snapshot.model].filter(Boolean).join(" · ");
     item.querySelectorAll<HTMLElement>("[data-drawer-product-name]").forEach((copy) => { copy.textContent = [snapshot.name, snapshot.model].filter(Boolean).join(" · "); });
     item.querySelector<HTMLDialogElement>("[data-config-drawer]")?.setAttribute("aria-label", `Mô tả và cấu hình ${snapshot.name}`);
     item.querySelector<HTMLDialogElement>("[data-image-drawer]")?.setAttribute("aria-label", `Ảnh báo giá ${snapshot.name}`);
@@ -410,7 +420,7 @@ if (root) {
   const syncItemSummary = (item: HTMLElement) => {
     syncDescription(item);
     const quantity = Number(item.querySelector<HTMLInputElement>('[name="quantity"]')?.value || 0);
-    const price = Number(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value || 0);
+    const price = parsePrice(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value);
     const total = item.querySelector<HTMLElement>("[data-quote-line-total]");
     if (total) total.textContent = formatMoney(quantity * price);
     const description = item.querySelector<HTMLTextAreaElement>("[data-quote-description]")?.value || "";
@@ -419,14 +429,39 @@ if (root) {
     if (configSummary) configSummary.textContent = `${groups || 1} nhóm · ${new Intl.NumberFormat("vi-VN").format(description.length)} ký tự`;
     const images = item.querySelectorAll<HTMLInputElement>("[data-quote-image-enabled]:checked").length;
     const imageSummary = item.querySelector<HTMLElement>("[data-quote-image-summary]");
-    if (imageSummary) imageSummary.textContent = images ? `${images} ảnh báo giá` : "Chưa chọn ảnh";
-    imageSummary?.classList.toggle("needs-attention", images === 0);
+    if (imageSummary) imageSummary.textContent = images ? `${images} ảnh` : "Chưa có ảnh";
+    imageSummary?.classList.remove("needs-attention");
+  };
+
+  const setSectionExpanded = (section: HTMLElement, expanded: boolean) => {
+    const toggle = section.querySelector<HTMLButtonElement>("[data-quote-accordion-toggle]");
+    const panel = section.querySelector<HTMLElement>("[data-quote-accordion-panel]");
+    if (!toggle || !panel) return;
+    section.classList.toggle("is-expanded", expanded);
+    toggle.setAttribute("aria-expanded", String(expanded));
+    panel.hidden = !expanded;
+  };
+  const setSectionCompletion = (name: string, complete: boolean) => {
+    const state = root.querySelector<HTMLElement>(`[data-section-name="${name}"] [data-section-state]`);
+    if (!state) return;
+    state.classList.toggle("is-complete", complete);
+    state.classList.toggle("needs-attention", !complete);
+    state.innerHTML = complete ? '<i class="ph ph-check" aria-hidden="true"></i>' : '<i class="ph ph-circle" aria-hidden="true"></i>';
+  };
+  const revealField = (target: HTMLElement | null) => {
+    if (!target) return;
+    const section = target.closest<HTMLElement>("[data-quote-section]");
+    if (section) setSectionExpanded(section, true);
+    window.requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+      if (target.matches("input, textarea, select, button, [contenteditable=true]")) target.focus({ preventScroll: true });
+    });
   };
 
   const syncQuoteUI = () => {
     const items = Array.from(root.querySelectorAll<HTMLElement>("[data-quote-item]"));
     items.forEach(syncItemSummary);
-    const subtotal = items.reduce((sum, item) => sum + Number(item.querySelector<HTMLInputElement>('[name="quantity"]')?.value || 0) * Number(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value || 0), 0);
+    const subtotal = items.reduce((sum, item) => sum + Number(item.querySelector<HTMLInputElement>('[name="quantity"]')?.value || 0) * parsePrice(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value), 0);
     root.querySelectorAll<HTMLElement>("[data-quote-subtotal], [data-quote-total]").forEach((node) => { node.textContent = formatMoney(subtotal); });
     root.querySelectorAll<HTMLElement>("[data-quote-vat]").forEach((node) => { node.textContent = (form?.elements.namedItem("vatIncluded") as HTMLInputElement | null)?.checked ? "Đã bao gồm" : "Chưa bao gồm"; });
     const customer = (form?.elements.namedItem("customerName") as HTMLInputElement | null)?.value.trim() || "";
@@ -436,16 +471,8 @@ if (root) {
     const quoteTitle = root.querySelector<HTMLElement>("[data-quote-number-title]");
     const quoteNumberValue = (form?.elements.namedItem("quoteNumber") as HTMLInputElement | null)?.value.trim();
     if (quoteTitle) quoteTitle.textContent = quoteNumberValue || "Báo giá mới";
-    const priceReady = items.length > 0 && items.every((item) => Number(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value || 0) > 0);
+    const missingPriceItem = items.find((item) => parsePrice(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value) <= 0);
     const termsReady = ["delivery", "payment", "validity"].every((name) => Boolean((form?.elements.namedItem(name) as HTMLInputElement | null)?.value.trim()));
-    const readiness: Record<string, boolean> = { customer: Boolean(customer), product: items.length > 0, price: priceReady, terms: termsReady };
-    root.querySelectorAll<HTMLElement>("[data-check]").forEach((node) => {
-      const complete = readiness[node.dataset.check || ""];
-      node.classList.toggle("is-complete", complete);
-      node.classList.toggle("needs-attention", !complete);
-      const icon = node.querySelector<HTMLElement>("i");
-      if (icon) icon.className = complete ? "ph ph-check-circle" : "ph ph-circle";
-    });
     const infoSummary = root.querySelector<HTMLElement>('[data-section-name="information"] [data-section-summary]');
     const quoteDateValue = (form?.elements.namedItem("quoteDate") as HTMLInputElement | null)?.value || "";
     const city = (form?.elements.namedItem("city") as HTMLInputElement | null)?.value.trim() || "";
@@ -453,12 +480,53 @@ if (root) {
     const customerSummary = root.querySelector<HTMLElement>('[data-section-name="customer"] [data-section-summary]');
     const phone = (form?.elements.namedItem("customerPhone") as HTMLInputElement | null)?.value.trim() || "";
     if (customerSummary) customerSummary.textContent = customer ? [customer, organization, phone].filter(Boolean).join(" · ") : "Thêm người liên hệ và đơn vị nhận báo giá";
-    const customerState = root.querySelector<HTMLElement>('[data-section-name="customer"] [data-section-state]');
-    customerState?.classList.toggle("is-complete", Boolean(customer));
-    customerState?.classList.toggle("needs-attention", !customer);
-    if (customerState) customerState.innerHTML = customer ? '<i class="ph ph-check" aria-hidden="true"></i>' : "·";
-    const productsState = root.querySelector<HTMLElement>('[data-section-link="quote-products"] [data-nav-state]');
-    if (productsState) productsState.textContent = items.length && priceReady ? "✓" : "!";
+    const termsSummary = root.querySelector<HTMLElement>('[data-section-name="terms"] [data-section-summary]');
+    const vatIncluded = (form?.elements.namedItem("vatIncluded") as HTMLInputElement | null)?.checked;
+    const payment = (form?.elements.namedItem("payment") as HTMLInputElement | null)?.value.trim() || "";
+    const validity = (form?.elements.namedItem("validity") as HTMLInputElement | null)?.value.trim() || "";
+    const deposit = payment.match(/đặt cọc\s*\d+%/i)?.[0];
+    const validityPeriod = validity.match(/\d+\s*ngày/i)?.[0];
+    if (termsSummary) {
+      termsSummary.textContent = [
+        vatIncluded ? "Giá gồm GTGT" : "Chưa gồm GTGT",
+        deposit ? `${deposit.charAt(0).toUpperCase()}${deposit.slice(1)}` : (payment ? "Đã có thanh toán" : "Chưa có thanh toán"),
+        validityPeriod ? `Hiệu lực ${validityPeriod}` : (validity ? "Đã có hiệu lực" : "Chưa có hiệu lực"),
+      ].join(" · ");
+    }
+    setSectionCompletion("information", Boolean(quoteDateValue && city));
+    setSectionCompletion("customer", Boolean(customer));
+    setSectionCompletion("terms", termsReady);
+
+    const readinessList = root.querySelector<HTMLElement>("[data-quote-readiness]");
+    if (readinessList) {
+      const issues: Array<{ label: string; target: HTMLElement | null }> = [];
+      if (!customer) issues.push({ label: "Tên khách hàng", target: form?.elements.namedItem("customerName") as HTMLElement | null });
+      if (!items.length) issues.push({ label: "Ít nhất một sản phẩm", target: root.querySelector<HTMLElement>("[data-add-quote-item]") });
+      if (missingPriceItem) issues.push({ label: `Đơn giá của ${missingPriceItem.querySelector<HTMLElement>("[data-quote-item-name]")?.textContent || "sản phẩm"}`, target: missingPriceItem.querySelector<HTMLInputElement>('[name="unitPrice"]') });
+      if (!termsReady) issues.push({ label: "Điều khoản thương mại", target: form?.elements.namedItem("delivery") as HTMLElement | null });
+      readinessList.replaceChildren();
+      if (!issues.length) {
+        const ready = document.createElement("li");
+        ready.className = "is-complete quote-readiness-ready";
+        ready.innerHTML = '<i class="ph ph-check-circle" aria-hidden="true"></i><span>Sẵn sàng xuất báo giá</span>';
+        readinessList.append(ready);
+      } else {
+        const heading = document.createElement("li");
+        heading.className = "quote-readiness-heading needs-attention";
+        heading.innerHTML = `<i class="ph ph-warning-circle" aria-hidden="true"></i><strong>Cần bổ sung ${issues.length} mục</strong>`;
+        readinessList.append(heading);
+        issues.forEach((issue, index) => {
+          const row = document.createElement("li");
+          const button = document.createElement("button");
+          button.type = "button";
+          button.dataset.readinessIssue = String(index);
+          button.textContent = issue.label;
+          button.addEventListener("click", () => revealField(issue.target));
+          row.append(button);
+          readinessList.append(row);
+        });
+      }
+    }
   };
 
   const syncItems = () => {
@@ -540,7 +608,7 @@ if (root) {
       productId,
       productSnapshot: storedSnapshot || (product ? { name: product.name, sku: product.sku, model: product.model, brand: product.brand, origin: product.origin, manufacturingYear: product.manufacturingYear, warranty: product.warranty } : undefined),
       quantity: Number(item.querySelector<HTMLInputElement>('[name="quantity"]')?.value || 1),
-      unitPrice: Number(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value || 0),
+      unitPrice: parsePrice(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value),
       description,
       descriptionRich,
       images: Array.from(item.querySelectorAll<HTMLElement>("[data-quote-image-card]")).filter((card) => card.querySelector<HTMLInputElement>("[data-quote-image-enabled]")?.checked).map((card) => ({
@@ -551,6 +619,12 @@ if (root) {
     };
   };
   itemsRoot?.addEventListener("focusin", (event) => {
+    const priceInput = (event.target as Element).closest<HTMLInputElement>("[data-quote-price]");
+    if (priceInput?.dataset.priceFormatted === "true") {
+      priceInput.value = String(parsePrice(priceInput.value));
+      delete priceInput.dataset.priceFormatted;
+      window.requestAnimationFrame(() => priceInput.select());
+    }
     const search = (event.target as Element).closest<HTMLInputElement>("[data-quote-product-search]");
     const item = search?.closest<HTMLElement>("[data-quote-item]");
     if (!search || !item) return;
@@ -580,6 +654,8 @@ if (root) {
     if ((event.target as Element).closest("[data-rich-command]")) event.preventDefault();
   });
   itemsRoot?.addEventListener("focusout", (event) => {
+    const priceInput = (event.target as Element).closest<HTMLInputElement>("[data-quote-price]");
+    if (priceInput) { formatPriceInput(priceInput); syncQuoteUI(); }
     const search = (event.target as Element).closest<HTMLInputElement>("[data-quote-product-search]");
     const item = search?.closest<HTMLElement>("[data-quote-item]");
     if (!search || !item) return;
@@ -730,7 +806,7 @@ if (root) {
     const added = Array.from(pickerSelection).flatMap((productId) => createQuoteItem(productId) || []);
     if (!added.length) return;
     productPicker?.close(); syncItems(); markDirty();
-    const missingPrice = added.find((item) => Number(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value || 0) <= 0);
+    const missingPrice = added.find((item) => parsePrice(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value) <= 0);
     const target = missingPrice?.querySelector<HTMLInputElement>('[name="unitPrice"]') || added.at(-1)?.querySelector<HTMLInputElement>('[name="quantity"]');
     added.at(-1)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
     window.requestAnimationFrame(() => target?.focus({ preventScroll: true }));
@@ -738,39 +814,22 @@ if (root) {
 
   root.querySelectorAll<HTMLButtonElement>("[data-quote-accordion-toggle]").forEach((toggle) => toggle.addEventListener("click", () => {
     const section = toggle.closest<HTMLElement>("[data-quote-section]");
-    const panel = section?.querySelector<HTMLElement>("[data-quote-accordion-panel]");
-    if (!section || !panel) return;
-    const willOpen = toggle.getAttribute("aria-expanded") !== "true";
-    if (willOpen) {
-      root.querySelectorAll<HTMLElement>("[data-quote-section].is-expanded").forEach((other) => {
-        if (other === section || other.contains(document.activeElement)) return;
-        other.classList.remove("is-expanded");
-        other.querySelector<HTMLButtonElement>("[data-quote-accordion-toggle]")?.setAttribute("aria-expanded", "false");
-        const otherPanel = other.querySelector<HTMLElement>("[data-quote-accordion-panel]"); if (otherPanel) otherPanel.hidden = true;
-      });
-    }
-    section.classList.toggle("is-expanded", willOpen); toggle.setAttribute("aria-expanded", String(willOpen)); panel.hidden = !willOpen;
+    if (!section) return;
+    setSectionExpanded(section, toggle.getAttribute("aria-expanded") !== "true");
   }));
 
   root.querySelectorAll<HTMLButtonElement>("[data-section-link]").forEach((link) => link.addEventListener("click", () => {
     const section = document.getElementById(link.dataset.sectionLink || "");
     if (!section) return;
-    root.querySelectorAll<HTMLElement>("[data-quote-section].is-expanded").forEach((other) => {
-      if (other === section || other.contains(document.activeElement)) return;
-      const otherToggle = other.querySelector<HTMLButtonElement>("[data-quote-accordion-toggle]"); const otherPanel = other.querySelector<HTMLElement>("[data-quote-accordion-panel]");
-      if (otherToggle && otherPanel) { other.classList.remove("is-expanded"); otherToggle.setAttribute("aria-expanded", "false"); otherPanel.hidden = true; }
-    });
-    const toggle = section.querySelector<HTMLButtonElement>("[data-quote-accordion-toggle]");
-    const panel = section.querySelector<HTMLElement>("[data-quote-accordion-panel]");
-    if (toggle && panel && toggle.getAttribute("aria-expanded") !== "true") { section.classList.add("is-expanded"); toggle.setAttribute("aria-expanded", "true"); panel.hidden = false; }
-    section.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    setSectionExpanded(section, true);
+    window.requestAnimationFrame(() => section.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
   }));
 
   const sectionObserver = new IntersectionObserver((entries) => {
     const visible = entries.filter((entry) => entry.isIntersecting).sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
     if (!visible) return;
     root.querySelectorAll<HTMLElement>("[data-section-link]").forEach((link) => link.classList.toggle("is-active", link.dataset.sectionLink === visible.target.id));
-  }, { rootMargin: "-35% 0px -55%", threshold: [0, .25, .5] });
+  }, { rootMargin: "-28% 0px -62%", threshold: [0, .2, .5] });
   root.querySelectorAll<HTMLElement>("[data-quote-section]").forEach((section) => sectionObserver.observe(section));
 
   const autoGrow = (textarea: HTMLTextAreaElement) => { textarea.style.height = "auto"; textarea.style.height = `${Math.min(160, Math.max(38, textarea.scrollHeight))}px`; };
@@ -824,7 +883,7 @@ if (root) {
   };
 
   const exportFieldsValid = () => {
-    const item = Array.from(root.querySelectorAll<HTMLElement>("[data-quote-item]")).find((entry) => Number(entry.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value || 0) <= 0);
+    const item = Array.from(root.querySelectorAll<HTMLElement>("[data-quote-item]")).find((entry) => parsePrice(entry.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value) <= 0);
     if (!item) return true;
     const price = item.querySelector<HTMLInputElement>('[name="unitPrice"]');
     price?.setAttribute("aria-invalid", "true");
@@ -838,11 +897,9 @@ if (root) {
   const updateSavedState = (quote: SavedQuoteSummary) => {
     currentSavedQuoteId = quote.id;
     if (form) form.dataset.savedQuoteId = quote.id;
-    if (saveLabel) saveLabel.textContent = "Lưu nháp";
-    if (savedCurrent) {
-      savedCurrent.hidden = false;
-      savedCurrent.textContent = `Đang sửa ${savedQuoteTitle(quote)} · phiên bản ${quote.version}`;
-    }
+    if (saveLabel) saveLabel.textContent = "Lưu";
+    if (quoteVersion) quoteVersion.textContent = `Phiên bản ${quote.version}`;
+    if (quoteVersionWrapper) quoteVersionWrapper.hidden = false;
     const url = new URL(window.location.href);
     url.searchParams.set("quote", quote.id);
     history.replaceState({}, "", url);
@@ -853,7 +910,7 @@ if (root) {
     if (!quoteDirty && currentSavedQuoteId) return currentSavedQuoteId;
     const payload = buildPayload();
     if (saveButton) { saveButton.disabled = true; saveButton.setAttribute("aria-busy", "true"); }
-    if (saveLabel) saveLabel.textContent = currentSavedQuoteId ? "Đang cập nhật…" : "Đang lưu…";
+    if (saveLabel) saveLabel.textContent = "Đang lưu…";
     setSaveState("saving");
     try {
       const response = await fetch(currentSavedQuoteId ? `/api/admin/sales-quotes/${encodeURIComponent(currentSavedQuoteId)}` : "/api/admin/sales-quotes", {
@@ -866,7 +923,7 @@ if (root) {
       updateSavedState(result.quote);
       quoteDirty = false;
       const savedAt = new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit" }).format(new Date());
-      setSaveState("saved", `Đã lưu lúc ${savedAt}`);
+      setSaveState("saved", `Đã lưu ${savedAt}`);
       if (announce && feedback) feedback.textContent = result.message || "Đã lưu bản báo giá.";
       if (announce) showToast(`Đã lưu báo giá ${payload.quoteNumber}`);
       await loadSavedQuotes();
@@ -879,7 +936,7 @@ if (root) {
       return null;
     } finally {
       if (saveButton) { saveButton.disabled = false; saveButton.removeAttribute("aria-busy"); }
-      if (saveLabel) saveLabel.textContent = "Lưu nháp";
+      if (saveLabel) saveLabel.textContent = currentSavedQuoteId ? "Lưu" : "Lưu nháp";
     }
   };
 
@@ -915,12 +972,12 @@ if (root) {
           item.dataset.productSnapshot = JSON.stringify(savedItem.productSnapshot);
           const name = item.querySelector<HTMLElement>("[data-quote-item-name]"); const meta = item.querySelector<HTMLElement>("[data-quote-item-meta]");
           if (name) name.textContent = savedItem.productSnapshot.name;
-          if (meta) meta.textContent = [savedItem.productSnapshot.model, savedItem.productSnapshot.brand].filter(Boolean).join(" · ");
+          if (meta) meta.textContent = [savedItem.productSnapshot.brand, savedItem.productSnapshot.model].filter(Boolean).join(" · ");
           item.querySelectorAll<HTMLElement>("[data-drawer-product-name]").forEach((copy) => { copy.textContent = [savedItem.productSnapshot!.name, savedItem.productSnapshot!.model].filter(Boolean).join(" · "); });
         }
         setItemDescription(item, savedItem.description, savedItem.descriptionRich);
         const quantity = item.querySelector<HTMLInputElement>('[name="quantity"]'); if (quantity) quantity.value = String(savedItem.quantity);
-        const price = item.querySelector<HTMLInputElement>('[name="unitPrice"]'); if (price) price.value = String(savedItem.unitPrice);
+        const price = item.querySelector<HTMLInputElement>('[name="unitPrice"]'); if (price) { price.value = String(savedItem.unitPrice); formatPriceInput(price); }
         renderImageManager(item, savedItem.images);
       }
     });
@@ -977,7 +1034,8 @@ if (root) {
       updateSavedState(result.quote);
       quoteDirty = false;
       if (savedPanel?.open) savedPanel.close();
-      if (feedback) feedback.textContent = `Đã mở ${result.quote.quoteNumber}, phiên bản ${result.quote.version}.`;
+      if (feedback) feedback.textContent = "";
+      setSaveState("saved");
       syncQuoteUI();
     } catch (error) {
       if (feedback) feedback.textContent = error instanceof Error ? error.message : "Không thể mở bản báo giá.";
@@ -987,12 +1045,25 @@ if (root) {
   form?.addEventListener("input", () => { markDirty(); syncQuoteUI(); });
   form?.addEventListener("change", () => { markDirty(); syncQuoteUI(); });
   saveButton?.addEventListener("click", () => { void saveCurrentQuote(); });
-  root.querySelector<HTMLButtonElement>("[data-save-and-export]")?.addEventListener("click", () => {
-    root.querySelector<HTMLButtonElement>('[data-quote-download][data-export-format="pdf"]')?.click();
+  root.querySelector<HTMLButtonElement>("[data-duplicate-quote]")?.addEventListener("click", () => {
+    if (!form) return;
+    currentSavedQuoteId = "";
+    form.dataset.savedQuoteId = "";
+    const quoteNumberInput = form.elements.namedItem("quoteNumber") as HTMLInputElement | null;
+    const duplicateNumber = `${String(Date.now()).slice(-4)}/BG/${new Date().getFullYear()}`;
+    if (quoteNumberInput) { quoteNumberInput.value = duplicateNumber; quoteNumberInput.dataset.defaultQuoteNumber = duplicateNumber; }
+    if (quoteVersionWrapper) quoteVersionWrapper.hidden = true;
+    if (saveLabel) saveLabel.textContent = "Lưu nháp";
+    const url = new URL(window.location.href); url.searchParams.delete("quote"); history.replaceState({}, "", url);
+    root.querySelector<HTMLElement>("[data-duplicate-quote]")?.closest("details")?.removeAttribute("open");
+    if (feedback) feedback.textContent = "";
+    markDirty();
+    syncQuoteUI();
   });
   savedToggle?.addEventListener("click", () => {
     if (!savedPanel) return;
     if (savedPanel.open) { savedPanel.close(); return; }
+    savedToggle.closest<HTMLDetailsElement>("details")?.removeAttribute("open");
     savedQuotesPage = 1;
     savedPanel.showModal();
     savedToggle.setAttribute("aria-expanded", "true");
@@ -1038,13 +1109,15 @@ if (root) {
     const vat = root.querySelector<HTMLElement>("[data-quote-vat]")?.textContent || "Đã bao gồm";
     const total = root.querySelector<HTMLElement>("[data-quote-total]")?.textContent || subtotal;
     const readiness = root.querySelector<HTMLElement>("[data-quote-readiness]")?.outerHTML || "";
-    mobileSummaryContent.innerHTML = `<p class="quote-mobile-summary-count">${productCount}</p><dl class="quote-totals"><div><dt>Tạm tính</dt><dd>${subtotal}</dd></div><div><dt>VAT</dt><dd>${vat}</dd></div><div class="quote-grand-total"><dt>Tổng cộng</dt><dd>${total}</dd></div></dl>${readiness}<div class="quote-export-actions"><button class="button button-outline" type="button" data-mobile-preview><i class="ph ph-eye" aria-hidden="true"></i>Xem trước</button><button class="button button-primary" type="button" data-mobile-export="pdf"><i class="ph ph-file-pdf" aria-hidden="true"></i>Tạo và tải PDF</button><button class="button button-outline" type="button" data-mobile-export="word"><i class="ph ph-file-doc" aria-hidden="true"></i>Tạo và tải Word</button><button class="button button-outline" type="button" data-mobile-save><i class="ph ph-floppy-disk" aria-hidden="true"></i>Lưu nháp</button></div>`;
+    mobileSummaryContent.innerHTML = `<p class="quote-mobile-summary-count">${productCount}</p><dl class="quote-totals"><div><dt>Tạm tính</dt><dd>${subtotal}</dd></div><div><dt>VAT</dt><dd>${vat}</dd></div><div class="quote-grand-total"><dt>Tổng cộng</dt><dd>${total}</dd></div></dl>${readiness}<div class="quote-export-actions"><button class="button button-outline" type="button" data-mobile-preview><i class="ph ph-eye" aria-hidden="true"></i>Xem trước báo giá</button><button class="button button-primary" type="button" data-mobile-export="pdf"><i class="ph ph-file-pdf" aria-hidden="true"></i>Xuất PDF</button><button class="button button-outline" type="button" data-mobile-export="word"><i class="ph ph-file-doc" aria-hidden="true"></i>Xuất Word</button><button class="button button-outline" type="button" data-mobile-save><i class="ph ph-floppy-disk" aria-hidden="true"></i>${currentSavedQuoteId ? "Lưu" : "Lưu nháp"}</button></div>`;
     mobileSummary.showModal();
   });
   root.querySelector<HTMLButtonElement>("[data-close-mobile-summary]")?.addEventListener("click", () => mobileSummary?.close());
   mobileSummary?.addEventListener("click", (event) => {
     if (event.target === mobileSummary) { mobileSummary.close(); return; }
     if ((event.target as Element).closest("[data-mobile-preview]")) { mobileSummary.close(); root.querySelector<HTMLButtonElement>("[data-preview-quote]")?.click(); }
+    const readinessIssue = (event.target as Element).closest<HTMLButtonElement>("[data-readiness-issue]");
+    if (readinessIssue) { mobileSummary.close(); root.querySelector<HTMLButtonElement>(`[data-quote-readiness] [data-readiness-issue="${readinessIssue.dataset.readinessIssue}"]`)?.click(); }
     const format = (event.target as Element).closest<HTMLButtonElement>("[data-mobile-export]")?.dataset.mobileExport;
     if (format) { mobileSummary.close(); root.querySelector<HTMLButtonElement>(`[data-quote-download][data-export-format="${format}"]`)?.click(); }
     if ((event.target as Element).closest("[data-mobile-save]")) { mobileSummary.close(); void saveCurrentQuote(); }
@@ -1054,6 +1127,7 @@ if (root) {
     event.preventDefault();
     if (choosingFileName || !descriptionsValid() || !formFieldsValid() || !exportFieldsValid()) return;
     const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null;
+    submitter?.closest<HTMLDetailsElement>("details")?.removeAttribute("open");
     const format = submitter?.dataset.exportFormat === "word" ? "word" : "pdf";
     const activeButton = submitter || buttons.find((entry) => entry.dataset.exportFormat === format) || buttons[0];
     const formatLabel = format === "word" ? "Word" : "PDF";
@@ -1110,8 +1184,14 @@ if (root) {
     if (dialog && event.target === dialog) dialog.close();
   });
   window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") root.querySelectorAll<HTMLDetailsElement>("details[open]").forEach((details) => details.removeAttribute("open"));
     if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase("en-US") === "s") { event.preventDefault(); void saveCurrentQuote(); }
     if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase("en-US") === "k") { event.preventDefault(); openProductPicker(); }
+  });
+  document.addEventListener("click", (event) => {
+    root.querySelectorAll<HTMLDetailsElement>(".quote-more-menu[open], .quote-export-menu[open], .quote-item-menu[open]").forEach((details) => {
+      if (!details.contains(event.target as Node)) details.removeAttribute("open");
+    });
   });
   window.addEventListener("beforeunload", (event) => { if (quoteDirty) event.preventDefault(); });
   const requestedQuoteId = new URL(window.location.href).searchParams.get("quote");

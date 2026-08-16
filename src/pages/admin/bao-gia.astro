@@ -35,30 +35,37 @@ const productSources = products.map((product) => {
         <a class="quote-back-link" href="/admin" aria-label="Quay lại trang quản trị"><i class="ph ph-arrow-left" aria-hidden="true"></i><span>Báo giá</span></a>
         <div>
           <span class="quote-mobile-heading-label">Báo giá</span>
-          <div class="quote-title-line"><h1 id="quote-builder-title" data-quote-number-title>{quoteNumber}</h1><span class="quote-save-state is-dirty" data-quote-save-state><i aria-hidden="true"></i><span>Có thay đổi chưa lưu</span></span></div>
-          <p><span data-quote-customer-header>Chưa có khách hàng</span><span aria-hidden="true"> · </span><span data-quote-product-summary>1 sản phẩm</span></p>
+          <div class="quote-title-line"><h1 id="quote-builder-title" data-quote-number-title>{quoteNumber}</h1><span class="quote-save-state is-dirty" data-quote-save-state><i class="ph ph-circle" aria-hidden="true"></i><span>Chưa lưu</span></span></div>
+          <p><span data-quote-customer-header>Chưa có khách hàng</span><span aria-hidden="true"> · </span><span data-quote-product-summary>1 sản phẩm</span><span data-quote-version-wrapper hidden><span aria-hidden="true"> · </span><span data-quote-version></span></span></p>
         </div>
       </div>
       <div class="quote-workspace-actions">
         <button class="button button-ghost" type="button" data-preview-quote><i class="ph ph-eye" aria-hidden="true"></i>Xem trước</button>
         <button class="button button-outline" type="button" data-save-quote><i class="ph ph-floppy-disk" aria-hidden="true"></i><span data-save-quote-label>Lưu nháp</span></button>
-        <button class="button button-primary" type="button" data-save-and-export><i class="ph ph-check-circle" aria-hidden="true"></i>Lưu &amp; xuất PDF</button>
+        <details class="quote-export-menu">
+          <summary class="button button-primary"><i class="ph ph-file-arrow-down" aria-hidden="true"></i>Xuất<i class="ph ph-caret-down" aria-hidden="true"></i></summary>
+          <div>
+            <button type="submit" form="quote-editor-form" value="pdf" data-quote-download data-export-format="pdf"><i class="ph ph-file-pdf" aria-hidden="true" data-quote-download-icon></i><i class="ph ph-circle-notch quote-download-spinner" aria-hidden="true"></i><span data-quote-download-label data-default-label="Xuất PDF">Xuất PDF</span></button>
+            <button type="submit" form="quote-editor-form" value="word" data-quote-download data-export-format="word"><i class="ph ph-file-doc" aria-hidden="true" data-quote-download-icon></i><i class="ph ph-circle-notch quote-download-spinner" aria-hidden="true"></i><span data-quote-download-label data-default-label="Xuất Word">Xuất Word</span></button>
+          </div>
+        </details>
         <details class="quote-more-menu">
-          <summary class="icon-action" aria-label="Tác vụ khác"><i class="ph ph-dots-three-vertical" aria-hidden="true"></i></summary>
+          <summary class="icon-action" aria-label="Thêm thao tác" title="Thêm thao tác"><i class="ph ph-dots-three" aria-hidden="true"></i></summary>
           <div>
             <a href="/admin/bao-gia"><i class="ph ph-plus" aria-hidden="true"></i>Báo giá mới</a>
             <button type="button" data-toggle-saved-quotes aria-expanded="false" aria-controls="saved-quotes-dialog"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i>Báo giá đã lưu</button>
-            <a href="/admin/san-pham"><i class="ph ph-package" aria-hidden="true"></i>Quản lý sản phẩm</a>
+            <span class="quote-menu-separator" role="separator"></span>
+            <button type="button" data-duplicate-quote><i class="ph ph-copy" aria-hidden="true"></i>Nhân bản báo giá</button>
           </div>
         </details>
       </div>
     </header>
 
     <nav class="quote-section-nav" aria-label="Các phần của báo giá">
-      <button type="button" data-section-link="quote-information"><span data-nav-state>✓</span>Thông tin</button>
-      <button type="button" data-section-link="quote-customer"><span data-nav-state>·</span>Khách hàng</button>
-      <button type="button" data-section-link="quote-products"><span data-nav-state>!</span>Sản phẩm <b data-quote-item-count>1</b></button>
-      <button type="button" data-section-link="quote-terms"><span data-nav-state>✓</span>Điều khoản</button>
+      <button type="button" data-section-link="quote-information">Thông tin</button>
+      <button class="is-active" type="button" data-section-link="quote-customer">Khách hàng</button>
+      <button type="button" data-section-link="quote-products">Sản phẩm <b data-quote-item-count>1</b></button>
+      <button type="button" data-section-link="quote-terms">Điều khoản</button>
     </nav>
 
     <dialog class="quote-saved-dialog" id="saved-quotes-dialog" data-saved-quotes-panel aria-labelledby="saved-quotes-title">
@@ -79,7 +86,7 @@ const productSources = products.map((product) => {
     </dialog>
 
     {selectedProduct ? (
-      <form data-quote-form data-saved-quote-id="" novalidate>
+      <form id="quote-editor-form" data-quote-form data-saved-quote-id="" novalidate>
         <div class="quote-builder-main">
           <section class="quote-form-section" id="quote-information" data-quote-section data-section-name="information" aria-labelledby="quote-document-title">
             <header>
@@ -130,31 +137,35 @@ const productSources = products.map((product) => {
               <article class="quote-line-item" data-quote-item>
                 <header>
                   <span class="quote-item-order" data-quote-item-number>1</span>
-                  <div class="quote-item-identity"><strong data-quote-item-name>{selectedProduct.name}</strong><span data-quote-item-meta>{[selectedProduct.model, selectedProduct.brand].filter(Boolean).join(" · ")}</span></div>
+                  <div class="quote-item-identity"><strong data-quote-item-name>{selectedProduct.name}</strong><span data-quote-item-meta>{[selectedProduct.brand, selectedProduct.model].filter(Boolean).join(" · ")}</span></div>
                   <details class="quote-item-menu">
                     <summary class="icon-action" aria-label="Tác vụ sản phẩm"><i class="ph ph-dots-three" aria-hidden="true"></i></summary>
                     <div>
                       <button type="button" data-move-quote-item="up"><i class="ph ph-arrow-up" aria-hidden="true"></i>Đưa lên</button>
                       <button type="button" data-move-quote-item="down"><i class="ph ph-arrow-down" aria-hidden="true"></i>Đưa xuống</button>
-                      <button type="button" data-duplicate-quote-item><i class="ph ph-copy" aria-hidden="true"></i>Nhân bản</button>
-                      <button type="button" data-reset-quote-item><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Đặt lại từ sản phẩm</button>
-                      <button type="button" data-remove-quote-item><i class="ph ph-trash" aria-hidden="true"></i>Xóa sản phẩm</button>
+                      <span class="quote-menu-separator" role="separator"></span>
+                      <button type="button" data-duplicate-quote-item><i class="ph ph-copy" aria-hidden="true"></i>Nhân bản sản phẩm</button>
+                      <button type="button" data-reset-quote-item><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Đặt lại dữ liệu từ sản phẩm</button>
+                      <span class="quote-menu-separator" role="separator"></span>
+                      <button type="button" data-remove-quote-item><i class="ph ph-trash" aria-hidden="true"></i>Xóa khỏi báo giá</button>
                     </div>
                   </details>
                 </header>
                 <input type="hidden" name="productId" value={selectedProduct.id} data-quote-product />
                 <div class="quote-item-edit-grid">
                   <label><span>Số lượng</span><input name="quantity" type="number" min="1" max="999" value="1" required inputmode="numeric" /></label>
-                  <label><span>Đơn giá (VNĐ)</span><input name="unitPrice" type="number" min="0" step="1000" value={selectedProduct.priceVnd || 0} required inputmode="numeric" /></label>
+                  <label><span>Đơn giá (VNĐ)</span><input name="unitPrice" type="text" value={selectedProduct.priceVnd || 0} required inputmode="numeric" autocomplete="off" data-quote-price /></label>
                   <div class="quote-line-total"><span>Thành tiền</span><strong data-quote-line-total>0đ</strong></div>
                 </div>
-                <div class="quote-item-summary">
-                  <span><i class="ph ph-list-bullets" aria-hidden="true"></i><b data-quote-config-summary>Đang đọc cấu hình…</b></span>
-                  <span><i class="ph ph-image" aria-hidden="true"></i><b data-quote-image-summary>Đang đọc ảnh…</b></span>
-                </div>
-                <div class="quote-item-actions">
-                  <button class="button button-outline button-sm" type="button" data-open-config><i class="ph ph-sliders-horizontal" aria-hidden="true"></i>Chỉnh cấu hình</button>
-                  <button class="button button-ghost button-sm" type="button" data-open-images><i class="ph ph-images" aria-hidden="true"></i>Quản lý ảnh</button>
+                <div class="quote-item-footer">
+                  <div class="quote-item-summary">
+                    <span><i class="ph ph-list-bullets" aria-hidden="true"></i><b data-quote-config-summary>Đang đọc cấu hình…</b></span>
+                    <span><i class="ph ph-image" aria-hidden="true"></i><b data-quote-image-summary>Đang đọc ảnh…</b></span>
+                  </div>
+                  <div class="quote-item-actions">
+                    <button class="button button-ghost button-sm" type="button" data-open-config><i class="ph ph-sliders-horizontal" aria-hidden="true"></i>Cấu hình</button>
+                    <button class="button button-ghost button-sm" type="button" data-open-images><i class="ph ph-images" aria-hidden="true"></i>Hình ảnh</button>
+                  </div>
                 </div>
 
                 <dialog class="quote-drawer quote-config-drawer" data-config-drawer aria-label={`Mô tả và cấu hình ${selectedProduct.name}`}>
@@ -214,29 +225,12 @@ const productSources = products.map((product) => {
         <aside class="quote-builder-side">
           <section><h2>Tóm tắt báo giá</h2><p data-side-product-count>1 sản phẩm</p>
             <dl class="quote-totals"><div><dt>Tạm tính</dt><dd data-quote-subtotal>0đ</dd></div><div><dt>VAT</dt><dd data-quote-vat>Đã bao gồm</dd></div><div class="quote-grand-total"><dt>Tổng cộng</dt><dd data-quote-total>0đ</dd></div></dl>
-            <ul class="quote-readiness" data-quote-readiness>
-              <li data-check="customer"><i class="ph ph-circle" aria-hidden="true"></i>Có khách hàng</li>
-              <li data-check="product"><i class="ph ph-check-circle" aria-hidden="true"></i>Có sản phẩm</li>
-              <li data-check="price"><i class="ph ph-check-circle" aria-hidden="true"></i>Có đơn giá</li>
-              <li data-check="terms"><i class="ph ph-check-circle" aria-hidden="true"></i>Có điều khoản</li>
-            </ul>
+            <ul class="quote-readiness" data-quote-readiness><li><i class="ph ph-circle-notch" aria-hidden="true"></i>Đang kiểm tra báo giá…</li></ul>
           </section>
           <p class="quote-builder-feedback" data-quote-feedback role="status" aria-live="polite"></p>
-          <p class="quote-saved-current" data-saved-quote-current hidden></p>
           <div class="quote-export-actions">
-            <button class="button button-outline" type="button" data-preview-quote><i class="ph ph-eye" aria-hidden="true"></i>Xem trước</button>
-            <button class="button button-primary" type="submit" value="pdf" data-quote-download data-export-format="pdf">
-              <i class="ph ph-file-pdf" aria-hidden="true" data-quote-download-icon></i>
-              <i class="ph ph-circle-notch quote-download-spinner" aria-hidden="true"></i>
-              <span data-quote-download-label data-default-label="Tạo và tải PDF">Tạo và tải PDF</span>
-            </button>
-            <button class="button button-outline" type="submit" value="word" data-quote-download data-export-format="word">
-              <i class="ph ph-file-doc" aria-hidden="true" data-quote-download-icon></i>
-              <i class="ph ph-circle-notch quote-download-spinner" aria-hidden="true"></i>
-              <span data-quote-download-label data-default-label="Tạo và tải Word">Tạo và tải Word</span>
-            </button>
+            <button class="button button-outline" type="button" data-preview-quote><i class="ph ph-eye" aria-hidden="true"></i>Xem trước báo giá</button>
           </div>
-          <small>PDF và Word dùng đúng thứ tự sản phẩm đang hiển thị.</small>
         </aside>
 
         <div class="quote-mobile-bar"><div><span>Tổng cộng</span><strong data-quote-total>0đ</strong></div><button class="button button-primary" type="button" data-open-mobile-summary>Xem báo giá</button></div>

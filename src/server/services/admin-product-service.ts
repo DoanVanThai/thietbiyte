@@ -6,6 +6,13 @@ import { invalidateContentCache } from "@/lib/content-repository";
 type CmsPayload = Record<string, any>;
 const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const documentType = (value: string) => ["CATALOGUE", "DATASHEET", "MANUAL", "CERTIFICATE", "WARRANTY"].includes(value.toUpperCase()) ? value.toUpperCase() : "OTHER";
+const documentAccess = (value: string) => {
+  const normalized = value.toUpperCase();
+  if (["PUBLIC", "REGISTERED", "STAFF", "ADMIN"].includes(normalized)) return normalized;
+  if (normalized === "LOGIN") return "REGISTERED";
+  if (normalized === "RESTRICTED") return "STAFF";
+  return "PUBLIC";
+};
 
 export class AdminProductService {
   constructor(private readonly repository = new ProductRepository()) {}
@@ -29,11 +36,11 @@ export class AdminProductService {
       warranty: raw.warranty || detail.warranty?.period || undefined, shortDescription: raw.shortDescription || detail.shortDescription || undefined, description: raw.description || undefined,
       price: raw.priceVnd, priceMode: raw.priceMode || "CONTACT", featured: Number(raw.featured || 0) > 0, featuredOrder: Number(raw.featured || 0),
       status, seoTitle: raw.seoTitle || detail.seo?.title, seoDescription: raw.seoDescription || detail.seo?.description, specialtyIds, applicationIds,
-      images: (detail.gallery || []).filter((item: CmsPayload) => item.type === "image" && item.src).map((item: CmsPayload, index: number) => ({ url: item.src, alt: item.alt || name, quoteEnabled: Boolean(item.quoteEnabled), quoteCaption: item.quoteCaption || undefined, quoteAfterText: item.quoteAfterText || undefined, sortOrder: index, isCover: index === 0 })),
+      images: (detail.gallery || []).filter((item: CmsPayload) => item.type === "image" && item.src).map((item: CmsPayload, index: number) => ({ url: item.src, alt: item.alt || name, quoteEnabled: Boolean(item.quoteEnabled), quoteCaption: item.quoteCaption || undefined, quoteAfterText: item.quoteAfterText || undefined, sortOrder: index, isCover: typeof item.isCover === "boolean" ? item.isCover : index === 0 })),
       features: (detail.features || []).map((item: CmsPayload, index: number) => ({ title: item.title, description: item.description, sortOrder: index })),
       configurations: (detail.configurations || []).flatMap((groupItem: CmsPayload, groupIndex: number) => (groupItem.items || []).map((item: CmsPayload, index: number) => ({ groupName: groupItem.title, name: item.name, description: item.detail, imageUrl: item.imageUrl || undefined, quantity: item.quantity || 1, sortOrder: groupIndex * 100 + index }))),
       specificationGroups: (detail.specificationGroups || []).map((groupItem: CmsPayload, groupIndex: number) => ({ name: groupItem.title, sortOrder: groupIndex, specifications: (groupItem.items || []).map((item: CmsPayload, index: number) => ({ label: item.label, value: item.value, sortOrder: index })) })),
-      documents: (detail.documents || []).filter((item: CmsPayload) => item.href).map((item: CmsPayload, index: number) => ({ name: item.title, type: documentType(item.type || item.format), url: item.href, access: item.access === "public" ? "PUBLIC" : item.access === "login" ? "REGISTERED" : "STAFF", sortOrder: index })),
+      documents: (detail.documents || []).filter((item: CmsPayload) => item.href).map((item: CmsPayload, index: number) => ({ name: item.title, type: documentType(item.type || item.format), url: item.href, access: documentAccess(item.access || "PUBLIC"), fileSize: typeof item.fileSize === "number" ? item.fileSize : undefined, sortOrder: index })),
     };
   }
 
