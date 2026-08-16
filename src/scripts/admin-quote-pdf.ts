@@ -68,8 +68,8 @@ if (root) {
     const fields = document.createElement("div"); fields.className = "quote-image-fields";
     const captionLabel = document.createElement("label"); const captionTitle = document.createElement("span"); captionTitle.textContent = "Chú thích";
     const caption = document.createElement("input"); caption.type = "text"; caption.value = image.caption; caption.maxLength = 240; caption.dataset.quoteImageCaption = ""; captionLabel.append(captionTitle, caption);
-    const anchorLabel = document.createElement("label"); const anchorTitle = document.createElement("span"); anchorTitle.textContent = "Đặt ảnh sau mục";
-    const anchor = document.createElement("select"); anchor.dataset.quoteImageAnchor = ""; anchorLabel.append(anchorTitle, anchor); fields.append(captionLabel, anchorLabel);
+    const anchorLabel = document.createElement("label"); anchorLabel.className = "quote-image-anchor-field"; const anchorTitle = document.createElement("span"); anchorTitle.textContent = "Đặt ảnh sau mục";
+    const anchor = document.createElement("select"); anchor.className = "quote-image-anchor-select"; anchor.dataset.quoteImageAnchor = ""; anchorLabel.append(anchorTitle, anchor); fields.append(captionLabel, anchorLabel);
     const actions = document.createElement("div"); actions.className = "quote-image-actions";
     const replace = document.createElement("label"); replace.className = "quote-image-file-action"; replace.title = "Đổi ảnh"; replace.innerHTML = `<input type="file" accept="${ADMIN_IMAGE_ACCEPT}" data-quote-image-upload data-upload-mode="replace"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i><span>Đổi</span>`;
     const remove = document.createElement("button"); remove.type = "button"; remove.dataset.removeQuoteImage = ""; remove.innerHTML = '<i class="ph ph-trash" aria-hidden="true"></i><span>Xóa</span>';

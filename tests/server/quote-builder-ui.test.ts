@@ -21,5 +21,8 @@ test("quote builder exposes purposeful loading and entry states", async () => {
   assert.match(page, /data-export-format="word"/);
   assert.match(script, /activeButton\.classList\.add\("is-loading"\)/);
   assert.match(script, /clone\.classList\.add\("is-entering"\)/);
+  assert.match(script, /quote-image-anchor-field/);
+  assert.match(styles, /grid-template-areas:/);
+  assert.match(styles, /quote-image-anchor-select/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
 });

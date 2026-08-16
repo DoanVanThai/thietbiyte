@@ -365,15 +365,19 @@
 
 .quote-inline-image {
   display: grid;
-  grid-template-columns: 76px 96px minmax(0, 1fr) auto;
-  align-items: center;
+  grid-template-areas:
+    "preview fields actions"
+    "toggle fields actions";
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: start;
   gap: var(--space-3);
-  padding: var(--space-3) 0;
+  padding: var(--space-4) 0;
   border-top: 1px solid var(--color-border);
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
 .quote-form-grid .quote-image-toggle {
+  grid-area: toggle;
   min-height: 40px;
   display: flex;
   flex-direction: row;
@@ -392,6 +396,7 @@
 }
 
 .quote-image-preview {
+  grid-area: preview;
   width: 96px;
   height: 72px;
   display: grid;
@@ -425,14 +430,24 @@
 }
 
 .quote-image-fields {
+  grid-area: fields;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(150px, .85fr) minmax(210px, 1.15fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
 .quote-image-fields label {
   min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.quote-image-fields label > span {
+  color: var(--color-muted-foreground);
+  font-size: .6875rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .quote-image-fields input,
@@ -441,8 +456,18 @@
   font-size: .8125rem;
 }
 
+.quote-image-anchor-select {
+  max-width: 100%;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .quote-image-actions {
+  grid-area: actions;
   display: flex;
+  align-items: flex-start;
+  align-self: stretch;
   gap: var(--space-1);
 }
 
@@ -459,6 +484,7 @@
   color: var(--color-primary);
   font-size: .75rem;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
@@ -712,7 +738,10 @@
   }
 
   .quote-inline-image {
-    grid-template-columns: 72px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "preview fields"
+      "toggle actions";
+    grid-template-columns: 72px minmax(0, 1fr);
   }
 
   .quote-image-preview,
@@ -721,16 +750,8 @@
     height: 56px;
   }
 
-  .quote-image-toggle {
-    grid-column: 1 / -1;
-  }
-
-  .quote-image-fields {
-    grid-template-columns: 1fr;
-  }
-
   .quote-image-actions {
-    flex-direction: column;
+    justify-content: flex-end;
   }
 
   .quote-image-actions > * { min-height: 44px; justify-content: center; }
@@ -747,7 +768,11 @@
   }
 
   .quote-inline-image {
-    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "preview preview"
+      "fields fields"
+      "toggle actions";
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .quote-image-preview {
