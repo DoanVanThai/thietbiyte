@@ -1796,7 +1796,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], .quote-rich-editor[ar
   .quote-item-actions .button { min-height: 44px; flex: 1; font-size: .75rem; }
   .quote-products-empty { align-items: flex-start; flex-direction: column; }
   .quote-products-empty .button { width: 100%; }
-  .quote-drawer { width: 100vw; height: 100dvh; margin: 0; }
+  .quote-drawer { position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; }
   .quote-drawer-shell > header { min-height: calc(60px + env(safe-area-inset-top)); padding: max(10px, env(safe-area-inset-top)) 12px 10px; }
   .quote-drawer-shell > footer { min-height: calc(64px + env(safe-area-inset-bottom)); padding: 10px 12px max(10px, env(safe-area-inset-bottom)); }
   .quote-drawer-body { padding: 12px; }
@@ -1812,7 +1812,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], .quote-rich-editor[ar
   .quote-picker-shell > footer > div { display: grid; grid-template-columns: 1fr 1fr; }
   .quote-picker-shell > footer .button { width: 100%; }
   .quote-product-picker,
-  .quote-preview-dialog { width: 100vw; height: 100dvh; max-height: none; margin: 0; border-radius: 0; }
+  .quote-preview-dialog { position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border-radius: 0; }
   .quote-picker-shell > header,
   .quote-preview-shell > header { min-height: calc(60px + env(safe-area-inset-top)); padding: max(10px, env(safe-area-inset-top)) 12px 10px; }
   .quote-picker-search { margin: 10px 12px 6px; }
@@ -1821,16 +1821,17 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], .quote-rich-editor[ar
   .quote-picker-option { min-height: 64px; }
   .quote-picker-option strong,
   .quote-picker-option small { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
-  .quote-mobile-summary { width: 100%; max-width: none; max-height: calc(100dvh - max(16px, env(safe-area-inset-top))); margin: auto 0 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .quote-mobile-summary { position: fixed; inset: auto 0 0; width: 100%; max-width: none; max-height: calc(100dvh - max(16px, env(safe-area-inset-top))); margin: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
   .quote-mobile-summary-shell { max-height: calc(100dvh - max(16px, env(safe-area-inset-top))); }
   .quote-mobile-summary-shell > header { padding: 12px 16px; }
   .quote-mobile-summary-shell > div { padding: 14px 16px max(16px, env(safe-area-inset-bottom)); }
-  .quote-saved-dialog { width: 100vw; height: 100dvh; max-height: none; display: grid; grid-template-rows: auto minmax(0, 1fr); margin: 0; overflow: hidden; border-radius: 0; }
+  .quote-saved-dialog { position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; display: grid; grid-template-rows: auto minmax(0, 1fr); margin: 0; overflow: hidden; border: 0; border-radius: 0; }
   .quote-saved-dialog > header { padding-top: max(14px, env(safe-area-inset-top)); }
   .quote-saved-dialog-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
   .quote-file-name-dialog { width: calc(100% - 24px); max-height: calc(100dvh - 24px); }
   .quote-toast { right: 12px; bottom: calc(76px + env(safe-area-inset-bottom)); left: 12px; }
   .admin-body:has(.quote-builder dialog[open]) { overflow: hidden; }
+  .admin-body:has(.quote-builder dialog[open]) .quote-mobile-bar { display: none; }
   .admin-body:has(.quote-builder :is(input, textarea, [contenteditable="true"]):focus) .quote-mobile-bar { pointer-events: none; transform: translateY(calc(100% + env(safe-area-inset-bottom))); }
   .quote-mobile-bar { transition: transform var(--duration-standard) var(--ease-enter); }
 }
@@ -1855,7 +1856,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], .quote-rich-editor[ar
   .quote-workspace-heading h1 { max-width: 40vw; }
   .quote-mobile-bar { gap: 8px; padding-inline: 12px; }
   .quote-mobile-bar .button { min-height: 44px; padding-inline: 12px; }
-  .quote-file-name-dialog { width: 100vw; height: 100dvh; max-height: none; margin: 0; border-radius: 0; }
+  .quote-file-name-dialog { position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border-radius: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

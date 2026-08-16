@@ -70,13 +70,20 @@ test("quote builder adapts naturally from tablet to small mobile", async () => {
   assert.match(sidebar, /data-sidebar-mobile-icon/);
   assert.match(styles, /@media \(max-width: 1199px\)[\s\S]*\.quote-builder form\[data-quote-form\] \{ grid-template-columns: 1fr; \}/);
   assert.match(styles, /@media \(max-width: 767px\)[\s\S]*\.quote-item-edit-grid \{ grid-template-columns: 1fr;/);
-  assert.match(styles, /\.quote-mobile-summary \{ width: 100%; max-width: none;/);
+  assert.match(styles, /\.quote-mobile-summary \{ position: fixed; inset: auto 0 0; width: 100%; max-width: none;/);
   assert.match(styles, /env\(safe-area-inset-bottom\)/);
   assert.match(styles, /@media \(max-width: 399px\)/);
   assert.match(script, /quote-mobile-summary-count/);
   assert.match(script, /data-mobile-export="word"/);
   assert.match(script, /descriptionSnapshots = new WeakMap/);
   assert.match(script, /ensureDescriptionEditor/);
+});
+
+test("mobile quote dialogs stay attached to the viewport on iOS Safari", async () => {
+  const styles = await readFile(new URL("../../src/styles/admin-quote-pdf.css", import.meta.url), "utf8");
+  assert.match(styles, /\.quote-saved-dialog \{ position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh;/);
+  assert.match(styles, /\.quote-product-picker,[\s\S]*\.quote-preview-dialog \{ position: fixed; inset: 0;/);
+  assert.match(styles, /dialog\[open\]\) \.quote-mobile-bar \{ display: none; \}/);
 });
 
 test("quote builder formats descriptions and reopens saved quotes", async () => {
