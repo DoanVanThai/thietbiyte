@@ -122,8 +122,7 @@ const editorSections = [
         <caption class="sr-only">Danh sách sản phẩm</caption>
         <thead><tr>
           <th class="admin-select-column" scope="col"><input type="checkbox" data-select-all aria-label="Chọn tất cả sản phẩm đang hiển thị" /></th>
-          <th class="admin-image-column" scope="col"><span class="sr-only">Ảnh</span></th>
-          <th scope="col">Sản phẩm</th><th scope="col">Model</th><th scope="col">Thương hiệu</th><th scope="col">Danh mục</th><th scope="col">Nhóm</th><th scope="col">Giá</th><th scope="col">Trạng thái</th><th scope="col">Cập nhật</th><th scope="col"><span class="sr-only">Thao tác</span></th>
+          <th scope="col">Sản phẩm</th><th scope="col">Model & thương hiệu</th><th scope="col">Phân loại</th><th scope="col">Giá</th><th scope="col">Trạng thái</th><th scope="col">Cập nhật</th><th scope="col"><span class="sr-only">Thao tác</span></th>
         </tr></thead>
         <tbody data-product-table-body>
           {catalogProducts.map((product, index) => {
@@ -133,10 +132,9 @@ const editorSections = [
             return (
               <tr data-product-row data-id={product.id} data-search={`${product.name} ${product.model} ${product.sku} ${product.id}`.toLocaleLowerCase("vi")} data-category={product.category} data-brand={product.brand} data-specialties={product.specialties.join("|")} data-group={product.group} data-status={statusKey} data-price={priceMode} data-featured={product.featured >= 9 ? "true" : "false"}>
                 <td class="admin-select-column"><input type="checkbox" data-row-select aria-label={`Chọn ${product.name}`} /></td>
-                <td class="admin-image-column"><img src={product.image} alt="" width="52" height="42" loading="lazy" /></td>
-                <td class="admin-product-name"><a href={canEditProduct ? `/admin/san-pham?view=editor&id=${product.id}` : `/san-pham/${product.slug}`}><strong>{product.name}</strong><span>SKU: {product.sku || product.id.toUpperCase()}</span></a></td>
-                <td>{product.model.replace(" (minh họa)", "")}</td><td>{product.brand}</td><td>{product.category}</td>
-                <td><span class={`admin-group-tag group-${product.group}`}>{product.group === "medical" ? "Y tế" : "Thú y"}</span></td>
+                <td class="admin-product-name"><div class="admin-product-identity"><img src={product.image} alt="" width="56" height="46" loading="lazy" /><a href={canEditProduct ? `/admin/san-pham?view=editor&id=${product.id}` : `/san-pham/${product.slug}`}><strong>{product.name}</strong><span>SKU: {product.sku || product.id.toUpperCase()}</span></a></div></td>
+                <td class="admin-product-details"><strong>{product.model.replace(" (minh họa)", "") || "Chưa cập nhật model"}</strong><span>{product.brand || "Chưa cập nhật thương hiệu"}</span></td>
+                <td class="admin-product-classification"><strong>{product.category || "Chưa phân loại"}</strong><span class={`admin-group-tag group-${product.group}`}>{product.group === "medical" ? "Y tế" : "Thú y"}</span></td>
                 <td><span class="admin-price-mode">{formatVnd(product.priceVnd)}</span><small>{priceMode}</small></td>
                 <td><span class={`admin-product-status status-${statusKey}`}><i aria-hidden="true"></i>{statusLabel}</span></td>
                 <td><time datetime={`2026-08-${String(Math.max(1, 13 - index)).padStart(2, "0")}`}>{updated}</time></td>

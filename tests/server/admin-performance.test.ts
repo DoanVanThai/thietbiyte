@@ -103,6 +103,21 @@ test("product search initializes reliably and searches the real SKU", async () =
   assert.match(page, /SKU: \{product\.sku \|\| product\.id\.toUpperCase\(\)\}/);
 });
 
+test("product list groups related fields into a readable responsive table", async () => {
+  const [page, styles] = await Promise.all([
+    read("src/pages/admin/san-pham.astro"),
+    read("src/styles/admin-products.css"),
+  ]);
+  assert.match(page, /Model & thương hiệu/);
+  assert.match(page, /class="admin-product-identity"/);
+  assert.match(page, /class="admin-product-details"/);
+  assert.match(page, /class="admin-product-classification"/);
+  assert.doesNotMatch(page, /class="admin-image-column"/);
+  assert.match(styles, /\.admin-products-table \{[^}]*min-width: 1040px;[^}]*font-size: \.875rem;[^}]*line-height: 1\.5;/);
+  assert.match(styles, /\.admin-product-identity \{[^}]*grid-template-columns: 56px minmax\(0, 1fr\);/);
+  assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.admin-products-table tbody tr \{[\s\S]*grid-template-columns: 28px minmax\(0, 1fr\) 44px;/);
+});
+
 test("product listing stays bounded at 50 rows for 10 through 10,000 records", async () => {
   for (const total of [10, 100, 1_000, 10_000]) {
     let query: Record<string, unknown> = {};
