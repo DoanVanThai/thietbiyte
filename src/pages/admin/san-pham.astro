@@ -129,10 +129,10 @@ const editorSections = [
             const priceMode = priceModeFor(product.priceMode);
             const updated = index < 2 ? "Hôm nay" : index < 5 ? "Hôm qua" : `${index + 1}/08/2026`;
             return (
-              <tr data-product-row data-id={product.id} data-search={`${product.name} ${product.model} ${product.id}`.toLocaleLowerCase("vi")} data-category={product.category} data-brand={product.brand} data-specialties={product.specialties.join("|")} data-group={product.group} data-status={statusKey} data-price={priceMode} data-featured={product.featured >= 9 ? "true" : "false"}>
+              <tr data-product-row data-id={product.id} data-search={`${product.name} ${product.model} ${product.sku} ${product.id}`.toLocaleLowerCase("vi")} data-category={product.category} data-brand={product.brand} data-specialties={product.specialties.join("|")} data-group={product.group} data-status={statusKey} data-price={priceMode} data-featured={product.featured >= 9 ? "true" : "false"}>
                 <td class="admin-select-column"><input type="checkbox" data-row-select aria-label={`Chọn ${product.name}`} /></td>
                 <td class="admin-image-column"><img src={product.image} alt="" width="52" height="42" loading="lazy" /></td>
-                <td class="admin-product-name"><a href={canEditProduct ? `/admin/san-pham?view=editor&id=${product.id}` : `/san-pham/${product.slug}`}><strong>{product.name}</strong><span>SKU: {product.id.toUpperCase()}</span></a></td>
+                <td class="admin-product-name"><a href={canEditProduct ? `/admin/san-pham?view=editor&id=${product.id}` : `/san-pham/${product.slug}`}><strong>{product.name}</strong><span>SKU: {product.sku || product.id.toUpperCase()}</span></a></td>
                 <td>{product.model.replace(" (minh họa)", "")}</td><td>{product.brand}</td><td>{product.category}</td>
                 <td><span class={`admin-group-tag group-${product.group}`}>{product.group === "medical" ? "Y tế" : "Thú y"}</span></td>
                 <td><span class="admin-price-mode">{formatVnd(product.priceVnd)}</span><small>{priceMode}</small></td>

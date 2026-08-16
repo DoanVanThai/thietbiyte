@@ -29,6 +29,18 @@ test("quote builder exposes purposeful loading and entry states", async () => {
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
+test("quote builder uses one customer name instead of separate contact and organization fields", async () => {
+  const [page, script] = await Promise.all([
+    readFile(new URL("../../src/pages/admin/bao-gia.astro", import.meta.url), "utf8"),
+    readFile(new URL("../../src/scripts/admin-quote-pdf.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(page, /<span>Tên khách hàng \*<\/span><input name="customerName"/);
+  assert.doesNotMatch(page, /Người liên hệ/);
+  assert.doesNotMatch(page, /name="customerOrganization"/);
+  assert.match(script, /organization: ""/);
+  assert.match(script, /payload\.customer\.organization \|\| payload\.customer\.name/);
+});
+
 test("quote builder V2 keeps long configuration and images in drawers", async () => {
   const [page, script, styles] = await Promise.all([
     readFile(new URL("../../src/pages/admin/bao-gia.astro", import.meta.url), "utf8"),

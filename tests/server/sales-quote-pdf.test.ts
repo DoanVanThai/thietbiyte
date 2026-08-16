@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import JSZip from "jszip";
 import { createSalesQuoteDocx } from "../../src/server/services/sales-quote-docx";
@@ -40,12 +41,23 @@ test("technical specifications omit repetitive affirmative values in quote descr
   assert.doesNotMatch(description, /Bàn phím ảo: Có/);
 });
 
+test("quote exports use a 12 point base font for primary content", async () => {
+  const [pdfSource, docxSource] = await Promise.all([
+    readFile(new URL("../../src/server/services/sales-quote-pdf.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../src/server/services/sales-quote-docx.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(pdfSource, /const bodyFontSize = 12;/);
+  assert.match(pdfSource, /size: bodyFontSize/);
+  assert.match(docxSource, /const bodyHalfPoints = 24;/);
+  assert.match(docxSource, /size: bodyHalfPoints/);
+});
+
 test("sales quote PDF supports Vietnamese and long product descriptions", async () => {
   const input = {
     quoteNumber: "1368/BG/2026",
     quoteDate: "2026-08-14",
     city: "Hà Nội",
-    customer: { name: "Nguyễn Văn An", organization: "Phòng khám Minh Tâm", address: "Hà Nội", phone: "0902 137 158", email: "an@example.com" },
+    customer: { name: "Phòng khám Minh Tâm", organization: "", address: "Hà Nội", phone: "0902 137 158", email: "an@example.com" },
     companyTagline: "Chuyên kinh doanh trang thiết bị y tế, hóa chất và vật tư tiêu hao.",
     companyAddress: "Hà Nội và Thành phố Hồ Chí Minh",
     website: "thienlocgroup.com",
@@ -76,7 +88,7 @@ test("sales quote Word export creates a valid OOXML document", async () => {
     quoteNumber: "1368/BG/2026",
     quoteDate: "2026-08-14",
     city: "Hà Nội",
-    customer: { name: "Nguyễn Văn An", organization: "Phòng khám Minh Tâm", address: "Hà Nội", phone: "0902 137 158", email: "an@example.com" },
+    customer: { name: "Phòng khám Minh Tâm", organization: "", address: "Hà Nội", phone: "0902 137 158", email: "an@example.com" },
     companyTagline: "Chuyên kinh doanh trang thiết bị y tế, hóa chất và vật tư tiêu hao.",
     companyAddress: "Hà Nội và Thành phố Hồ Chí Minh",
     website: "thienlocgroup.com",
@@ -113,4 +125,5 @@ test("sales quote Word export creates a valid OOXML document", async () => {
   assert.match(documentXml, /<w:bottom w:val="single" w:color="000000" w:sz="10" w:space="1"\/>[\s\S]*?<w:t[^>]*>ĐIỀU KHOẢN THƯƠNG MẠI<\/w:t>/);
   assert.match(documentXml, /<w:b\/>[\s\S]*?<w:i\/>[\s\S]*?<w:t[^>]*>ĐIỀU KHOẢN THƯƠNG MẠI<\/w:t>/);
   assert.match(documentXml, /<w:i\/>[\s\S]*?<w:t[^>]*>- Giá trên đã bao gồm thuế GTGT\.<\/w:t>/);
+  assert.doesNotMatch(documentXml, /Người liên hệ:/);
 });

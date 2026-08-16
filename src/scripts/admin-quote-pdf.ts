@@ -465,9 +465,8 @@ if (root) {
     root.querySelectorAll<HTMLElement>("[data-quote-subtotal], [data-quote-total]").forEach((node) => { node.textContent = formatMoney(subtotal); });
     root.querySelectorAll<HTMLElement>("[data-quote-vat]").forEach((node) => { node.textContent = (form?.elements.namedItem("vatIncluded") as HTMLInputElement | null)?.checked ? "Đã bao gồm" : "Chưa bao gồm"; });
     const customer = (form?.elements.namedItem("customerName") as HTMLInputElement | null)?.value.trim() || "";
-    const organization = (form?.elements.namedItem("customerOrganization") as HTMLInputElement | null)?.value.trim() || "";
     const customerHeader = root.querySelector<HTMLElement>("[data-quote-customer-header]");
-    if (customerHeader) customerHeader.textContent = customer || organization || "Chưa có khách hàng";
+    if (customerHeader) customerHeader.textContent = customer || "Chưa có khách hàng";
     const quoteTitle = root.querySelector<HTMLElement>("[data-quote-number-title]");
     const quoteNumberValue = (form?.elements.namedItem("quoteNumber") as HTMLInputElement | null)?.value.trim();
     if (quoteTitle) quoteTitle.textContent = quoteNumberValue || "Báo giá mới";
@@ -479,7 +478,7 @@ if (root) {
     if (infoSummary) infoSummary.textContent = [quoteNumberValue, quoteDateValue ? quoteDateValue.split("-").reverse().join("/") : "", city].filter(Boolean).join(" · ");
     const customerSummary = root.querySelector<HTMLElement>('[data-section-name="customer"] [data-section-summary]');
     const phone = (form?.elements.namedItem("customerPhone") as HTMLInputElement | null)?.value.trim() || "";
-    if (customerSummary) customerSummary.textContent = customer ? [customer, organization, phone].filter(Boolean).join(" · ") : "Thêm người liên hệ và đơn vị nhận báo giá";
+    if (customerSummary) customerSummary.textContent = customer ? [customer, phone].filter(Boolean).join(" · ") : "Thêm tên khách hàng nhận báo giá";
     const termsSummary = root.querySelector<HTMLElement>('[data-section-name="terms"] [data-section-summary]');
     const vatIncluded = (form?.elements.namedItem("vatIncluded") as HTMLInputElement | null)?.checked;
     const payment = (form?.elements.namedItem("payment") as HTMLInputElement | null)?.value.trim() || "";
@@ -839,7 +838,7 @@ if (root) {
   const buildPayload = (): QuotePayload => ({
     quoteNumber: value("quoteNumber") || (form?.elements.namedItem("quoteNumber") as HTMLInputElement | null)?.dataset.defaultQuoteNumber || "", quoteDate: value("quoteDate"), city: value("city"),
     companyTagline: value("companyTagline"), companyAddress: value("companyAddress"), website: value("website"),
-    customer: { name: value("customerName"), organization: value("customerOrganization"), address: value("customerAddress"), phone: value("customerPhone"), email: value("customerEmail") },
+    customer: { name: value("customerName"), organization: "", address: value("customerAddress"), phone: value("customerPhone"), email: value("customerEmail") },
     introduction: value("introduction"),
     items: Array.from(root.querySelectorAll<HTMLElement>("[data-quote-item]")).map(snapshotItem),
     vatIncluded: Boolean((form?.elements.namedItem("vatIncluded") as HTMLInputElement | null)?.checked),
@@ -949,7 +948,7 @@ if (root) {
     if (!form || !itemsRoot || !payload.items.length) return;
     setField("quoteNumber", payload.quoteNumber); setField("quoteDate", payload.quoteDate); setField("city", payload.city);
     setField("companyTagline", payload.companyTagline); setField("companyAddress", payload.companyAddress); setField("website", payload.website);
-    setField("customerName", payload.customer.name); setField("customerOrganization", payload.customer.organization); setField("customerAddress", payload.customer.address);
+    setField("customerName", payload.customer.organization || payload.customer.name); setField("customerAddress", payload.customer.address);
     setField("customerPhone", payload.customer.phone); setField("customerEmail", payload.customer.email); setField("introduction", payload.introduction);
     setField("delivery", payload.delivery); setField("payment", payload.payment); setField("validity", payload.validity); setField("additionalTerms", payload.additionalTerms);
     const vat = form.elements.namedItem("vatIncluded") as HTMLInputElement | null; if (vat) vat.checked = payload.vatIncluded;

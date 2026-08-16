@@ -38,7 +38,7 @@ const input = {
   quoteNumber: "1368/BG/2026",
   quoteDate: "2026-08-14",
   city: "Hà Nội",
-  customer: { name: "Nguyễn Văn An", organization: "PHÒNG KHÁM MINH TÂM", address: "Hà Nội", phone: "0909 123 456", email: "an@example.com" },
+  customer: { name: "PHÒNG KHÁM MINH TÂM", organization: "", address: "Hà Nội", phone: "0909 123 456", email: "an@example.com" },
   companyTagline: "Chuyên kinh doanh trang thiết bị y tế, hóa chất và vật tư tiêu hao.",
   companyAddress: "VPGD: Hà Nội | VPHCM: Quận 12, TP. Hồ Chí Minh",
   website: "thienlocgroup.com",

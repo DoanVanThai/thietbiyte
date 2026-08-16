@@ -112,14 +112,13 @@ const productSources = products.map((product) => {
             <header>
               <button class="quote-section-toggle" type="button" data-quote-accordion-toggle aria-expanded="true" aria-controls="quote-customer-panel">
                 <span class="quote-section-state" data-section-state>·</span>
-                <span><strong id="quote-customer-title">Khách hàng</strong><small data-section-summary>Thêm người liên hệ và đơn vị nhận báo giá</small></span>
+                <span><strong id="quote-customer-title">Khách hàng</strong><small data-section-summary>Thêm tên khách hàng nhận báo giá</small></span>
                 <i class="ph ph-caret-down" aria-hidden="true"></i>
               </button>
             </header>
             <div class="quote-section-panel" id="quote-customer-panel" data-quote-accordion-panel>
             <div class="quote-form-grid">
-              <label><span>Người liên hệ *</span><input name="customerName" placeholder="Nguyễn Văn An" minlength="2" required /></label>
-              <label><span>Đơn vị</span><input name="customerOrganization" placeholder="Phòng khám / Bệnh viện" /></label>
+              <label class="span-2"><span>Tên khách hàng *</span><input name="customerName" placeholder="Tên cá nhân / đơn vị" minlength="2" required /></label>
               <label><span>Điện thoại</span><input name="customerPhone" inputmode="tel" /></label>
               <label><span>Email</span><input name="customerEmail" type="email" /></label>
               <label class="span-2"><span>Địa chỉ</span><textarea name="customerAddress" rows="1" data-auto-grow></textarea></label>

@@ -75,6 +75,17 @@ test("new product editor starts clean and keeps checkbox controls compact", asyn
   assert.match(script, /priceVnd:quotePrice\?Number\(quotePrice\):undefined/);
 });
 
+test("product search initializes reliably and searches the real SKU", async () => {
+  const [page, script] = await Promise.all([
+    read("src/pages/admin/san-pham.astro"),
+    read("src/scripts/admin-products.ts"),
+  ]);
+  assert.match(script, /lifecycleRoot\.dataset\.productsInitialized/);
+  assert.match(script, /document\.addEventListener\("astro:page-load", initAdminProducts\);\s*initAdminProducts\(\);/);
+  assert.match(page, /data-search=\{`\$\{product\.name\} \$\{product\.model\} \$\{product\.sku\} \$\{product\.id\}`/);
+  assert.match(page, /SKU: \{product\.sku \|\| product\.id\.toUpperCase\(\)\}/);
+});
+
 test("product listing stays bounded at 50 rows for 10 through 10,000 records", async () => {
   for (const total of [10, 100, 1_000, 10_000]) {
     let query: Record<string, unknown> = {};

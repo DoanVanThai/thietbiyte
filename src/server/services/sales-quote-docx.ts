@@ -34,6 +34,9 @@ const pageHeight = 16_838;
 const margin = 760;
 const contentWidth = pageWidth - margin * 2;
 const columnWidths = [600, contentWidth - 2_600, 2_000];
+const bodyHalfPoints = 24;
+const bodyHeadingHalfPoints = 26;
+const secondaryHalfPoints = 20;
 const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 type PreparedQuoteImage = ResolvedQuoteImage & { data: Buffer; width: number; height: number };
 type PreparedQuoteItem = Omit<ResolvedQuoteItem, "images"> & { images: PreparedQuoteImage[] };
@@ -73,7 +76,7 @@ const thinBorders = (color = line) => ({
 const text = (copy: string, options: { bold?: boolean; italics?: boolean; underline?: boolean; size?: number } = {}) => new TextRun({
   text: clean(copy),
   font: "Times New Roman",
-  size: options.size ?? 19,
+  size: options.size ?? bodyHalfPoints,
   bold: options.bold,
   italics: options.italics,
   underline: options.underline ? { type: UnderlineType.SINGLE } : undefined,
@@ -84,7 +87,7 @@ const paragraph = (copy: string, options: { bold?: boolean; italics?: boolean; s
   alignment: options.alignment,
   border: options.border,
   indent: options.indent,
-  spacing: { before: options.before ?? 0, after: options.after ?? 80, line: options.line ?? 260 },
+  spacing: { before: options.before ?? 0, after: options.after ?? 80, line: options.line ?? 300 },
   children: [text(copy, options)],
 });
 
@@ -118,7 +121,7 @@ const imageParagraphs = (image: PreparedQuoteImage) => {
         transformation: { width: Math.max(1, Math.round(image.width * scale)), height: Math.max(1, Math.round(image.height * scale)) },
       })],
     }),
-    ...(image.caption ? [paragraph(image.caption, { italics: true, size: 16, after: 60, line: 220 })] : []),
+    ...(image.caption ? [paragraph(image.caption, { italics: true, size: secondaryHalfPoints, after: 60, line: 260 })] : []),
   ];
 };
 
@@ -144,11 +147,11 @@ const productContent = (item: PreparedQuoteItem) => {
     }
     const heading = copy === copy.toLocaleUpperCase("vi") && copy.length < 90;
     children.push(new Paragraph({
-      spacing: { after: index === 0 || heading ? 50 : 30, line: 250 },
+      spacing: { after: index === 0 || heading ? 60 : 40, line: 300 },
       children: value.runs.map((run) => new TextRun({
         text: run.text,
         font: "Times New Roman",
-        size: index === 0 ? 20 : 18,
+        size: index === 0 ? 27 : bodyHalfPoints,
         bold: run.bold,
         italics: !richText && index > 0 && heading,
         underline: run.underline ? { type: UnderlineType.SINGLE } : undefined,
@@ -173,7 +176,7 @@ const cell = (children: Paragraph[], width: number, options: { fill?: string; al
   children,
 });
 
-const headerParagraph = (copy: string) => paragraph(copy, { bold: true, size: 18, alignment: AlignmentType.CENTER, after: 0, line: 220 });
+const headerParagraph = (copy: string) => paragraph(copy, { bold: true, size: bodyHalfPoints, alignment: AlignmentType.CENTER, after: 0, line: 280 });
 
 export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: QuoteCompanyDetails, items: ResolvedQuoteItem[]) => {
   const preparedItems: PreparedQuoteItem[] = await Promise.all(items.map(async (item) => ({
@@ -190,7 +193,7 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
       cell(productContent(item), columnWidths[1], { align: VerticalAlignTable.TOP }),
       cell([
         paragraph(money(item.unitPrice), { bold: true, alignment: AlignmentType.CENTER, after: item.quantity > 1 ? 30 : 0 }),
-        ...(item.quantity > 1 ? [paragraph(`SL: ${item.quantity}`, { italics: true, size: 16, alignment: AlignmentType.CENTER, after: 0 })] : []),
+        ...(item.quantity > 1 ? [paragraph(`SL: ${item.quantity}`, { italics: true, size: secondaryHalfPoints, alignment: AlignmentType.CENTER, after: 0 })] : []),
       ], columnWidths[2], { align: VerticalAlignTable.TOP }),
     ],
   }));
@@ -210,8 +213,8 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
     styles: {
       default: {
         document: {
-          run: { font: "Times New Roman", size: 19, color: ink },
-          paragraph: { spacing: { after: 80, line: 260 } },
+          run: { font: "Times New Roman", size: bodyHalfPoints, color: ink },
+          paragraph: { spacing: { after: 80, line: 300 } },
         },
       },
     },
@@ -253,13 +256,12 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
         }),
         new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 16, color: primary, space: 4 } }, spacing: { after: 160 } }),
         paragraph("BẢNG BÁO GIÁ THIẾT BỊ Y TẾ", { bold: true, size: 34, alignment: AlignmentType.CENTER, after: 40, line: 300 }),
-        paragraph(`Số: ${input.quoteNumber}`, { bold: true, size: 21, alignment: AlignmentType.CENTER, after: 120 }),
-        paragraph(dateCopy(input.quoteDate, input.city), { italics: true, size: 19, alignment: AlignmentType.RIGHT, after: 120 }),
-        paragraph(`Kính gửi: ${clean(input.customer.organization || input.customer.name).toLocaleUpperCase("vi")}`, { bold: true, size: 20, after: 40 }),
-        ...(input.customer.name && input.customer.organization ? [paragraph(`Người liên hệ: ${input.customer.name}`, { size: 18, after: 20 })] : []),
-        ...(input.customer.address ? [paragraph(`Địa chỉ: ${input.customer.address}`, { size: 18, after: 20 })] : []),
-        ...((input.customer.phone || input.customer.email) ? [paragraph([input.customer.phone && `Điện thoại: ${input.customer.phone}`, input.customer.email && `Email: ${input.customer.email}`].filter(Boolean).join("  |  "), { size: 18, after: 60 })] : []),
-        paragraph(input.introduction, { italics: true, size: 18, after: 120, line: 260 }),
+        paragraph(`Số: ${input.quoteNumber}`, { bold: true, size: bodyHalfPoints, alignment: AlignmentType.CENTER, after: 120 }),
+        paragraph(dateCopy(input.quoteDate, input.city), { italics: true, size: bodyHalfPoints, alignment: AlignmentType.RIGHT, after: 120 }),
+        paragraph(`Kính gửi: ${clean(input.customer.organization || input.customer.name).toLocaleUpperCase("vi")}`, { bold: true, size: bodyHeadingHalfPoints, after: 40 }),
+        ...(input.customer.address ? [paragraph(`Địa chỉ: ${input.customer.address}`, { size: bodyHalfPoints, after: 20 })] : []),
+        ...((input.customer.phone || input.customer.email) ? [paragraph([input.customer.phone && `Điện thoại: ${input.customer.phone}`, input.customer.email && `Email: ${input.customer.email}`].filter(Boolean).join("  |  "), { size: bodyHalfPoints, after: 60 })] : []),
+        paragraph(input.introduction, { italics: true, size: bodyHalfPoints, after: 120, line: 300 }),
         new Table({
           width: { size: contentWidth, type: WidthType.DXA },
           columnWidths,
@@ -272,21 +274,21 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
             ] }),
             ...productRows,
             new TableRow({ children: [
-              cell([paragraph("TỔNG GIÁ TRỊ", { bold: true, size: 21, after: 0 })], columnWidths[0] + columnWidths[1], { fill: pale, columnSpan: 2 }),
-              cell([paragraph(`${money(total)} VNĐ`, { bold: true, size: 24, alignment: AlignmentType.RIGHT, after: 0 })], columnWidths[2], { fill: pale }),
+              cell([paragraph("TỔNG GIÁ TRỊ", { bold: true, size: bodyHeadingHalfPoints, after: 0 })], columnWidths[0] + columnWidths[1], { fill: pale, columnSpan: 2 }),
+              cell([paragraph(`${money(total)} VNĐ`, { bold: true, size: 28, alignment: AlignmentType.RIGHT, after: 0 })], columnWidths[2], { fill: pale }),
             ] }),
           ],
         }),
-        paragraph(`(Bằng chữ: ${numberToVietnameseMoney(total)}.)`, { italics: true, size: 19, after: 180, before: 60 }),
+        paragraph(`(Bằng chữ: ${numberToVietnameseMoney(total)}.)`, { italics: true, size: bodyHalfPoints, after: 180, before: 60 }),
         paragraph("ĐIỀU KHOẢN THƯƠNG MẠI", {
           bold: true,
           italics: true,
-          size: 21,
+          size: bodyHeadingHalfPoints,
           after: 55,
           border: { bottom: { style: BorderStyle.SINGLE, size: 10, color: ink, space: 1 } },
           indent: { right: contentWidth - 2_840 },
         }),
-        ...terms.map((term) => paragraph(term, { italics: true, size: 18, after: 45, line: 260 })),
+        ...terms.map((term) => paragraph(term, { italics: true, size: bodyHalfPoints, after: 55, line: 300 })),
         new Paragraph({ spacing: { after: 160 } }),
         new Table({
           width: { size: contentWidth, type: WidthType.DXA },
@@ -297,8 +299,8 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
             insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" }, insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
           },
           rows: [new TableRow({ children: [
-            cell([paragraph("ĐẠI DIỆN KHÁCH HÀNG", { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký và ghi rõ họ tên)", { italics: true, size: 16, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
-            cell([paragraph(company.name.toLocaleUpperCase("vi"), { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký tên, đóng dấu)", { italics: true, size: 16, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
+            cell([paragraph("ĐẠI DIỆN KHÁCH HÀNG", { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký và ghi rõ họ tên)", { italics: true, size: secondaryHalfPoints, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
+            cell([paragraph(company.name.toLocaleUpperCase("vi"), { bold: true, alignment: AlignmentType.CENTER, after: 40 }), paragraph("(Ký tên, đóng dấu)", { italics: true, size: secondaryHalfPoints, alignment: AlignmentType.CENTER, after: 0 })], contentWidth / 2, { align: VerticalAlignTable.TOP }),
           ] })],
         }),
       ],

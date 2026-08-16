@@ -4,6 +4,10 @@ export {};
 
 let productLifecycle: AbortController | undefined;
 const initAdminProducts = () => {
+const lifecycleRoot = document.querySelector<HTMLElement>("[data-products-list-view]");
+if (!lifecycleRoot) { productLifecycle?.abort(); productLifecycle = undefined; return; }
+if (lifecycleRoot.dataset.productsInitialized === "true") return;
+lifecycleRoot.dataset.productsInitialized = "true";
 productLifecycle?.abort();
 productLifecycle = new AbortController();
 const { signal } = productLifecycle;
@@ -883,3 +887,4 @@ document.querySelector<HTMLButtonElement>("[data-select-og]")?.addEventListener(
 };
 
 document.addEventListener("astro:page-load", initAdminProducts);
+initAdminProducts();
