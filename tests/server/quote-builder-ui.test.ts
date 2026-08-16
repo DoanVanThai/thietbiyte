@@ -81,7 +81,9 @@ test("quote builder adapts naturally from tablet to small mobile", async () => {
 
 test("mobile quote dialogs stay attached to the viewport on iOS Safari", async () => {
   const styles = await readFile(new URL("../../src/styles/admin-quote-pdf.css", import.meta.url), "utf8");
-  assert.match(styles, /\.quote-saved-dialog \{ position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh;/);
+  assert.match(styles, /\.quote-builder dialog:not\(\[open\]\) \{[\s\S]*?display: none !important;/);
+  assert.match(styles, /\.quote-saved-dialog \{ position: fixed; z-index: var\(--z-modal\); inset: 0; width: 100vw; max-width: none; height: 100dvh;/);
+  assert.match(styles, /\.quote-saved-dialog\[open\] \{ display: grid; \}/);
   assert.match(styles, /\.quote-product-picker,[\s\S]*\.quote-preview-dialog \{ position: fixed; inset: 0;/);
   assert.match(styles, /dialog\[open\]\) \.quote-mobile-bar \{ display: none; \}/);
 });
