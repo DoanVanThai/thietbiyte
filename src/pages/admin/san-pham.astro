@@ -86,7 +86,7 @@ const editorSections = [
       <h2 id="filters-title" class="sr-only">Lọc sản phẩm</h2>
       <div class="admin-filter-primary">
         <form class="admin-product-search-form" action="/admin/san-pham" method="get" role="search" data-product-search-form>
-          <label class="admin-search-field" for="admin-product-search"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Tìm sản phẩm</span><input id="admin-product-search" name="q" type="search" placeholder="Tên sản phẩm, model, SKU..." autocomplete="off" data-admin-search value={filters.search || ""} oninput="clearTimeout(Number(this.form.dataset.searchTimer||0));this.form.dataset.searchTimer=String(setTimeout(()=>this.form.requestSubmit(),280))" /></label>
+          <label class="admin-search-field" for="admin-product-search"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Tìm sản phẩm</span><input id="admin-product-search" name="q" type="search" placeholder="Tên sản phẩm, model, SKU..." autocomplete="off" data-admin-search value={filters.search || ""} /></label>
         </form>
         <select aria-label="Danh mục" data-filter="category"><option value="all">Tất cả danh mục</option>{categories.map((category) => <option value={category} selected={filters.category === category}>{category}</option>)}</select>
         <select aria-label="Thương hiệu" data-filter="brand"><option value="all">Tất cả thương hiệu</option>{brands.map((brand) => <option value={brand} selected={filters.brand === brand}>{brand}</option>)}</select>

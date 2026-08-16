@@ -61,6 +61,7 @@ const filterBadge = document.querySelector<HTMLElement>("[data-filter-count]");
 const tableEmpty = document.querySelector<HTMLElement>("[data-table-empty]");
 const table = document.querySelector<HTMLTableElement>(".admin-products-table");
 let serverFilterTimer = 0;
+let searchIsComposing = false;
 signal.addEventListener("abort", () => window.clearTimeout(serverFilterTimer), { once: true });
 const filterUrl = new URL(window.location.href);
 if (search) search.value = filterUrl.searchParams.get("q") || "";
@@ -98,12 +99,21 @@ const applyFilters = (requestServer = false, serverDelay = 280) => {
     window.clearTimeout(serverFilterTimer);
     serverFilterTimer = window.setTimeout(() => {
       url.searchParams.set("page", "1");
-      document.dispatchEvent(new CustomEvent("admin:navigate", { detail: `${url.pathname}${url.search}` }));
+      window.location.assign(`${url.pathname}${url.search}`);
     }, serverDelay);
   } else history.replaceState(history.state, "", url);
   syncSelectAll();
 };
 
+search?.addEventListener("compositionstart", () => { searchIsComposing = true; }, { signal });
+search?.addEventListener("compositionend", () => { searchIsComposing = false; applyFilters(true); }, { signal });
+search?.addEventListener("input", (event) => {
+  if (searchIsComposing || (event as InputEvent).isComposing) {
+    applyFilters();
+    return;
+  }
+  applyFilters(true);
+}, { signal });
 searchForm?.addEventListener("submit", (event) => { event.preventDefault(); applyFilters(true, 0); }, { signal });
 filters.forEach((filter) => filter.addEventListener("change", () => applyFilters(true), { signal }));
 featuredFilter?.addEventListener("change", () => applyFilters(true), { signal });
