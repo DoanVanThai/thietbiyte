@@ -47,6 +47,8 @@ test("quote builder V2 keeps long configuration and images in drawers", async ()
   assert.match(styles, /width: min\(720px, 60vw\)/);
   assert.match(styles, /\.quote-workspace-header \{/);
   assert.match(styles, /\.quote-mobile-bar \{/);
+  assert.match(styles, /\.quote-product-picker \{[\s\S]*height: min\(720px, calc\(100dvh - 28px\)\);[\s\S]*overflow: hidden;/);
+  assert.match(styles, /\.quote-picker-shell \{ height: 100%; min-height: 0;/);
 });
 
 test("quote builder formats descriptions and reopens saved quotes", async () => {

@@ -1620,8 +1620,13 @@
   color: var(--color-foreground);
 }
 
-.quote-product-picker { width: min(720px, calc(100% - 28px)); max-height: min(760px, calc(100dvh - 28px)); }
-.quote-picker-shell { min-height: min(650px, calc(100dvh - 28px)); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.quote-product-picker {
+  width: min(720px, calc(100% - 28px));
+  height: min(720px, calc(100dvh - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: hidden;
+}
+.quote-picker-shell { height: 100%; min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
 .quote-picker-shell > header,
 .quote-preview-shell > header,
 .quote-mobile-summary-shell > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--color-border); }
@@ -1645,7 +1650,7 @@
 .quote-picker-option > b { color: var(--color-muted-foreground); font-size: .7rem; font-weight: 600; }
 .quote-picker-option > b.needs-attention { color: oklch(.4 .095 70); }
 .quote-picker-empty { margin: 16px; color: var(--color-muted-foreground); font-size: .75rem; text-align: center; }
-.quote-picker-shell > footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--color-border); }
+.quote-picker-shell > footer { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--color-border); background: var(--color-surface); }
 .quote-picker-shell > footer > span { color: var(--color-muted-foreground); font-size: .7rem; }
 .quote-picker-shell > footer > div { display: flex; gap: 7px; }
 
@@ -1749,6 +1754,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], .quote-rich-editor[ar
   .quote-picker-shell > footer { align-items: stretch; flex-direction: column; }
   .quote-picker-shell > footer > div { display: grid; grid-template-columns: 1fr 1fr; }
   .quote-picker-shell > footer .button { width: 100%; }
+  .quote-product-picker { width: 100vw; height: 100dvh; max-height: none; border-radius: 0; }
   .quote-preview-dialog { width: 100vw; height: 100dvh; max-height: none; border-radius: 0; }
   .quote-toast { right: 12px; bottom: 76px; left: 12px; }
 }
