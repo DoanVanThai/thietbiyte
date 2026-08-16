@@ -23,6 +23,10 @@ const boldFont = assetFile("fonts", "TimesNewRoman-Bold.ttf");
 const italicFont = assetFile("fonts", "TimesNewRoman-Italic.ttf");
 const boldItalicFont = assetFile("fonts", "TimesNewRoman-BoldItalic.ttf");
 const companyLogo = assetFile("images", "tl-group-logo.png");
+const preparedCompanyLogo = sharp(companyLogo)
+  .trim({ background: { r: 255, g: 255, b: 255, alpha: 0 } })
+  .png({ compressionLevel: 8 })
+  .toBuffer();
 
 const prepareQuoteImage = async (image: NonNullable<ResolvedQuoteItem["images"]>[number]) => {
   const pathname = decodeURIComponent(image.url.split(/[?#]/, 1)[0] || "");
@@ -57,6 +61,11 @@ const clean = (value: string) => value
   .replace(/[ \t]+\n/g, "\n")
   .trim();
 
+const cleanInline = (value: string) => value
+  .replace(/[\u2010-\u2015\u2212]/g, "-")
+  .replace(/[•●▪✓✔]/g, "-")
+  .replace(/\u00a0/g, " ");
+
 const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
 const dateCopy = (isoDate: string, city: string) => {
@@ -64,21 +73,33 @@ const dateCopy = (isoDate: string, city: string) => {
   return `${city}, ngày ${day} tháng ${month} năm ${year}`;
 };
 
-const drawFirstPageHeader = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, company: QuoteCompanyDetails) => {
+const drawFirstPageHeader = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, company: QuoteCompanyDetails, logo: Buffer) => {
   const top = 30;
   const logoWidth = 126;
-  const logoHeight = 72;
+  const headerRowHeight = 66;
   const companyX = margin + logoWidth + 18;
   const companyWidth = contentWidth - logoWidth - 18;
-
-  doc.image(companyLogo, margin, top + 3, { fit: [logoWidth, logoHeight], align: "center", valign: "center" });
-  doc.fillColor(ink).font("Bold").fontSize(11.5).text(clean(company.name).toLocaleUpperCase("vi"), companyX, top + 2, { width: companyWidth, align: "center" });
-  doc.font("Italic").fontSize(9).text(clean(input.companyTagline), companyX, doc.y + 3, { width: companyWidth, align: "center" });
-  if (input.companyAddress) doc.fillColor(ink).font("Regular").fontSize(8.4).text(clean(input.companyAddress), companyX, doc.y + 4, { width: companyWidth, align: "center", lineGap: 1.5 });
   const contact = [company.hotline && `Hotline: ${company.hotline}`, company.email && `Email: ${company.email}`, input.website && `Website: ${input.website}`].filter(Boolean).join("  |  ");
-  if (contact) doc.fillColor(primary).font("Bold").fontSize(8.3).text(clean(contact), companyX, doc.y + 4, { width: companyWidth, align: "center" });
+  const companyLines = [
+    { copy: clean(company.name).toLocaleUpperCase("vi"), font: "Bold", size: 11.5, color: ink, gap: 3, lineGap: 0 },
+    { copy: clean(input.companyTagline), font: "Italic", size: 9, color: ink, gap: 3, lineGap: 0 },
+    input.companyAddress ? { copy: clean(input.companyAddress), font: "Regular", size: 8.4, color: ink, gap: 3, lineGap: 1.5 } : null,
+    contact ? { copy: clean(contact), font: "Bold", size: 8.3, color: primary, gap: 0, lineGap: 0 } : null,
+  ].filter((line): line is NonNullable<typeof line> => Boolean(line?.copy));
+  const measuredLines = companyLines.map((line) => {
+    doc.font(line.font).fontSize(line.size);
+    return { ...line, height: doc.heightOfString(line.copy, { width: companyWidth, align: "center", lineGap: line.lineGap }) };
+  });
+  const companyBlockHeight = measuredLines.reduce((height, line) => height + line.height + line.gap, 0);
+  let companyY = top + Math.max(0, (headerRowHeight - companyBlockHeight) / 2);
 
-  const dividerY = Math.max(116, doc.y + 10);
+  doc.image(logo, margin, top, { fit: [logoWidth, headerRowHeight], align: "center", valign: "center" });
+  measuredLines.forEach((line) => {
+    doc.fillColor(line.color).font(line.font).fontSize(line.size).text(line.copy, companyX, companyY, { width: companyWidth, align: "center", lineGap: line.lineGap });
+    companyY += line.height + line.gap;
+  });
+
+  const dividerY = top + headerRowHeight + 12;
   doc.strokeColor(primary).lineWidth(1.4).moveTo(margin, dividerY).lineTo(pageWidth - margin, dividerY).stroke();
   doc.strokeColor("#7AB6DF").lineWidth(0.5).moveTo(margin, dividerY + 3).lineTo(pageWidth - margin, dividerY + 3).stroke();
 
@@ -122,6 +143,20 @@ const paragraphStyle = (copy: string, paragraphIndex: number) => {
   if (heading) return { font: "BoldItalic", size: 9.2, lineGap: 1.2, indent: 0 };
   if (copy.startsWith("- ")) return { font: "Regular", size: 9, lineGap: 1.25, indent: 10 };
   return { font: "Regular", size: 9, lineGap: 1.25, indent: 0 };
+};
+
+const descriptionParagraphs = (item: ResolvedQuoteItem) => {
+  if (item.descriptionRich?.paragraphs?.length) {
+    return item.descriptionRich.paragraphs.map((paragraph) => ({
+      runs: paragraph.runs.map((run) => ({ ...run, text: cleanInline(run.text) })),
+      copy: cleanInline(paragraph.runs.map((run) => run.text).join("")).trim(),
+    }));
+  }
+  return clean(item.description).split("\n").map((copy, index) => {
+    const value = copy.trim();
+    const style = paragraphStyle(value, index);
+    return { copy: value, runs: value ? [{ text: value, bold: style.font.includes("Bold"), underline: false, color: "default" as const }] : [] };
+  });
 };
 
 const drawRowFrame = (doc: PDFKit.PDFDocument, top: number, bottom: number) => {
@@ -182,20 +217,28 @@ const drawProduct = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, item: R
     renderedImages.add(image.url);
   };
 
-  const paragraphs = clean(item.description).split("\n");
-  paragraphs.forEach((raw, paragraphIndex) => {
-    const copy = raw.trim();
+  const paragraphs = descriptionParagraphs(item);
+  paragraphs.forEach((paragraph, paragraphIndex) => {
+    const copy = paragraph.copy;
     if (!copy) {
       contentY += 5;
       return;
     }
-    const style = paragraphStyle(copy, paragraphIndex);
+    const style = item.descriptionRich?.paragraphs?.length
+      ? { font: "Regular", size: paragraphIndex === 0 ? 10.2 : 9, lineGap: 1.25, indent: copy.startsWith("- ") ? 10 : 0 }
+      : paragraphStyle(copy, paragraphIndex);
     doc.font(style.font).fontSize(style.size);
     const paragraphX = textX + style.indent;
     const paragraphWidth = textWidth - style.indent;
     const height = doc.heightOfString(copy, { width: paragraphWidth, lineGap: style.lineGap });
     if (contentY + height + 8 > footerTop) continueOnNextPage();
-    doc.fillColor(ink).font(style.font).fontSize(style.size).text(copy, paragraphX, contentY, { width: paragraphWidth, lineGap: style.lineGap, align: style.indent ? "left" : "justify" });
+    paragraph.runs.forEach((run, runIndex) => {
+      const font = run.bold ? (style.font.includes("Italic") ? "BoldItalic" : "Bold") : style.font.includes("Italic") ? "Italic" : "Regular";
+      const options = { width: paragraphWidth, lineGap: style.lineGap, align: "left" as const, continued: runIndex < paragraph.runs.length - 1, underline: Boolean(run.underline) };
+      doc.fillColor(run.color === "red" ? "#C62828" : ink).font(font).fontSize(style.size);
+      if (runIndex === 0) doc.text(run.text, paragraphX, contentY, options);
+      else doc.text(run.text, options);
+    });
     contentY = doc.y + (style.font.includes("Bold") ? 3 : 2);
     item.images?.filter((image) => !renderedImages.has(image.url) && clean(image.afterText) === copy).forEach(drawImage);
   });
@@ -256,10 +299,13 @@ const drawTerms = (doc: PDFKit.PDFDocument, input: SalesQuotePdfInput, grandTota
 };
 
 export async function createSalesQuotePdf(input: SalesQuotePdfInput, company: QuoteCompanyDetails, items: ResolvedQuoteItem[]) {
-  const preparedItems = await Promise.all(items.map(async (item) => ({
-    ...item,
-    images: (await Promise.all((item.images || []).map(prepareQuoteImage))).filter((image): image is NonNullable<typeof image> => Boolean(image)),
-  })));
+  const [logo, preparedItems] = await Promise.all([
+    preparedCompanyLogo,
+    Promise.all(items.map(async (item) => ({
+      ...item,
+      images: (await Promise.all((item.images || []).map(prepareQuoteImage))).filter((image): image is NonNullable<typeof image> => Boolean(image)),
+    }))),
+  ]);
   const doc = new PDFDocument({ size: "A4", margins: { top: margin, right: margin, bottom: 42, left: margin }, bufferPages: true, info: { Title: `Báo giá ${input.quoteNumber}`, Author: company.name, Subject: "Báo giá thiết bị y tế" } });
   doc.registerFont("Regular", regularFont);
   doc.registerFont("Bold", boldFont);
@@ -272,7 +318,7 @@ export async function createSalesQuotePdf(input: SalesQuotePdfInput, company: Qu
     doc.on("error", reject);
   });
 
-  drawFirstPageHeader(doc, input, company);
+  drawFirstPageHeader(doc, input, company, logo);
   drawTableHeader(doc);
   preparedItems.forEach((item, index) => drawProduct(doc, input, item, index));
   drawTerms(doc, input, preparedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0), company);

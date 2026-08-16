@@ -36,6 +36,12 @@ enum PriceMode {
   REQUEST_QUOTE
 }
 
+enum SalesQuoteStatus {
+  DRAFT
+  EXPORTED
+  ARCHIVED
+}
+
 enum CustomerType {
   INDIVIDUAL
   CLINIC
@@ -165,6 +171,8 @@ model User {
   followUps             FollowUp[]           @relation("FollowUpAssignee")
   internalNotes         InternalNote[]       @relation("InternalNoteAuthor")
   notificationEvents    NotificationOutbox[] @relation("NotificationRecipient")
+  salesQuotes           SalesQuote[]         @relation("SalesQuoteCreator")
+  salesQuoteRevisions   SalesQuoteRevision[] @relation("SalesQuoteRevisionCreator")
 
   @@index([status])
 }
@@ -276,6 +284,43 @@ model Quote {
   user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@index([userId, createdAt])
+}
+
+model SalesQuote {
+  id                   String               @id @default(cuid())
+  quoteNumber          String               @unique
+  quoteDate            DateTime             @db.Date
+  customerName         String
+  customerOrganization String?
+  total                Decimal              @db.Decimal(15, 2)
+  status               SalesQuoteStatus     @default(DRAFT)
+  payload              Json
+  version              Int                  @default(1)
+  createdById          String?
+  lastExportedAt       DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  createdBy            User?                @relation("SalesQuoteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  revisions            SalesQuoteRevision[]
+
+  @@index([updatedAt])
+  @@index([status, updatedAt])
+  @@index([createdById, updatedAt])
+}
+
+model SalesQuoteRevision {
+  id           String     @id @default(cuid())
+  salesQuoteId String
+  version      Int
+  payload      Json
+  createdById  String?
+  createdAt    DateTime   @default(now())
+  salesQuote   SalesQuote @relation(fields: [salesQuoteId], references: [id], onDelete: Cascade)
+  createdBy    User?      @relation("SalesQuoteRevisionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([salesQuoteId, version])
+  @@index([salesQuoteId, createdAt])
+  @@index([createdById, createdAt])
 }
 
 model Document {
@@ -418,16 +463,16 @@ model ProductSlugHistory {
 }
 
 model ProductImage {
-  id        String  @id @default(cuid())
-  productId String
-  url       String
-  alt       String
+  id             String  @id @default(cuid())
+  productId      String
+  url            String
+  alt            String
   quoteEnabled   Boolean @default(false)
   quoteCaption   String?
   quoteAfterText String?
-  sortOrder Int     @default(0)
-  isCover   Boolean @default(false)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sortOrder      Int     @default(0)
+  isCover        Boolean @default(false)
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId, sortOrder])
   @@index([productId, isCover])
@@ -450,7 +495,7 @@ model ProductConfiguration {
   groupName   String
   name        String
   description String?
-  imageUrl     String?
+  imageUrl    String?
   quantity    Int     @default(1)
   sortOrder   Int     @default(0)
   product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)

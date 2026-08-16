@@ -23,3 +23,11 @@ test("category supports parent and child hierarchy", () => {
   assert.match(schema, /parentId\s+String\?/);
   assert.match(schema, /children\s+Category\[\]/);
 });
+
+test("sales quotes keep editable snapshots and immutable revisions", () => {
+  assert.match(schema, /model SalesQuote \{/);
+  assert.match(schema, /payload\s+Json/);
+  assert.match(schema, /version\s+Int\s+@default\(1\)/);
+  assert.match(schema, /model SalesQuoteRevision \{/);
+  assert.match(schema, /@@unique\(\[salesQuoteId, version\]\)/);
+});

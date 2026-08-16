@@ -22,7 +22,7 @@ const productSources = products.map((product) => {
     .filter((item) => item.imageUrl)
     .map((item) => ({ url: item.imageUrl!, caption: item.name, afterText: `- ${item.name}${item.detail ? `: ${item.detail}` : ""}` })));
   const images = [...new Map([...mediaImages, ...configurationImages].map((image) => [`${image.url}\u0000${image.afterText}`, image])).values()];
-  return { id: product.id, name: product.name, model: product.model, price: product.priceVnd || 0, description: buildProductQuoteDescription(product), images };
+  return { id: product.id, name: product.name, sku: product.sku, model: product.model, brand: product.brand, origin: product.origin, manufacturingYear: product.manufacturingYear, warranty: product.warranty, price: product.priceVnd || 0, description: buildProductQuoteDescription(product), images };
 });
 ---
 
@@ -35,16 +35,30 @@ const productSources = products.map((product) => {
         <h1 id="quote-builder-title">Tạo báo giá thiết bị</h1>
         <p>Thông tin kỹ thuật và giá được lấy từ sản phẩm. Bạn có thể chỉnh lại trước khi tải PDF hoặc Word gửi khách hàng.</p>
       </div>
-      <a class="button button-outline" href="/admin/san-pham"><i class="ph ph-package" aria-hidden="true"></i>Quản lý sản phẩm</a>
+      <div class="quote-page-actions">
+        <a class="button button-outline" href="/admin/bao-gia"><i class="ph ph-plus" aria-hidden="true"></i>Báo giá mới</a>
+        <button class="button button-outline" type="button" data-toggle-saved-quotes aria-expanded="false"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i>Báo giá đã lưu</button>
+        <a class="button button-outline" href="/admin/san-pham"><i class="ph ph-package" aria-hidden="true"></i>Quản lý sản phẩm</a>
+      </div>
     </header>
 
+    <section class="quote-saved-panel" data-saved-quotes-panel hidden aria-labelledby="saved-quotes-title">
+      <header>
+        <div><h2 id="saved-quotes-title">Báo giá đã lưu</h2><p>Mở lại bản trước đây để sửa tiếp. Mỗi lần cập nhật được lưu thành một phiên bản.</p></div>
+        <button class="icon-action" type="button" data-close-saved-quotes aria-label="Đóng danh sách"><i class="ph ph-x" aria-hidden="true"></i></button>
+      </header>
+      <label class="quote-saved-search"><span class="sr-only">Tìm báo giá đã lưu</span><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input type="search" placeholder="Tìm theo số báo giá hoặc khách hàng..." data-saved-quote-search /></label>
+      <div class="quote-saved-list" data-saved-quotes-list></div>
+      <p class="quote-saved-empty" data-saved-quotes-empty hidden>Chưa có bản báo giá đã lưu.</p>
+    </section>
+
     {selectedProduct ? (
-      <form data-quote-form>
+      <form data-quote-form data-saved-quote-id="">
         <div class="quote-builder-main">
           <section class="quote-form-section" aria-labelledby="quote-document-title">
-            <header><div><h2 id="quote-document-title">Thông tin báo giá</h2><p>Số báo giá có thể sửa theo quy ước nội bộ.</p></div></header>
+            <header><div><h2 id="quote-document-title">Thông tin báo giá</h2><p>Số báo giá có thể sửa hoặc để trống để dùng số gợi ý tự động.</p></div></header>
             <div class="quote-form-grid">
-              <label><span>Số báo giá</span><input name="quoteNumber" value={quoteNumber} required maxlength="80" /></label>
+              <label><span>Số báo giá</span><input name="quoteNumber" value={quoteNumber} maxlength="80" placeholder="Tự động nếu để trống" data-default-quote-number={quoteNumber} /></label>
               <label><span>Ngày báo giá</span><input name="quoteDate" type="date" value={quoteDate} required /></label>
               <label><span>Địa điểm lập</span><input name="city" value="Hà Nội" required /></label>
               <label><span>Website</span><input name="website" value="thienlocgroup.com" /></label>
@@ -80,7 +94,18 @@ const productSources = products.map((product) => {
                   <label><span>Số lượng</span><input name="quantity" type="number" min="1" max="999" value="1" required /></label>
                   <label><span>Đơn giá (VNĐ)</span><input name="unitPrice" type="number" min="0" step="1000" value={selectedProduct.priceVnd || 0} required inputmode="numeric" /></label>
                   <div class="quote-inline-images span-2" data-quote-images></div>
-                  <label class="span-2"><span>Mô tả và cấu hình</span><textarea name="description" rows="18" required data-quote-description>{buildProductQuoteDescription(selectedProduct)}</textarea></label>
+                  <div class="span-2 quote-rich-field">
+                    <div class="quote-rich-label"><span>Mô tả và cấu hình <b>· Bắt buộc</b></span><small>Chọn đoạn chữ rồi dùng thanh công cụ. Định dạng được giữ nguyên khi xuất PDF và Word.</small></div>
+                    <div class="quote-rich-toolbar" role="toolbar" aria-label="Định dạng mô tả">
+                      <button type="button" data-rich-command="bold" aria-label="In đậm" title="In đậm"><strong>B</strong></button>
+                      <button type="button" data-rich-command="underline" aria-label="Gạch chân" title="Gạch chân"><span class="quote-toolbar-underline">U</span></button>
+                      <button type="button" data-rich-command="red" aria-label="Chữ màu đỏ" title="Chữ màu đỏ"><span class="quote-toolbar-red">A</span></button>
+                      <span aria-hidden="true"></span>
+                      <button type="button" data-rich-command="clear" aria-label="Xóa định dạng" title="Xóa định dạng"><i class="ph ph-eraser" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="quote-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Mô tả và cấu hình sản phẩm" data-quote-description-editor></div>
+                    <textarea name="description" data-quote-description hidden>{buildProductQuoteDescription(selectedProduct)}</textarea>
+                  </div>
                 </div>
               </article>
             </div>
@@ -110,6 +135,11 @@ const productSources = products.map((product) => {
             </dl>
           </section>
           <p class="quote-builder-feedback" data-quote-feedback role="status" aria-live="polite"></p>
+          <button class="button button-outline button-lg quote-save-button" type="button" data-save-quote>
+            <i class="ph ph-floppy-disk" aria-hidden="true"></i>
+            <span data-save-quote-label>Lưu bản báo giá</span>
+          </button>
+          <p class="quote-saved-current" data-saved-quote-current hidden></p>
           <div class="quote-export-actions">
             <button class="button button-primary button-lg" type="submit" value="pdf" data-quote-download data-export-format="pdf">
               <i class="ph ph-file-pdf" aria-hidden="true" data-quote-download-icon></i>
@@ -128,6 +158,28 @@ const productSources = products.map((product) => {
     ) : (
       <div class="quote-builder-empty"><i class="ph ph-package" aria-hidden="true"></i><h2>Chưa có sản phẩm</h2><p>Hãy tạo sản phẩm trước khi lập báo giá.</p><a class="button button-primary" href="/admin/san-pham?view=editor&id=new">Thêm sản phẩm</a></div>
     )}
+
+    <dialog class="quote-file-name-dialog" data-quote-file-dialog aria-labelledby="quote-file-dialog-title">
+      <form method="dialog" data-quote-file-form>
+        <header>
+          <span class="quote-file-dialog-icon"><i class="ph ph-file-arrow-down" aria-hidden="true"></i></span>
+          <div><h2 id="quote-file-dialog-title" data-quote-file-dialog-title>Tên file xuất</h2><p>Kiểm tra hoặc sửa tên trước khi tải xuống.</p></div>
+          <button class="icon-action" type="submit" value="cancel" formnovalidate aria-label="Đóng"><i class="ph ph-x" aria-hidden="true"></i></button>
+        </header>
+        <div class="quote-file-dialog-body">
+          <label for="quote-export-file-name">Tên file</label>
+          <div class="quote-file-name-control">
+            <input id="quote-export-file-name" type="text" required maxlength="180" autocomplete="off" data-quote-file-name />
+            <span data-quote-file-extension>.pdf</span>
+          </div>
+          <small>Đuôi file được giữ cố định theo định dạng bạn đã chọn.</small>
+        </div>
+        <footer>
+          <button class="button button-outline" type="submit" value="cancel" formnovalidate>Hủy</button>
+          <button class="button button-primary" type="submit" value="confirm"><i class="ph ph-download-simple" aria-hidden="true"></i><span data-quote-file-confirm>OK, tải file</span></button>
+        </footer>
+      </form>
+    </dialog>
   </section>
   <script>import "@/scripts/admin-quote-pdf";</script>
 </AdminLayout>

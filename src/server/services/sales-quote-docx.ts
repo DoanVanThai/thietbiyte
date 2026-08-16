@@ -12,6 +12,7 @@ import {
   TableCell,
   TableRow,
   TextRun,
+  UnderlineType,
   VerticalAlignTable,
   WidthType,
 } from "docx";
@@ -55,6 +56,11 @@ const clean = (value: string) => value
   .replace(/[ \t]+\n/g, "\n")
   .trim();
 
+const cleanInline = (value: string) => value
+  .replace(/[\u2010-\u2015\u2212]/g, "-")
+  .replace(/[•●▪✓✔]/g, "-")
+  .replace(/\u00a0/g, " ");
+
 const thinBorders = (color = line) => ({
   top: { style: BorderStyle.SINGLE, size: 5, color },
   bottom: { style: BorderStyle.SINGLE, size: 5, color },
@@ -64,12 +70,13 @@ const thinBorders = (color = line) => ({
   insideVertical: { style: BorderStyle.SINGLE, size: 5, color },
 });
 
-const text = (copy: string, options: { bold?: boolean; italics?: boolean; size?: number; color?: string } = {}) => new TextRun({
+const text = (copy: string, options: { bold?: boolean; italics?: boolean; underline?: boolean; size?: number; color?: string } = {}) => new TextRun({
   text: clean(copy),
   font: "Times New Roman",
   size: options.size ?? 19,
   bold: options.bold,
   italics: options.italics,
+  underline: options.underline ? { type: UnderlineType.SINGLE } : undefined,
   color: options.color ?? ink,
 });
 
@@ -116,19 +123,35 @@ const imageParagraphs = (image: PreparedQuoteImage) => {
 const productContent = (item: PreparedQuoteItem) => {
   const rendered = new Set<string>();
   const children: Paragraph[] = [];
-  clean(item.description).split("\n").forEach((raw, index) => {
-    const copy = raw.trim();
+  const richText = item.descriptionRich;
+  const paragraphs = richText?.paragraphs?.length
+    ? richText.paragraphs.map((value) => ({
+      copy: cleanInline(value.runs.map((run) => run.text).join("")).trim(),
+      runs: value.runs.map((run) => ({ ...run, text: cleanInline(run.text) })),
+    }))
+    : clean(item.description).split("\n").map((copy, index) => {
+      const value = copy.trim();
+      const heading = value === value.toLocaleUpperCase("vi") && value.length < 90;
+      return { copy: value, runs: value ? [{ text: value, bold: index === 0 || heading, underline: false, color: "default" as const }] : [] };
+    });
+  paragraphs.forEach((value, index) => {
+    const copy = value.copy;
     if (!copy) {
       children.push(new Paragraph({ spacing: { after: 40 } }));
       return;
     }
     const heading = copy === copy.toLocaleUpperCase("vi") && copy.length < 90;
-    children.push(paragraph(copy, {
-      bold: index === 0 || heading,
-      italics: index > 0 && heading,
-      size: index === 0 ? 20 : 18,
-      after: index === 0 || heading ? 50 : 30,
-      line: 250,
+    children.push(new Paragraph({
+      spacing: { after: index === 0 || heading ? 50 : 30, line: 250 },
+      children: value.runs.map((run) => new TextRun({
+        text: run.text,
+        font: "Times New Roman",
+        size: index === 0 ? 20 : 18,
+        bold: run.bold,
+        italics: !richText && index > 0 && heading,
+        underline: run.underline ? { type: UnderlineType.SINGLE } : undefined,
+        color: run.color === "red" ? "C62828" : ink,
+      })),
     }));
     item.images.filter((image) => !rendered.has(image.url) && clean(image.afterText) === copy).forEach((image) => {
       children.push(...imageParagraphs(image));

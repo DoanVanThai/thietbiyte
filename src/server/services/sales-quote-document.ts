@@ -92,14 +92,15 @@ export function buildProductQuoteDescription(product: CmsProduct) {
 
 export const resolveQuoteItems = async (input: SalesQuotePdfInput): Promise<ResolvedQuoteItem[] | null> => {
   const products = await Promise.all(input.items.map((item) => productService.getAdminProduct(item.productId)));
-  if (products.some((product) => !product)) return null;
+  if (products.some((product, index) => !product && !input.items[index]?.productSnapshot)) return null;
 
   return input.items.map((item, index) => {
-    const product = products[index]!;
-    const mediaImages = (product.detail?.gallery || [])
+    const product = products[index];
+    const snapshot = item.productSnapshot;
+    const mediaImages = (product?.detail?.gallery || [])
       .filter((media) => media.type === "image" && media.quoteEnabled && media.src)
       .map((media) => ({ url: media.src, caption: media.quoteCaption || media.alt || "Ảnh minh họa", afterText: media.quoteAfterText || "" }));
-    const configurationImages = (product.detail?.configurations || []).flatMap((group) => group.items
+    const configurationImages = (product?.detail?.configurations || []).flatMap((group) => group.items
       .filter((configuration) => configuration.imageUrl)
       .map((configuration) => ({
         url: configuration.imageUrl!,
@@ -115,8 +116,8 @@ export const resolveQuoteItems = async (input: SalesQuotePdfInput): Promise<Reso
     const seenImages = new Set<string>();
     const selectedImages = requestedImages.flatMap((requested) => {
       const configured = configuredByUrl.get(requested.url);
-      const quoteUpload = /^\/uploads\/[a-zA-Z0-9][a-zA-Z0-9._-]*\.(?:png|jpe?g|webp)$/i.test(requested.url);
-      if (!configured && !quoteUpload) return [];
+      const safeQuoteAsset = /^\/(?:uploads|images)\/[a-zA-Z0-9][a-zA-Z0-9._/-]*\.(?:png|jpe?g|webp)$/i.test(requested.url) && !requested.url.includes("..");
+      if (!configured && !safeQuoteAsset) return [];
       const key = `${requested.url}\u0000${requested.afterText || configured?.afterText || ""}`;
       if (seenImages.has(key)) return [];
       seenImages.add(key);
@@ -128,14 +129,14 @@ export const resolveQuoteItems = async (input: SalesQuotePdfInput): Promise<Reso
     });
     return {
       ...item,
-      description: item.description || buildProductQuoteDescription(product),
-      name: product.name,
-      sku: product.sku,
-      model: product.model,
-      brand: product.brand,
-      origin: product.origin,
-      manufacturingYear: product.manufacturingYear,
-      warranty: product.warranty,
+      description: item.description || (product ? buildProductQuoteDescription(product) : ""),
+      name: snapshot ? snapshot.name : product!.name,
+      sku: snapshot ? snapshot.sku : product!.sku,
+      model: snapshot ? snapshot.model : product!.model,
+      brand: snapshot ? snapshot.brand : product!.brand,
+      origin: snapshot ? snapshot.origin : product!.origin,
+      manufacturingYear: snapshot ? snapshot.manufacturingYear : product!.manufacturingYear,
+      warranty: snapshot ? snapshot.warranty : product!.warranty,
       images: selectedImages,
     };
   });

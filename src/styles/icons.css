@@ -286,6 +286,10 @@
   content: "\e218";
 }
 
+.ph.ph-eraser:before {
+  content: "\e21e";
+}
+
 .ph.ph-export:before {
   content: "\eaf0";
 }
@@ -300,6 +304,10 @@
 
 .ph.ph-file:before {
   content: "\e230";
+}
+
+.ph.ph-file-arrow-down:before {
+  content: "\e232";
 }
 
 .ph.ph-file-dashed:before {
@@ -656,6 +664,10 @@
 
 .ph.ph-text-h-two:before {
   content: "\e6be";
+}
+
+.ph.ph-textbox:before {
+  content: "\eb0a";
 }
 
 .ph.ph-tooth:before {

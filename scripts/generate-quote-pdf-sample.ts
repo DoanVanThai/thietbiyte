@@ -8,6 +8,7 @@ const description = [
   "Hãng sản xuất: CHISON",
   "Xuất xứ: Trung Quốc - Công nghệ Đức",
   "Máy mới 100%, năm sản xuất 2026 trở về sau, đầy đủ hồ sơ nguồn gốc.",
+  "BẢO HÀNH 24 THÁNG",
   "",
   "CẤU HÌNH MÁY CHÍNH",
   "- Máy chính SonoPort 8",
@@ -21,6 +22,18 @@ const description = [
   ...Array.from({ length: 45 }, (_, index) => `- Tính năng ${index + 1}: Nội dung mô tả kỹ thuật chi tiết phục vụ tư vấn cấu hình, vận hành và đánh giá thiết bị tại cơ sở y tế.`),
 ].join("\n");
 
+const descriptionRich = {
+  version: 1 as const,
+  paragraphs: description.split("\n").map((line, index) => ({
+    runs: line ? [{
+      text: line,
+      bold: index === 0 || line === line.toLocaleUpperCase("vi"),
+      underline: line.startsWith("CẤU HÌNH") || line.startsWith("TÍNH NĂNG"),
+      color: line.startsWith("BẢO HÀNH") ? "red" as const : "default" as const,
+    }] : [],
+  })),
+};
+
 const input = {
   quoteNumber: "1368/BG/2026",
   quoteDate: "2026-08-14",
@@ -30,7 +43,7 @@ const input = {
   companyAddress: "VPGD: Hà Nội | VPHCM: Quận 12, TP. Hồ Chí Minh",
   website: "thienlocgroup.com",
   introduction: "THIÊN LỘC GROUP xin hân hạnh gửi đến Quý khách bảng báo giá thiết bị với cấu hình chi tiết như sau:",
-  items: [{ productId: "sample", quantity: 1, unitPrice: 430_000_000, description, images: [{ url: "/images/project-handover-placeholder.webp", caption: "Màn hình độ phân giải cao 23,8 inch", afterText: "- Màn hình độ phân giải cao 23,8 inch" }] }],
+  items: [{ productId: "sample", quantity: 1, unitPrice: 430_000_000, description, descriptionRich, images: [{ url: "/images/project-handover-placeholder.webp", caption: "Màn hình độ phân giải cao 23,8 inch", afterText: "- Màn hình độ phân giải cao 23,8 inch" }] }],
   vatIncluded: true,
   delivery: "Vận chuyển, lắp đặt tại nơi sử dụng; thời gian giao hàng từ 1 đến 8 tuần kể từ khi ký hợp đồng và nhận đặt cọc.",
   payment: "Đặt cọc 50%; giá trị còn lại thanh toán sau khi hai bên ký biên bản bàn giao máy.",
