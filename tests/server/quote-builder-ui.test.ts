@@ -28,9 +28,10 @@ test("quote builder exposes purposeful loading and entry states", async () => {
 });
 
 test("quote builder formats descriptions and reopens saved quotes", async () => {
-  const [page, script] = await Promise.all([
+  const [page, script, styles] = await Promise.all([
     readFile(new URL("../../src/pages/admin/bao-gia.astro", import.meta.url), "utf8"),
     readFile(new URL("../../src/scripts/admin-quote-pdf.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../src/styles/admin-quote-pdf.css", import.meta.url), "utf8"),
   ]);
   assert.match(page, /data-rich-command="bold"/);
   assert.match(page, /data-rich-command="underline"/);
@@ -39,6 +40,7 @@ test("quote builder formats descriptions and reopens saved quotes", async () => 
   assert.match(script, /descriptionRich:/);
   assert.match(script, /\/api\/admin\/sales-quotes/);
   assert.match(script, /openSavedQuote/);
+  assert.match(styles, /\.quote-file-name-dialog > form \{[\s\S]*display: block;/);
 });
 
 test("quote export accepts an optional quote number and confirms the download name", async () => {
@@ -54,4 +56,5 @@ test("quote export accepts an optional quote number and confirms the download na
   assert.match(script, /chosenFileName/);
   assert.match(script, /download\.download = `\$\{chosenFileName\}\.\$\{extension\}`/);
   assert.match(styles, /\.quote-file-name-dialog/);
+  assert.match(styles, /\.quote-save-button\s*\{\s*width: calc\(100% - var\(--space-10\)\);\s*margin: 0 var\(--space-5\) var\(--space-2\);/);
 });
