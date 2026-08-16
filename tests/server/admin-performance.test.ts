@@ -61,6 +61,9 @@ test("new product editor starts clean and keeps checkbox controls compact", asyn
     read("src/scripts/admin-products.ts"),
   ]);
   assert.match(page, /const editorProduct = isCreating \? blankProduct/);
+  assert.match(page, /requestedProduct \|\| catalogProducts\[0\] \|\| blankProduct/);
+  assert.match(page, /hidden=\{catalogProducts\.length === 0\}/);
+  assert.match(page, /data-table-empty hidden=\{catalogProducts\.length > 0\}/);
   assert.match(page, /gallery: \[\], features: \[\], configurations: \[\]/);
   assert.match(page, /value=\{isCreating \? "" : editorProduct\.sku\}/);
   assert.match(styles, /input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\):not\(\[type="file"\]\)/);

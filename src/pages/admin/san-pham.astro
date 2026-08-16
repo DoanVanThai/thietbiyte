@@ -47,7 +47,7 @@ const blankProduct: CmsProduct = {
   publishStatus: "draft", createdOrder: Math.floor(Date.now() / 1000),
   detail: { gallery: [], features: [], configurations: [], specificationGroups: [], documents: [] },
 };
-const editorProduct = isCreating ? blankProduct : requestedProduct || catalogProducts[0];
+const editorProduct = isCreating ? blankProduct : requestedProduct || catalogProducts[0] || blankProduct;
 const serializedProducts = isCreating
   ? [blankProduct, ...catalogProducts]
   : requestedProduct && !catalogProducts.some((product) => product.id === requestedProduct.id)
@@ -118,7 +118,7 @@ const editorSections = [
     </div>
 
     <div class="admin-products-table-wrap">
-      <table class="admin-products-table">
+      <table class="admin-products-table" hidden={catalogProducts.length === 0}>
         <caption class="sr-only">Danh sách sản phẩm</caption>
         <thead><tr>
           <th class="admin-select-column" scope="col"><input type="checkbox" data-select-all aria-label="Chọn tất cả sản phẩm đang hiển thị" /></th>
@@ -146,7 +146,7 @@ const editorSections = [
           })}
         </tbody>
       </table>
-      <div class="admin-table-empty" data-table-empty hidden><i class="ph ph-magnifying-glass" aria-hidden="true"></i><h2>Không tìm thấy sản phẩm</h2><p>Thử thay đổi từ khóa hoặc đặt lại bộ lọc.</p><button class="button button-outline" type="button" data-clear-filters>Đặt lại bộ lọc</button></div>
+      <div class="admin-table-empty" data-table-empty hidden={catalogProducts.length > 0}><i class="ph ph-magnifying-glass" aria-hidden="true"></i><h2>Không tìm thấy sản phẩm</h2><p>Thử thay đổi từ khóa hoặc đặt lại bộ lọc.</p><button class="button button-outline" type="button" data-clear-filters>Đặt lại bộ lọc</button></div>
     </div>
 
     <footer class="admin-pagination">
