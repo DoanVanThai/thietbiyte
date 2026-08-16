@@ -10,6 +10,7 @@
 .admin-filter-region { border-block: 1px solid var(--color-border); background: var(--color-surface); }
 .admin-filter-primary, .admin-filter-secondary { display: flex; align-items: center; gap: var(--space-2); padding-block: var(--space-3); }
 .admin-filter-secondary { border-top: 1px solid var(--color-border); }
+.admin-product-search-form { display: flex; flex: 0 1 auto; align-items: center; gap: var(--space-2); }
 .admin-search-field { position: relative; width: min(360px, 34vw); }
 .admin-search-field > i { position: absolute; top: 50%; left: 12px; color: var(--color-muted-foreground); transform: translateY(-50%); }
 .admin-search-field input { width: 100%; min-height: 42px; padding: 8px 12px 8px 38px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-foreground); }
@@ -355,7 +356,8 @@
 
 @media (max-width: 1280px) {
   .admin-filter-primary { flex-wrap: wrap; }
-  .admin-search-field { width: min(100%, 420px); flex: 1 1 300px; }
+  .admin-product-search-form { flex: 1 1 420px; }
+  .admin-search-field { width: auto; flex: 1 1 300px; }
   .admin-editor-layout { grid-template-columns: 176px minmax(0, 1fr); gap: var(--space-5); }
   .admin-editor-header { margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-6); padding-inline: var(--space-6); }
   .admin-editor-title h2 { max-width: 360px; }
@@ -373,6 +375,7 @@
 
 @media (max-width: 760px) {
   .admin-products-view, .admin-editor-view { --admin-products-topbar-height: 58px; }
+  .admin-product-search-form { width: 100%; flex-basis: 100%; }
   .admin-page-header { align-items: stretch; flex-direction: column; gap: var(--space-4); }
   .admin-page-header .button { width: 100%; }
   .admin-page-actions { display: grid; grid-template-columns: 1fr 1fr; }

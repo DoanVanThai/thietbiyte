@@ -52,6 +52,7 @@ if (listView && editorView) { listView.hidden = editorActive; editorView.hidden 
 // Products table and filters.
 const rows = [...document.querySelectorAll<HTMLTableRowElement>("[data-product-row]")];
 const search = document.querySelector<HTMLInputElement>("[data-admin-search]");
+const searchForm = document.querySelector<HTMLFormElement>("[data-product-search-form]");
 const filters = [...document.querySelectorAll<HTMLSelectElement>("select[data-filter]")];
 const featuredFilter = document.querySelector<HTMLInputElement>("[data-filter-featured]");
 const resultCount = document.querySelector<HTMLElement>("[data-result-count]");
@@ -60,6 +61,7 @@ const filterBadge = document.querySelector<HTMLElement>("[data-filter-count]");
 const tableEmpty = document.querySelector<HTMLElement>("[data-table-empty]");
 const table = document.querySelector<HTMLTableElement>(".admin-products-table");
 let serverFilterTimer = 0;
+signal.addEventListener("abort", () => window.clearTimeout(serverFilterTimer), { once: true });
 const filterUrl = new URL(window.location.href);
 if (search) search.value = filterUrl.searchParams.get("q") || "";
 filters.forEach((filter) => { filter.value = filterUrl.searchParams.get(filter.dataset.filter || "") || "all"; });
@@ -92,20 +94,20 @@ const applyFilters = (requestServer = false) => {
   if (search?.value.trim()) url.searchParams.set("q", search.value.trim()); else url.searchParams.delete("q");
   filters.forEach((filter) => { const key = filter.dataset.filter || ""; if (!key) return; if (filter.value !== "all") url.searchParams.set(key, filter.value); else url.searchParams.delete(key); });
   if (featuredFilter?.checked) url.searchParams.set("featured", "1"); else url.searchParams.delete("featured");
-  history.replaceState(history.state, "", url);
   if (requestServer && !editorActive) {
     window.clearTimeout(serverFilterTimer);
     serverFilterTimer = window.setTimeout(() => {
       url.searchParams.set("page", "1");
       document.dispatchEvent(new CustomEvent("admin:navigate", { detail: `${url.pathname}${url.search}` }));
     }, 280);
-  }
+  } else history.replaceState(history.state, "", url);
   syncSelectAll();
 };
 
-search?.addEventListener("input", () => applyFilters(true));
-filters.forEach((filter) => filter.addEventListener("change", () => applyFilters(true)));
-featuredFilter?.addEventListener("change", () => applyFilters(true));
+search?.addEventListener("input", () => applyFilters(true), { signal });
+searchForm?.addEventListener("submit", (event) => { event.preventDefault(); applyFilters(true); }, { signal });
+filters.forEach((filter) => filter.addEventListener("change", () => applyFilters(true), { signal }));
+featuredFilter?.addEventListener("change", () => applyFilters(true), { signal });
 
 const resetFilters = () => {
   if (search) search.value = "";
@@ -113,7 +115,7 @@ const resetFilters = () => {
   if (featuredFilter) featuredFilter.checked = false;
   applyFilters(true);
 };
-document.querySelectorAll<HTMLButtonElement>("[data-clear-filters]").forEach((button) => button.addEventListener("click", resetFilters));
+document.querySelectorAll<HTMLButtonElement>("[data-clear-filters]").forEach((button) => button.addEventListener("click", resetFilters, { signal }));
 
 const secondaryFilters = document.querySelector<HTMLElement>("[data-secondary-filters]");
 const moreFilters = document.querySelector<HTMLButtonElement>("[data-more-filters]");
@@ -121,7 +123,7 @@ moreFilters?.addEventListener("click", () => {
   if (!secondaryFilters) return;
   secondaryFilters.hidden = !secondaryFilters.hidden;
   moreFilters.setAttribute("aria-expanded", String(!secondaryFilters.hidden));
-});
+}, { signal });
 
 // Strict JSON product import: parse locally, validate on the server, then create drafts.
 type ProductImportPreview = {
