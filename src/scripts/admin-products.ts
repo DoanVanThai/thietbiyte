@@ -52,7 +52,6 @@ if (listView && editorView) { listView.hidden = editorActive; editorView.hidden 
 // Products table and filters.
 const rows = [...document.querySelectorAll<HTMLTableRowElement>("[data-product-row]")];
 const search = document.querySelector<HTMLInputElement>("[data-admin-search]");
-const searchForm = document.querySelector<HTMLFormElement>("[data-product-search-form]");
 const filters = [...document.querySelectorAll<HTMLSelectElement>("select[data-filter]")];
 const featuredFilter = document.querySelector<HTMLInputElement>("[data-filter-featured]");
 const resultCount = document.querySelector<HTMLElement>("[data-result-count]");
@@ -61,7 +60,6 @@ const filterBadge = document.querySelector<HTMLElement>("[data-filter-count]");
 const tableEmpty = document.querySelector<HTMLElement>("[data-table-empty]");
 const table = document.querySelector<HTMLTableElement>(".admin-products-table");
 let serverFilterTimer = 0;
-let searchIsComposing = false;
 signal.addEventListener("abort", () => window.clearTimeout(serverFilterTimer), { once: true });
 const filterUrl = new URL(window.location.href);
 if (search) search.value = filterUrl.searchParams.get("q") || "";
@@ -105,16 +103,6 @@ const applyFilters = (requestServer = false, serverDelay = 280) => {
   syncSelectAll();
 };
 
-search?.addEventListener("compositionstart", () => { searchIsComposing = true; }, { signal });
-search?.addEventListener("compositionend", () => { searchIsComposing = false; applyFilters(true); }, { signal });
-search?.addEventListener("input", (event) => {
-  if (searchIsComposing || (event as InputEvent).isComposing) {
-    applyFilters();
-    return;
-  }
-  applyFilters(true);
-}, { signal });
-searchForm?.addEventListener("submit", (event) => { event.preventDefault(); applyFilters(true, 0); }, { signal });
 filters.forEach((filter) => filter.addEventListener("change", () => applyFilters(true), { signal }));
 featuredFilter?.addEventListener("change", () => applyFilters(true), { signal });
 

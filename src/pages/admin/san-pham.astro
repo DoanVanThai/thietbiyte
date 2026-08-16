@@ -159,6 +159,62 @@ const editorSections = [
     </footer>
   </section>
 
+  <script is:inline data-astro-rerun>
+    (() => {
+      const search = document.querySelector("[data-admin-search]");
+      const form = document.querySelector("[data-product-search-form]");
+      if (!(search instanceof HTMLInputElement) || !(form instanceof HTMLFormElement) || search.dataset.autoSearchBound === "true") return;
+      search.dataset.autoSearchBound = "true";
+
+      let timer = 0;
+      let composing = false;
+      const normalize = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi").trim();
+      const filterVisibleRows = () => {
+        const query = normalize(search.value);
+        const filters = [...document.querySelectorAll("select[data-filter]")];
+        const activeSelects = filters.filter((filter) => filter.value !== "all");
+        const featured = document.querySelector("[data-filter-featured]");
+        let visible = 0;
+        document.querySelectorAll("[data-product-row]").forEach((row) => {
+          const matchesSearch = !query || normalize(row.dataset.search || "").includes(query);
+          const matchesFilters = activeSelects.every((filter) => {
+            const key = filter.dataset.filter || "";
+            if (key === "specialty") return (row.dataset.specialties || "").split("|").includes(filter.value);
+            return row.dataset[key] === filter.value;
+          });
+          const matchesFeatured = !(featured instanceof HTMLInputElement && featured.checked) || row.dataset.featured === "true";
+          row.hidden = !(matchesSearch && matchesFilters && matchesFeatured);
+          if (!row.hidden) visible += 1;
+        });
+        const count = document.querySelector("[data-result-count]");
+        const table = document.querySelector(".admin-products-table");
+        const empty = document.querySelector("[data-table-empty]");
+        if (count) count.textContent = String(visible);
+        if (table) table.hidden = visible === 0;
+        if (empty) empty.hidden = visible > 0;
+      };
+      const loadServerResults = () => {
+        const url = new URL(window.location.href);
+        const query = search.value.trim();
+        if (query) url.searchParams.set("q", query);
+        else url.searchParams.delete("q");
+        url.searchParams.set("page", "1");
+        const target = `${url.pathname}${url.search}`;
+        if (target !== `${window.location.pathname}${window.location.search}`) window.location.replace(target);
+      };
+      const scheduleSearch = () => {
+        filterVisibleRows();
+        window.clearTimeout(timer);
+        if (!composing) timer = window.setTimeout(loadServerResults, 280);
+      };
+
+      search.addEventListener("compositionstart", () => { composing = true; window.clearTimeout(timer); });
+      search.addEventListener("compositionend", () => { composing = false; scheduleSearch(); });
+      search.addEventListener("input", scheduleSearch);
+      form.addEventListener("submit", (event) => { event.preventDefault(); window.clearTimeout(timer); filterVisibleRows(); loadServerResults(); });
+    })();
+  </script>
+
   <section class="admin-editor-view" data-product-editor hidden aria-labelledby="editor-title">
     <header class="admin-editor-header">
       <div class="admin-editor-title"><a href="/admin/san-pham" data-close-editor aria-label="Quay lại danh sách"><i class="ph ph-arrow-left" aria-hidden="true"></i></a><div><span data-editor-kicker>{isCreating ? "Sản phẩm mới" : "Chỉnh sửa sản phẩm"}</span><h2 id="editor-title" data-editor-heading>{isCreating ? "Sản phẩm chưa đặt tên" : editorProduct.name}</h2><p><span class={`admin-product-status status-${statusFor(editorProduct.publishStatus)[1]}`}><i aria-hidden="true"></i>{statusFor(editorProduct.publishStatus)[0]}</span><span data-editor-id>{isCreating ? "BẢN NHÁP MỚI" : editorProduct.id.toUpperCase()}</span></p></div></div>
