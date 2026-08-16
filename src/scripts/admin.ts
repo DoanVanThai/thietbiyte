@@ -18,7 +18,7 @@ if (shell) {
   const sidebar = shell.querySelector<HTMLElement>("[data-admin-sidebar]");
   const backdrop = shell.querySelector<HTMLElement>("[data-sidebar-backdrop]");
   const collapseButton = shell.querySelector<HTMLButtonElement>("[data-sidebar-collapse]");
-  const mobileMenuButton = shell.querySelector<HTMLButtonElement>("[data-admin-menu-open]");
+  const mobileMenuButtons = Array.from(shell.querySelectorAll<HTMLButtonElement>("[data-admin-menu-open]"));
   const dashboard = shell.querySelector<HTMLElement>("[data-admin-dashboard]");
   const moduleView = shell.querySelector<HTMLElement>("[data-admin-module]");
   const toast = document.querySelector<HTMLElement>("[data-admin-toast]");
@@ -48,24 +48,29 @@ if (shell) {
     try { localStorage.setItem("tlm-admin-sidebar-collapsed", String(collapsed)); } catch { /* optional preference */ }
   };
   try { setCollapsed(localStorage.getItem("tlm-admin-sidebar-collapsed") === "true"); } catch { setCollapsed(false); }
-  collapseButton?.addEventListener("click", () => setCollapsed(!document.body.classList.contains("sidebar-collapsed")), { signal });
 
   const closeMobileSidebar = () => {
     document.body.classList.remove("sidebar-open");
     if (backdrop) backdrop.hidden = true;
-    mobileMenuButton?.setAttribute("aria-expanded", "false");
+    mobileMenuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
+    collapseButton?.setAttribute("aria-label", document.body.classList.contains("sidebar-collapsed") ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng");
     document.body.classList.remove("has-modal-open");
     mobileSidebarReturnFocus?.focus({ preventScroll: true });
     mobileSidebarReturnFocus = null;
   };
-  mobileMenuButton?.addEventListener("click", () => {
-    mobileSidebarReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : mobileMenuButton;
+  collapseButton?.addEventListener("click", () => {
+    if (window.matchMedia("(max-width: 1199px)").matches && document.body.classList.contains("sidebar-open")) closeMobileSidebar();
+    else setCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+  }, { signal });
+  mobileMenuButtons.forEach((button) => button.addEventListener("click", () => {
+    mobileSidebarReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : button;
     document.body.classList.add("sidebar-open");
     if (backdrop) backdrop.hidden = false;
-    mobileMenuButton.setAttribute("aria-expanded", "true");
+    mobileMenuButtons.forEach((trigger) => trigger.setAttribute("aria-expanded", "true"));
+    collapseButton?.setAttribute("aria-label", "Đóng điều hướng");
     document.body.classList.add("has-modal-open");
     requestAnimationFrame(() => sidebar?.querySelector<HTMLElement>("a[href], button:not([disabled])")?.focus({ preventScroll: true }));
-  }, { signal });
+  }, { signal }));
   backdrop?.addEventListener("click", closeMobileSidebar, { signal });
   sidebar?.querySelectorAll<HTMLAnchorElement>("a").forEach((link) => link.addEventListener("click", closeMobileSidebar, { signal }));
   document.addEventListener("keydown", (event) => {

@@ -51,7 +51,7 @@ test("Admin shell toast stays out of the layout until feedback is shown", async 
     read("src/styles/admin.css"),
   ]);
   assert.match(layout, /data-admin-shell-toast hidden/);
-  assert.match(styles, /\.admin-toast\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
+  assert.match(styles, /\.admin-toast\[hidden\],\s*\.admin-shell-toast:empty\s*\{\s*display:\s*none\s*!important;\s*\}/);
 });
 
 test("new product editor starts clean and keeps checkbox controls compact", async () => {

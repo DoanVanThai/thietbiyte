@@ -31,8 +31,10 @@ const productSources = products.map((product) => {
   <section class="quote-builder" data-quote-builder aria-labelledby="quote-builder-title">
     <header class="quote-workspace-header">
       <div class="quote-workspace-heading">
+        <button class="quote-mobile-admin-menu" type="button" data-admin-menu-open aria-label="Mở điều hướng" aria-expanded="false" aria-controls="admin-sidebar"><i class="ph ph-list" aria-hidden="true"></i></button>
         <a class="quote-back-link" href="/admin" aria-label="Quay lại trang quản trị"><i class="ph ph-arrow-left" aria-hidden="true"></i><span>Báo giá</span></a>
         <div>
+          <span class="quote-mobile-heading-label">Báo giá</span>
           <div class="quote-title-line"><h1 id="quote-builder-title" data-quote-number-title>{quoteNumber}</h1><span class="quote-save-state is-dirty" data-quote-save-state><i aria-hidden="true"></i><span>Có thay đổi chưa lưu</span></span></div>
           <p><span data-quote-customer-header>Chưa có khách hàng</span><span aria-hidden="true"> · </span><span data-quote-product-summary>1 sản phẩm</span></p>
         </div>
@@ -113,7 +115,7 @@ const productSources = products.map((product) => {
               <label><span>Đơn vị</span><input name="customerOrganization" placeholder="Phòng khám / Bệnh viện" /></label>
               <label><span>Điện thoại</span><input name="customerPhone" inputmode="tel" /></label>
               <label><span>Email</span><input name="customerEmail" type="email" /></label>
-              <label class="span-2"><span>Địa chỉ</span><input name="customerAddress" /></label>
+              <label class="span-2"><span>Địa chỉ</span><textarea name="customerAddress" rows="1" data-auto-grow></textarea></label>
               <label class="span-2"><span>Lời mở đầu *</span><textarea name="introduction" rows="1" minlength="10" required data-auto-grow>THIÊN LỘC GROUP xin hân hạnh gửi đến Quý khách bảng báo giá thiết bị với cấu hình chi tiết như sau:</textarea></label>
             </div>
             </div>
@@ -128,7 +130,7 @@ const productSources = products.map((product) => {
               <article class="quote-line-item" data-quote-item>
                 <header>
                   <span class="quote-item-order" data-quote-item-number>1</span>
-                  <div class="quote-item-identity"><strong data-quote-item-name>{selectedProduct.name}</strong><span data-quote-item-meta>{[selectedProduct.brand, selectedProduct.model].filter(Boolean).join(" · ")}</span></div>
+                  <div class="quote-item-identity"><strong data-quote-item-name>{selectedProduct.name}</strong><span data-quote-item-meta>{[selectedProduct.model, selectedProduct.brand].filter(Boolean).join(" · ")}</span></div>
                   <details class="quote-item-menu">
                     <summary class="icon-action" aria-label="Tác vụ sản phẩm"><i class="ph ph-dots-three" aria-hidden="true"></i></summary>
                     <div>

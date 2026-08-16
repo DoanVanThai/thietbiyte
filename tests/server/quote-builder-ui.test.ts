@@ -44,11 +44,39 @@ test("quote builder V2 keeps long configuration and images in drawers", async ()
   assert.match(script, /data-move-quote-item/);
   assert.match(script, /data-duplicate-quote-item/);
   assert.match(script, /data-config-include/);
+  assert.match(script, /showAllConfigSections/);
   assert.match(styles, /width: min\(720px, 60vw\)/);
+  assert.match(styles, /\.quote-image-drawer \{ width: min\(860px, calc\(100vw - 24px\)\); \}/);
+  assert.match(styles, /\.quote-config-drawer \.quote-rich-editor \{ min-height: min\(560px, calc\(100dvh - 260px\)\);/);
   assert.match(styles, /\.quote-workspace-header \{/);
   assert.match(styles, /\.quote-mobile-bar \{/);
+  assert.match(styles, /\.quote-preview-loading\[hidden\]\s*\{\s*display:\s*none\s*!important;\s*\}/);
+  assert.match(styles, /\.quote-preview-loading\s*\{[^}]*pointer-events:\s*none;/);
   assert.match(styles, /\.quote-product-picker \{[\s\S]*height: min\(720px, calc\(100dvh - 28px\)\);[\s\S]*overflow: hidden;/);
   assert.match(styles, /\.quote-picker-shell \{ height: 100%; min-height: 0;/);
+});
+
+test("quote builder adapts naturally from tablet to small mobile", async () => {
+  const [page, script, styles, adminScript, sidebar] = await Promise.all([
+    readFile(new URL("../../src/pages/admin/bao-gia.astro", import.meta.url), "utf8"),
+    readFile(new URL("../../src/scripts/admin-quote-pdf.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../src/styles/admin-quote-pdf.css", import.meta.url), "utf8"),
+    readFile(new URL("../../src/scripts/admin.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../src/components/AdminSidebar.astro", import.meta.url), "utf8"),
+  ]);
+  assert.match(page, /quote-mobile-admin-menu[^>]+data-admin-menu-open/);
+  assert.match(adminScript, /mobileMenuButtons/);
+  assert.match(adminScript, /max-width: 1199px/);
+  assert.match(sidebar, /data-sidebar-mobile-icon/);
+  assert.match(styles, /@media \(max-width: 1199px\)[\s\S]*\.quote-builder form\[data-quote-form\] \{ grid-template-columns: 1fr; \}/);
+  assert.match(styles, /@media \(max-width: 767px\)[\s\S]*\.quote-item-edit-grid \{ grid-template-columns: 1fr;/);
+  assert.match(styles, /\.quote-mobile-summary \{ width: 100%; max-width: none;/);
+  assert.match(styles, /env\(safe-area-inset-bottom\)/);
+  assert.match(styles, /@media \(max-width: 399px\)/);
+  assert.match(script, /quote-mobile-summary-count/);
+  assert.match(script, /data-mobile-export="word"/);
+  assert.match(script, /descriptionSnapshots = new WeakMap/);
+  assert.match(script, /ensureDescriptionEditor/);
 });
 
 test("quote builder formats descriptions and reopens saved quotes", async () => {
@@ -64,6 +92,7 @@ test("quote builder formats descriptions and reopens saved quotes", async () => 
   assert.match(page, /data-saved-quotes-list/);
   assert.match(page, /<dialog class="quote-saved-dialog"/);
   assert.match(page, /data-saved-quotes-pagination/);
+  assert.match(page, /<textarea name="customerAddress" rows="1" data-auto-grow><\/textarea>/);
   assert.match(script, /descriptionRich:/);
   assert.match(script, /\/api\/admin\/sales-quotes/);
   assert.match(script, /openSavedQuote/);

@@ -71,6 +71,7 @@ if (root) {
   let savedQuotes: SavedQuoteSummary[] = [];
   let savedQuotesPage = 1;
   const savedQuotesPageSize = 9;
+  const descriptionSnapshots = new WeakMap<HTMLElement, QuoteRichText>();
   let products: ProductSource[] = [];
   try { products = JSON.parse(document.querySelector("#quote-product-data")?.textContent || "[]") as ProductSource[]; } catch { products = []; }
 
@@ -198,8 +199,10 @@ if (root) {
   const syncDescription = (item: HTMLElement) => {
     const editor = item.querySelector<HTMLElement>("[data-quote-description-editor]");
     const textarea = item.querySelector<HTMLTextAreaElement>("[data-quote-description]");
-    if (!editor || !textarea) return;
-    textarea.value = quoteRichTextToPlainText(editorToRichText(editor));
+    if (!editor || !textarea || item.dataset.descriptionEditorHydrated !== "true") return;
+    const value = editorToRichText(editor);
+    descriptionSnapshots.set(item, value);
+    textarea.value = quoteRichTextToPlainText(value);
   };
 
   const setItemDescription = (item: HTMLElement, description: string, richText?: QuoteRichText) => {
@@ -207,17 +210,27 @@ if (root) {
     const textarea = item.querySelector<HTMLTextAreaElement>("[data-quote-description]");
     if (!editor || !textarea) return;
     const value = richText?.paragraphs?.length ? richText : plainTextToQuoteRichText(description, true);
-    setEditorRichText(editor, value);
+    editor.replaceChildren();
+    item.dataset.descriptionEditorHydrated = "false";
+    descriptionSnapshots.set(item, value);
     textarea.value = quoteRichTextToPlainText(value, description);
-    renderConfigOutline(item);
+  };
+
+  const ensureDescriptionEditor = (item: HTMLElement) => {
+    const editor = item.querySelector<HTMLElement>("[data-quote-description-editor]");
+    const textarea = item.querySelector<HTMLTextAreaElement>("[data-quote-description]");
+    if (!editor || !textarea || item.dataset.descriptionEditorHydrated === "true") return;
+    setEditorRichText(editor, descriptionSnapshots.get(item) || plainTextToQuoteRichText(textarea.value, true));
+    item.dataset.descriptionEditorHydrated = "true";
   };
 
   const descriptionHeadings = (item: HTMLElement) => {
     const editor = item.querySelector<HTMLElement>("[data-quote-description-editor]");
     if (!editor) return [];
-    const blocks = Array.from(editor.children) as HTMLElement[];
-    return blocks.flatMap((block, index) => {
-      const text = block.textContent?.trim() || "";
+    const texts = item.dataset.descriptionEditorHydrated === "true"
+      ? Array.from(editor.children).map((block) => block.textContent?.trim() || "")
+      : (descriptionSnapshots.get(item)?.paragraphs || []).map((paragraph) => paragraph.runs.map((run) => run.text).join("").trim());
+    return texts.flatMap((text, index) => {
       const uppercase = text.length > 2 && text.length < 90 && text === text.toLocaleUpperCase("vi") && !text.startsWith("-");
       const commonHeading = /^(Mô tả|Tính năng nổi bật|Cấu hình cung cấp|Thông số kỹ thuật|Bảo hành)/iu.test(text);
       return index === 0 || uppercase || commonHeading ? [{ index, text }] : [];
@@ -227,8 +240,14 @@ if (root) {
   const renderConfigOutline = (item: HTMLElement) => {
     const outline = item.querySelector<HTMLElement>("[data-config-outline]");
     const editor = item.querySelector<HTMLElement>("[data-quote-description-editor]");
-    if (!outline || !editor) return;
+    if (!outline || !editor || item.dataset.descriptionEditorHydrated !== "true") return;
     outline.replaceChildren();
+    const showAll = document.createElement("button");
+    showAll.type = "button";
+    showAll.className = "quote-config-show-all";
+    showAll.dataset.configTarget = "all";
+    showAll.textContent = "Tất cả";
+    outline.append(showAll);
     const headings = descriptionHeadings(item);
     headings.forEach(({ index, text }, headingIndex) => {
       const label = document.createElement("label");
@@ -239,6 +258,11 @@ if (root) {
       button.textContent = headingIndex === 0 ? "Thông tin sản phẩm" : text.replace(/[:：].*$/, "").toLocaleLowerCase("vi").replace(/^./u, (letter) => letter.toLocaleUpperCase("vi"));
       label.append(checkbox, button); outline.append(label);
     });
+  };
+
+  const showAllConfigSections = (item: HTMLElement) => {
+    item.querySelectorAll<HTMLElement>("[data-quote-description-editor] > *").forEach((block) => block.classList.remove("quote-editor-section-hidden"));
+    item.querySelectorAll<HTMLButtonElement>("[data-config-target]").forEach((button) => button.classList.toggle("is-active", button.dataset.configTarget === "all"));
   };
 
   const descriptionLines = (item: HTMLElement) => {
@@ -345,7 +369,7 @@ if (root) {
     const name = item.querySelector<HTMLElement>("[data-quote-item-name]");
     const meta = item.querySelector<HTMLElement>("[data-quote-item-meta]");
     if (name) name.textContent = snapshot.name;
-    if (meta) meta.textContent = [snapshot.brand, snapshot.model].filter(Boolean).join(" · ");
+    if (meta) meta.textContent = [snapshot.model, snapshot.brand].filter(Boolean).join(" · ");
     item.querySelectorAll<HTMLElement>("[data-drawer-product-name]").forEach((copy) => { copy.textContent = [snapshot.name, snapshot.model].filter(Boolean).join(" · "); });
     item.querySelector<HTMLDialogElement>("[data-config-drawer]")?.setAttribute("aria-label", `Mô tả và cấu hình ${snapshot.name}`);
     item.querySelector<HTMLDialogElement>("[data-image-drawer]")?.setAttribute("aria-label", `Ảnh báo giá ${snapshot.name}`);
@@ -509,13 +533,16 @@ if (root) {
     try { storedSnapshot = JSON.parse(item.dataset.productSnapshot || "null") as QuotePayload["items"][number]["productSnapshot"]; } catch { storedSnapshot = undefined; }
     const editor = item.querySelector<HTMLElement>("[data-quote-description-editor]");
     const description = item.querySelector<HTMLTextAreaElement>("[data-quote-description]")?.value || "";
+    const descriptionRich = editor && item.dataset.descriptionEditorHydrated === "true"
+      ? editorToRichText(editor)
+      : descriptionSnapshots.get(item) || plainTextToQuoteRichText(description, true);
     return {
       productId,
       productSnapshot: storedSnapshot || (product ? { name: product.name, sku: product.sku, model: product.model, brand: product.brand, origin: product.origin, manufacturingYear: product.manufacturingYear, warranty: product.warranty } : undefined),
       quantity: Number(item.querySelector<HTMLInputElement>('[name="quantity"]')?.value || 1),
       unitPrice: Number(item.querySelector<HTMLInputElement>('[name="unitPrice"]')?.value || 0),
       description,
-      descriptionRich: editor ? editorToRichText(editor) : plainTextToQuoteRichText(description, true),
+      descriptionRich,
       images: Array.from(item.querySelectorAll<HTMLElement>("[data-quote-image-card]")).filter((card) => card.querySelector<HTMLInputElement>("[data-quote-image-enabled]")?.checked).map((card) => ({
         url: card.dataset.imageUrl || "",
         caption: card.querySelector<HTMLInputElement>("[data-quote-image-caption]")?.value.trim() || "Ảnh minh họa",
@@ -613,6 +640,7 @@ if (root) {
       const item = configTarget.closest<HTMLElement>("[data-quote-item]");
       const editor = item?.querySelector<HTMLElement>("[data-quote-description-editor]");
       if (!item || !editor) return;
+      if (configTarget.dataset.configTarget === "all") { showAllConfigSections(item); editor.scrollTo({ top: 0, behavior: "smooth" }); return; }
       const headings = descriptionHeadings(item); const start = Number(configTarget.dataset.configTarget || 0); const headingPosition = headings.findIndex((heading) => heading.index === start); const end = headings[headingPosition + 1]?.index ?? editor.children.length;
       Array.from(editor.children).forEach((block, index) => block.classList.toggle("quote-editor-section-hidden", index < start || index >= end));
       item.querySelectorAll("[data-config-target]").forEach((button) => button.classList.toggle("is-active", button === configTarget));
@@ -620,7 +648,7 @@ if (root) {
       return;
     }
     const openConfig = (event.target as Element).closest<HTMLButtonElement>("[data-open-config]");
-    if (openConfig) { const item = openConfig.closest<HTMLElement>("[data-quote-item]"); if (!item) return; renderConfigOutline(item); item.querySelector<HTMLDialogElement>("[data-config-drawer]")?.showModal(); window.requestAnimationFrame(() => item.querySelector<HTMLButtonElement>("[data-config-target]")?.click()); return; }
+    if (openConfig) { const item = openConfig.closest<HTMLElement>("[data-quote-item]"); if (!item) return; ensureDescriptionEditor(item); renderConfigOutline(item); showAllConfigSections(item); item.querySelector<HTMLDialogElement>("[data-config-drawer]")?.showModal(); return; }
     const openImages = (event.target as Element).closest<HTMLButtonElement>("[data-open-images]");
     if (openImages) { openImages.closest<HTMLElement>("[data-quote-item]")?.querySelector<HTMLDialogElement>("[data-image-drawer]")?.showModal(); return; }
     const closeDrawer = (event.target as Element).closest<HTMLButtonElement>("[data-close-drawer]");
@@ -887,7 +915,7 @@ if (root) {
           item.dataset.productSnapshot = JSON.stringify(savedItem.productSnapshot);
           const name = item.querySelector<HTMLElement>("[data-quote-item-name]"); const meta = item.querySelector<HTMLElement>("[data-quote-item-meta]");
           if (name) name.textContent = savedItem.productSnapshot.name;
-          if (meta) meta.textContent = [savedItem.productSnapshot.brand, savedItem.productSnapshot.model].filter(Boolean).join(" · ");
+          if (meta) meta.textContent = [savedItem.productSnapshot.model, savedItem.productSnapshot.brand].filter(Boolean).join(" · ");
           item.querySelectorAll<HTMLElement>("[data-drawer-product-name]").forEach((copy) => { copy.textContent = [savedItem.productSnapshot!.name, savedItem.productSnapshot!.model].filter(Boolean).join(" · "); });
         }
         setItemDescription(item, savedItem.description, savedItem.descriptionRich);
@@ -1005,9 +1033,12 @@ if (root) {
 
   root.querySelector<HTMLButtonElement>("[data-open-mobile-summary]")?.addEventListener("click", () => {
     if (!mobileSummary || !mobileSummaryContent) return;
+    const productCount = root.querySelector<HTMLElement>("[data-side-product-count]")?.textContent || "0 sản phẩm";
     const subtotal = root.querySelector<HTMLElement>("[data-quote-subtotal]")?.textContent || "0đ";
+    const vat = root.querySelector<HTMLElement>("[data-quote-vat]")?.textContent || "Đã bao gồm";
+    const total = root.querySelector<HTMLElement>("[data-quote-total]")?.textContent || subtotal;
     const readiness = root.querySelector<HTMLElement>("[data-quote-readiness]")?.outerHTML || "";
-    mobileSummaryContent.innerHTML = `<dl class="quote-totals"><div><dt>Tổng cộng</dt><dd>${subtotal}</dd></div></dl>${readiness}<div class="quote-export-actions"><button class="button button-outline" type="button" data-mobile-preview>Xem trước</button><button class="button button-primary" type="button" data-mobile-export="pdf">Xuất PDF</button><button class="button button-outline" type="button" data-mobile-export="word">Xuất Word</button><button class="button button-outline" type="button" data-mobile-save>Lưu nháp</button></div>`;
+    mobileSummaryContent.innerHTML = `<p class="quote-mobile-summary-count">${productCount}</p><dl class="quote-totals"><div><dt>Tạm tính</dt><dd>${subtotal}</dd></div><div><dt>VAT</dt><dd>${vat}</dd></div><div class="quote-grand-total"><dt>Tổng cộng</dt><dd>${total}</dd></div></dl>${readiness}<div class="quote-export-actions"><button class="button button-outline" type="button" data-mobile-preview><i class="ph ph-eye" aria-hidden="true"></i>Xem trước</button><button class="button button-primary" type="button" data-mobile-export="pdf"><i class="ph ph-file-pdf" aria-hidden="true"></i>Tạo và tải PDF</button><button class="button button-outline" type="button" data-mobile-export="word"><i class="ph ph-file-doc" aria-hidden="true"></i>Tạo và tải Word</button><button class="button button-outline" type="button" data-mobile-save><i class="ph ph-floppy-disk" aria-hidden="true"></i>Lưu nháp</button></div>`;
     mobileSummary.showModal();
   });
   root.querySelector<HTMLButtonElement>("[data-close-mobile-summary]")?.addEventListener("click", () => mobileSummary?.close());
