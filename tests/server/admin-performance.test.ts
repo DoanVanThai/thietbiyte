@@ -89,12 +89,16 @@ test("product search initializes reliably and searches the real SKU", async () =
   assert.doesNotMatch(script, /history\.replaceState[\s\S]*?if \(requestServer && !editorActive\)/);
   assert.match(page, /<form class="admin-product-search-form" action="\/admin\/san-pham" method="get" role="search"/);
   assert.match(page, /name="q" type="search"/);
+  assert.match(page, /data-product-search-input/);
+  assert.doesNotMatch(page, /id="admin-product-search"[^>]*data-admin-search(?:\s|>)/);
   assert.match(page, /<script is:inline data-astro-rerun>/);
+  assert.match(page, /root\?\.querySelector\("\[data-product-search-input\]"\)/);
   assert.match(page, /search\.dataset\.autoSearchBound/);
   assert.match(page, /search\.addEventListener\("input", scheduleSearch\)/);
   assert.match(page, /search\.addEventListener\("compositionstart"/);
   assert.match(page, /search\.addEventListener\("compositionend"/);
   assert.match(page, /window\.setTimeout\(loadServerResults, 280\)/);
+  assert.match(script, /listView\?\.querySelector<HTMLInputElement>\("\[data-product-search-input\]"\)/);
   assert.match(page, /window\.location\.replace\(target\)/);
   assert.doesNotMatch(page, /oninput=/);
   const searchForm = page.match(/<form class="admin-product-search-form"[\s\S]*?<\/form>/)?.[0] || "";

@@ -51,7 +51,7 @@ if (listView && editorView) { listView.hidden = editorActive; editorView.hidden 
 
 // Products table and filters.
 const rows = [...document.querySelectorAll<HTMLTableRowElement>("[data-product-row]")];
-const search = document.querySelector<HTMLInputElement>("[data-admin-search]");
+const search = listView?.querySelector<HTMLInputElement>("[data-product-search-input]") || null;
 const filters = [...document.querySelectorAll<HTMLSelectElement>("select[data-filter]")];
 const featuredFilter = document.querySelector<HTMLInputElement>("[data-filter-featured]");
 const resultCount = document.querySelector<HTMLElement>("[data-result-count]");

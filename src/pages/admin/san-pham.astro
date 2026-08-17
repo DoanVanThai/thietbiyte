@@ -86,7 +86,7 @@ const editorSections = [
       <h2 id="filters-title" class="sr-only">Lọc sản phẩm</h2>
       <div class="admin-filter-primary">
         <form class="admin-product-search-form" action="/admin/san-pham" method="get" role="search" data-product-search-form>
-          <label class="admin-search-field" for="admin-product-search"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Tìm sản phẩm</span><input id="admin-product-search" name="q" type="search" placeholder="Tên sản phẩm, model, SKU..." autocomplete="off" data-admin-search value={filters.search || ""} /></label>
+          <label class="admin-search-field" for="admin-product-search"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Tìm sản phẩm</span><input id="admin-product-search" name="q" type="search" placeholder="Tên sản phẩm, model, SKU..." autocomplete="off" data-product-search-input value={filters.search || ""} /></label>
         </form>
         <select aria-label="Danh mục" data-filter="category"><option value="all">Tất cả danh mục</option>{categories.map((category) => <option value={category} selected={filters.category === category}>{category}</option>)}</select>
         <select aria-label="Thương hiệu" data-filter="brand"><option value="all">Tất cả thương hiệu</option>{brands.map((brand) => <option value={brand} selected={filters.brand === brand}>{brand}</option>)}</select>
@@ -159,8 +159,9 @@ const editorSections = [
 
   <script is:inline data-astro-rerun>
     (() => {
-      const search = document.querySelector("[data-admin-search]");
-      const form = document.querySelector("[data-product-search-form]");
+      const root = document.querySelector("[data-products-list-view]");
+      const search = root?.querySelector("[data-product-search-input]");
+      const form = root?.querySelector("[data-product-search-form]");
       if (!(search instanceof HTMLInputElement) || !(form instanceof HTMLFormElement) || search.dataset.autoSearchBound === "true") return;
       search.dataset.autoSearchBound = "true";
 
