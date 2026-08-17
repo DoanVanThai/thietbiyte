@@ -169,6 +169,8 @@ test("sales quote Word export creates a valid OOXML document", async () => {
   assert.deepEqual([...new Set(runColors)], ["000000"]);
   assert.equal(documentXml.match(/<w:tbl>/g)?.length, 3);
   assert.match(documentXml, /<w:gridSpan w:val="2"\/>[\s\S]*?<w:t[^>]*>TỔNG GIÁ TRỊ<\/w:t>/);
+  assert.match(documentXml, /<w:tc>[\s\S]*?<w:tcW w:type="dxa" w:w="2000"\/>[\s\S]*?<w:vAlign w:val="center"\/>[\s\S]*?<w:t[^>]*>430\.000\.000<\/w:t>[\s\S]*?<\/w:tc>/);
+  assert.match(documentXml, /<w:gridSpan w:val="2"\/>[\s\S]*?<w:right w:val="none"[^>]*\/>[\s\S]*?<w:t[^>]*>TỔNG GIÁ TRỊ<\/w:t>[\s\S]*?<w:start w:val="none"[^>]*\/>[\s\S]*?<w:t[^>]*>860\.000\.000 VNĐ<\/w:t>/);
   assert.match(documentXml, /<w:keepNext\/>[\s\S]*?<w:t[^>]*>ĐIỀU KHOẢN THƯƠNG MẠI<\/w:t>[\s\S]*?<w:bottom w:val="single" w:color="000000" w:sz="10" w:space="1"\/>[\s\S]*?<w:ind w:right="6986"\/>/);
   assert.match(documentXml, /<w:b\/>[\s\S]*?<w:i\/>[\s\S]*?<w:t[^>]*>ĐIỀU KHOẢN THƯƠNG MẠI<\/w:t>/);
   assert.match(documentXml, /<w:keepNext\/>[\s\S]*?<w:keepLines\/>[\s\S]*?<w:i\/>[\s\S]*?<w:t[^>]*>- Giá trên đã bao gồm thuế GTGT\.<\/w:t>/);

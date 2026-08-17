@@ -5,6 +5,7 @@ import {
   Footer,
   ImageRun,
   type IParagraphOptions,
+  type ITableCellBorders,
   PageNumber,
   Packer,
   Paragraph,
@@ -174,10 +175,11 @@ const productContent = (item: PreparedQuoteItem) => {
   return children;
 };
 
-const cell = (children: Paragraph[], width: number, options: { fill?: string; align?: typeof VerticalAlignTable[keyof typeof VerticalAlignTable]; columnSpan?: number } = {}) => new TableCell({
+const cell = (children: Paragraph[], width: number, options: { fill?: string; align?: typeof VerticalAlignTable[keyof typeof VerticalAlignTable]; columnSpan?: number; borders?: ITableCellBorders } = {}) => new TableCell({
   width: { size: width, type: WidthType.DXA },
   columnSpan: options.columnSpan,
   verticalAlign: options.align ?? VerticalAlignTable.CENTER,
+  borders: options.borders,
   shading: options.fill ? { type: ShadingType.CLEAR, fill: options.fill, color: "auto" } : undefined,
   margins: { top: 100, bottom: 100, left: 120, right: 120 },
   children,
@@ -201,7 +203,7 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
       cell([
         paragraph(money(item.unitPrice), { bold: true, alignment: AlignmentType.CENTER, after: item.quantity > 1 ? 30 : 0 }),
         ...(item.quantity > 1 ? [paragraph(`SL: ${item.quantity}`, { italics: true, size: secondaryHalfPoints, alignment: AlignmentType.CENTER, after: 0 })] : []),
-      ], columnWidths[2], { align: VerticalAlignTable.TOP }),
+      ], columnWidths[2], { align: VerticalAlignTable.CENTER }),
     ],
   }));
 
@@ -281,8 +283,21 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
             ] }),
             ...productRows,
             new TableRow({ children: [
-              cell([paragraph("TỔNG GIÁ TRỊ", { bold: true, size: bodyHeadingHalfPoints, after: 0 })], columnWidths[0] + columnWidths[1], { fill: pale, columnSpan: 2 }),
-              cell([paragraph(`${money(total)} VNĐ`, { bold: true, size: 28, alignment: AlignmentType.RIGHT, after: 0 })], columnWidths[2], { fill: pale }),
+              cell([paragraph("TỔNG GIÁ TRỊ", { bold: true, size: bodyHeadingHalfPoints, after: 0 })], columnWidths[0] + columnWidths[1], {
+                fill: pale,
+                columnSpan: 2,
+                borders: {
+                  end: { style: BorderStyle.NONE, size: 0, color: pale },
+                  right: { style: BorderStyle.NONE, size: 0, color: pale },
+                },
+              }),
+              cell([paragraph(`${money(total)} VNĐ`, { bold: true, size: 28, alignment: AlignmentType.RIGHT, after: 0 })], columnWidths[2], {
+                fill: pale,
+                borders: {
+                  start: { style: BorderStyle.NONE, size: 0, color: pale },
+                  left: { style: BorderStyle.NONE, size: 0, color: pale },
+                },
+              }),
             ] }),
           ],
         }),
