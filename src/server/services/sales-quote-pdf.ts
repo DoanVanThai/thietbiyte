@@ -2,6 +2,7 @@ import PDFDocument from "pdfkit";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import sharp from "sharp";
+import { sanitizeQuotePlainText, sanitizeQuoteRichText } from "@/lib/quote-rich-text";
 import type { SalesQuotePdfInput } from "@/server/validation/sales-quote";
 import { findPublicUploadPath } from "@/server/uploads/public-upload-storage";
 import type { QuoteCompanyDetails, ResolvedQuoteItem } from "@/server/services/sales-quote-document";
@@ -148,13 +149,14 @@ const paragraphStyle = (copy: string, paragraphIndex: number) => {
 };
 
 const descriptionParagraphs = (item: ResolvedQuoteItem) => {
-  if (item.descriptionRich?.paragraphs?.length) {
-    return item.descriptionRich.paragraphs.map((paragraph) => ({
+  const richText = sanitizeQuoteRichText(item.descriptionRich);
+  if (richText?.paragraphs?.length) {
+    return richText.paragraphs.map((paragraph) => ({
       runs: paragraph.runs.map((run) => ({ ...run, text: cleanInline(run.text) })),
       copy: cleanInline(paragraph.runs.map((run) => run.text).join("")).trim(),
     }));
   }
-  return clean(item.description).split("\n").map((copy, index) => {
+  return sanitizeQuotePlainText(clean(item.description)).split("\n").map((copy, index) => {
     const value = copy.trim();
     const style = paragraphStyle(value, index);
     return { copy: value, runs: value ? [{ text: value, bold: style.font.includes("Bold"), underline: false, color: "default" as const }] : [] };

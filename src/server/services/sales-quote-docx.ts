@@ -17,6 +17,7 @@ import {
   VerticalAlignTable,
   WidthType,
 } from "docx";
+import { sanitizeQuotePlainText, sanitizeQuoteRichText } from "@/lib/quote-rich-text";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import sharp from "sharp";
@@ -134,13 +135,13 @@ const imageParagraphs = (image: PreparedQuoteImage) => {
 const productContent = (item: PreparedQuoteItem) => {
   const rendered = new Set<string>();
   const children: Paragraph[] = [];
-  const richText = item.descriptionRich;
+  const richText = sanitizeQuoteRichText(item.descriptionRich);
   const paragraphs = richText?.paragraphs?.length
     ? richText.paragraphs.map((value) => ({
       copy: cleanInline(value.runs.map((run) => run.text).join("")).trim(),
       runs: value.runs.map((run) => ({ ...run, text: cleanInline(run.text) })),
     }))
-    : clean(item.description).split("\n").map((copy, index) => {
+    : sanitizeQuotePlainText(clean(item.description)).split("\n").map((copy, index) => {
       const value = copy.trim();
       const heading = value === value.toLocaleUpperCase("vi") && value.length < 90;
       return { copy: value, runs: value ? [{ text: value, bold: index === 0 || heading, underline: false, color: "default" as const }] : [] };

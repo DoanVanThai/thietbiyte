@@ -1,4 +1,5 @@
 import type { CmsProduct } from "@/lib/content-repository";
+import { isQuotePlaceholderValue, quoteRichTextToPlainText, sanitizeQuotePlainText, sanitizeQuoteRichText } from "@/lib/quote-rich-text";
 import type { SalesQuotePdfInput } from "@/server/validation/sales-quote";
 import { productService } from "@/server/services/product-service";
 
@@ -64,35 +65,53 @@ const compactSpecificationLine = (label: string, value: string) => {
 
 export function buildProductQuoteDescription(product: CmsProduct) {
   const detail = product.detail;
-  const sections: string[] = [
-    product.name.toLocaleUpperCase("vi"),
-    `Model: ${product.model || "Đang cập nhật"}`,
-    `Hãng sản xuất: ${product.brand || "Đang cập nhật"}`,
-    `Xuất xứ: ${product.origin || "Đang cập nhật"}`,
-  ];
-  if (product.manufacturingYear) sections.push(`Năm sản xuất: ${product.manufacturingYear} trở về sau`);
-  if (product.warranty) sections.push(`Bảo hành: ${product.warranty}`);
-  if (product.description?.trim()) sections.push("", product.description.trim());
+  const sections: string[] = [product.name.toLocaleUpperCase("vi")];
+  const addMetadata = (label: string, value: string | number | null | undefined, suffix = "") => {
+    if (!isQuotePlaceholderValue(value)) sections.push(`${label}: ${String(value).trim()}${suffix}`);
+  };
+  addMetadata("Model", product.model);
+  addMetadata("Hãng sản xuất", product.brand);
+  addMetadata("Xuất xứ", product.origin);
+  addMetadata("Năm sản xuất", product.manufacturingYear, " trở về sau");
+  addMetadata("Bảo hành", product.warranty);
+  const productDescription = sanitizeQuotePlainText(product.description || "");
+  if (productDescription) sections.push("", productDescription);
 
-  if (detail?.features?.length) {
+  const features = (detail?.features || []).flatMap((feature) => {
+    if (isQuotePlaceholderValue(feature.title)) return [];
+    const description = isQuotePlaceholderValue(feature.description) ? "" : feature.description.trim();
+    return [`- ${feature.title.trim()}${description ? `: ${description}` : ""}`];
+  });
+  if (features.length) {
     sections.push("", "TÍNH NĂNG NỔI BẬT");
-    detail.features.forEach((feature) => sections.push(`- ${feature.title}${feature.description ? `: ${feature.description}` : ""}`));
+    sections.push(...features);
   }
-  if (detail?.configurations?.length) {
+  const configurations = (detail?.configurations || []).flatMap((group) => {
+    if (isQuotePlaceholderValue(group.title)) return [];
+    const items = group.items.flatMap((item) => {
+      if (isQuotePlaceholderValue(item.name)) return [];
+      const description = isQuotePlaceholderValue(item.detail) ? "" : item.detail?.trim() || "";
+      return [`- ${item.name.trim()}${description ? `: ${description}` : ""}`];
+    });
+    return items.length ? [group.title.toLocaleUpperCase("vi"), ...items] : [];
+  });
+  if (configurations.length) {
     sections.push("", "CẤU HÌNH CUNG CẤP");
-    detail.configurations.forEach((group) => {
-      sections.push(group.title.toLocaleUpperCase("vi"));
-      group.items.forEach((item) => sections.push(`- ${item.name}${item.detail ? `: ${item.detail}` : ""}`));
-    });
+    sections.push(...configurations);
   }
-  if (detail?.specificationGroups?.length) {
+  const specifications = (detail?.specificationGroups || []).flatMap((group) => {
+    if (isQuotePlaceholderValue(group.title)) return [];
+    const items = group.items.flatMap((item) => {
+      if (isQuotePlaceholderValue(item.label) || isQuotePlaceholderValue(item.value)) return [];
+      return [compactSpecificationLine(item.label.trim(), item.value.trim())];
+    });
+    return items.length ? [group.title.toLocaleUpperCase("vi"), ...items] : [];
+  });
+  if (specifications.length) {
     sections.push("", "THÔNG SỐ KỸ THUẬT");
-    detail.specificationGroups.forEach((group) => {
-      sections.push(group.title.toLocaleUpperCase("vi"));
-      group.items.forEach((item) => sections.push(compactSpecificationLine(item.label, item.value)));
-    });
+    sections.push(...specifications);
   }
-  return cleanQuoteText(sections.join("\n"));
+  return sanitizeQuotePlainText(cleanQuoteText(sections.join("\n")));
 }
 
 export const resolveQuoteItems = async (input: SalesQuotePdfInput): Promise<ResolvedQuoteItem[] | null> => {
@@ -132,9 +151,15 @@ export const resolveQuoteItems = async (input: SalesQuotePdfInput): Promise<Reso
         afterText: requested.afterText || configured?.afterText || "",
       }];
     });
+    const defaultDescription = item.description || (product ? buildProductQuoteDescription(product) : "");
+    const descriptionRich = sanitizeQuoteRichText(item.descriptionRich);
+    const description = sanitizeQuotePlainText(descriptionRich?.paragraphs.length
+      ? quoteRichTextToPlainText(descriptionRich)
+      : defaultDescription);
     return {
       ...item,
-      description: item.description || (product ? buildProductQuoteDescription(product) : ""),
+      description,
+      descriptionRich,
       name: snapshot ? snapshot.name : product!.name,
       sku: snapshot ? snapshot.sku : product!.sku,
       model: snapshot ? snapshot.model : product!.model,

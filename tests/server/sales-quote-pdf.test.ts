@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import JSZip from "jszip";
+import { isQuotePlaceholderLine, sanitizeQuotePlainText, sanitizeQuoteRichText } from "../../src/lib/quote-rich-text";
 import { createSalesQuoteDocx } from "../../src/server/services/sales-quote-docx";
 import { buildProductQuoteDescription, quoteContentDisposition, quoteFileName } from "../../src/server/services/sales-quote-document";
 import { createSalesQuotePdf } from "../../src/server/services/sales-quote-pdf";
@@ -39,6 +40,50 @@ test("technical specifications omit repetitive affirmative values in quote descr
   assert.match(description, /- Khả năng QC: Mean, SD và CV/);
   assert.match(description, /- Cổng kết nối: cổng USB/);
   assert.doesNotMatch(description, /Bàn phím ảo: Có/);
+});
+
+test("quote descriptions omit fields and configuration entries that are not updated", () => {
+  const description = buildProductQuoteDescription({
+    id: "missing-details", slug: "missing-details", sku: "OXY-01", group: "medical", category: "", categorySlug: "", specialties: [], specialtySlugs: [],
+    brand: "Chưa cập nhật", brandSlug: "chua-cap-nhat", model: "OxyLife Premium", origin: "Việt Nam", priceBand: "", warranty: "Đang cập nhật", applications: [], applicationSlugs: [],
+    name: "Hệ thống oxy áp lực", specs: [], image: "", imagePosition: "", availability: "contact", featured: 0, createdOrder: 0,
+    description: "Hãng sản xuất: Chưa cập nhật\nThiết bị tạo oxy áp lực.", priceMode: "CONTACT", publishStatus: "draft",
+    detail: {
+      gallery: [], documents: [], features: [{ title: "Chưa cập nhật", description: "" }],
+      configurations: [
+        { title: "Máy chính", items: [{ name: "Chưa cập nhật", detail: "Chưa có thông tin", quantity: 1 }] },
+        { title: "Phụ kiện", items: [{ name: "Bộ dây kết nối", detail: "Đang cập nhật", quantity: 1 }] },
+      ],
+      specificationGroups: [{ title: "Thông số khác", items: [
+        { label: "Công suất", value: "Chưa cập nhật" },
+        { label: "Nguồn điện", value: "220 V" },
+      ] }],
+    },
+  });
+
+  assert.match(description, /Model: OxyLife Premium/);
+  assert.match(description, /Xuất xứ: Việt Nam/);
+  assert.match(description, /- Bộ dây kết nối/);
+  assert.match(description, /- Nguồn điện: 220 V/);
+  assert.doesNotMatch(description, /Chưa cập nhật|Đang cập nhật|Chưa có thông tin/iu);
+  assert.doesNotMatch(description, /MÁY CHÍNH/);
+});
+
+test("plain and rich quote content remove labelled placeholder lines without losing formatting", () => {
+  assert.equal(isQuotePlaceholderLine("Hãng sản xuất: Chưa cập nhật"), true);
+  assert.equal(isQuotePlaceholderLine("- Công suất: Đang cập nhật"), true);
+  assert.equal(isQuotePlaceholderLine("- Công suất: 1500 W"), false);
+  assert.equal(
+    sanitizeQuotePlainText("THIẾT BỊ\nHãng sản xuất: Chưa cập nhật\nModel: A1"),
+    "THIẾT BỊ\nModel: A1",
+  );
+  const rich = sanitizeQuoteRichText({ version: 1, paragraphs: [
+    { runs: [{ text: "THIẾT BỊ", bold: true }] },
+    { runs: [{ text: "Hãng sản xuất: " }, { text: "Chưa cập nhật", bold: true }] },
+    { runs: [{ text: "Model: A1", underline: true }] },
+  ] });
+  assert.equal(rich?.paragraphs.length, 2);
+  assert.equal(rich?.paragraphs[1]?.runs[0]?.underline, true);
 });
 
 test("quote exports use a 12 point base font for primary content", async () => {
@@ -93,9 +138,10 @@ test("sales quote Word export creates a valid OOXML document", async () => {
     companyAddress: "Hà Nội và Thành phố Hồ Chí Minh",
     website: "thienlocgroup.com",
     introduction: "Công ty trân trọng gửi đến Quý khách bảng báo giá thiết bị với cấu hình chi tiết như sau:",
-    items: [{ productId: "product-test", quantity: 2, unitPrice: 430_000_000, description: "MÁY SIÊU ÂM CAO CẤP\nModel: SonoPort 8\nBẢO HÀNH 24 THÁNG\n- Màn hình độ phân giải cao", descriptionRich: { version: 1 as const, paragraphs: [
+    items: [{ productId: "product-test", quantity: 2, unitPrice: 430_000_000, description: "MÁY SIÊU ÂM CAO CẤP\nModel: SonoPort 8\nHãng sản xuất: Chưa cập nhật\nBẢO HÀNH 24 THÁNG\n- Màn hình độ phân giải cao", descriptionRich: { version: 1 as const, paragraphs: [
       { runs: [{ text: "MÁY SIÊU ÂM CAO CẤP", bold: true }] },
       { runs: [{ text: "Model: SonoPort 8" }] },
+      { runs: [{ text: "Hãng sản xuất: Chưa cập nhật" }] },
       { runs: [{ text: "BẢO HÀNH 24 THÁNG", bold: true, color: "red" as const }] },
       { runs: [{ text: "- Màn hình độ phân giải cao", underline: true }] },
     ] }, images: [{ url: "/images/project-handover-placeholder.webp", caption: "Ảnh sản phẩm", afterText: "- Màn hình độ phân giải cao" }] }],
@@ -129,4 +175,5 @@ test("sales quote Word export creates a valid OOXML document", async () => {
   assert.match(documentXml, /<w:cantSplit\/>[\s\S]*?<w:t[^>]*>ĐẠI DIỆN KHÁCH HÀNG<\/w:t>/);
   assert.match(documentXml, /<wp:extent cx="1914525" cy="\d+"\/>/);
   assert.doesNotMatch(documentXml, /Người liên hệ:/);
+  assert.doesNotMatch(documentXml, /Chưa cập nhật/iu);
 });

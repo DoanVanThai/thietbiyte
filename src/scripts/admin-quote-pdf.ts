@@ -1,5 +1,5 @@
 import { ADMIN_IMAGE_ACCEPT, validateAdminImage } from "@/lib/admin-image-upload";
-import { plainTextToQuoteRichText, quoteRichTextToPlainText, type QuoteRichText, type QuoteRichTextRun } from "@/lib/quote-rich-text";
+import { plainTextToQuoteRichText, quoteRichTextToPlainText, sanitizeQuotePlainText, sanitizeQuoteRichText, type QuoteRichText, type QuoteRichTextRun } from "@/lib/quote-rich-text";
 
 export {};
 
@@ -219,11 +219,13 @@ if (root) {
     const editor = item.querySelector<HTMLElement>("[data-quote-description-editor]");
     const textarea = item.querySelector<HTMLTextAreaElement>("[data-quote-description]");
     if (!editor || !textarea) return;
-    const value = richText?.paragraphs?.length ? richText : plainTextToQuoteRichText(description, true);
+    const cleanDescription = sanitizeQuotePlainText(description);
+    const cleanRichText = sanitizeQuoteRichText(richText);
+    const value = cleanRichText?.paragraphs?.length ? cleanRichText : plainTextToQuoteRichText(cleanDescription, true);
     editor.replaceChildren();
     item.dataset.descriptionEditorHydrated = "false";
     descriptionSnapshots.set(item, value);
-    textarea.value = quoteRichTextToPlainText(value, description);
+    textarea.value = quoteRichTextToPlainText(value, cleanDescription);
   };
 
   const ensureDescriptionEditor = (item: HTMLElement) => {
@@ -599,10 +601,12 @@ if (root) {
     let storedSnapshot: QuotePayload["items"][number]["productSnapshot"];
     try { storedSnapshot = JSON.parse(item.dataset.productSnapshot || "null") as QuotePayload["items"][number]["productSnapshot"]; } catch { storedSnapshot = undefined; }
     const editor = item.querySelector<HTMLElement>("[data-quote-description-editor]");
-    const description = item.querySelector<HTMLTextAreaElement>("[data-quote-description]")?.value || "";
-    const descriptionRich = editor && item.dataset.descriptionEditorHydrated === "true"
+    const rawDescription = item.querySelector<HTMLTextAreaElement>("[data-quote-description]")?.value || "";
+    const rawDescriptionRich = editor && item.dataset.descriptionEditorHydrated === "true"
       ? editorToRichText(editor)
-      : descriptionSnapshots.get(item) || plainTextToQuoteRichText(description, true);
+      : descriptionSnapshots.get(item) || plainTextToQuoteRichText(rawDescription, true);
+    const descriptionRich = sanitizeQuoteRichText(rawDescriptionRich) || { version: 1, paragraphs: [] };
+    const description = sanitizeQuotePlainText(quoteRichTextToPlainText(descriptionRich, rawDescription));
     return {
       productId,
       productSnapshot: storedSnapshot || (product ? { name: product.name, sku: product.sku, model: product.model, brand: product.brand, origin: product.origin, manufacturingYear: product.manufacturingYear, warranty: product.warranty } : undefined),
