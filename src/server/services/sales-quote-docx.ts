@@ -5,14 +5,15 @@ import {
   Footer,
   ImageRun,
   type IParagraphOptions,
-  type ITableCellBorders,
   PageNumber,
   Packer,
   Paragraph,
   ShadingType,
+  Tab,
   Table,
   TableCell,
   TableRow,
+  TabStopType,
   TextRun,
   UnderlineType,
   VerticalAlignTable,
@@ -175,11 +176,10 @@ const productContent = (item: PreparedQuoteItem) => {
   return children;
 };
 
-const cell = (children: Paragraph[], width: number, options: { fill?: string; align?: typeof VerticalAlignTable[keyof typeof VerticalAlignTable]; columnSpan?: number; borders?: ITableCellBorders } = {}) => new TableCell({
+const cell = (children: Paragraph[], width: number, options: { fill?: string; align?: typeof VerticalAlignTable[keyof typeof VerticalAlignTable]; columnSpan?: number } = {}) => new TableCell({
   width: { size: width, type: WidthType.DXA },
   columnSpan: options.columnSpan,
   verticalAlign: options.align ?? VerticalAlignTable.CENTER,
-  borders: options.borders,
   shading: options.fill ? { type: ShadingType.CLEAR, fill: options.fill, color: "auto" } : undefined,
   margins: { top: 100, bottom: 100, left: 120, right: 120 },
   children,
@@ -282,26 +282,30 @@ export const createSalesQuoteDocx = async (input: SalesQuotePdfInput, company: Q
               cell([headerParagraph("ĐƠN GIÁ\n(VNĐ)")], columnWidths[2], { fill: pale }),
             ] }),
             ...productRows,
-            new TableRow({ children: [
-              cell([paragraph("TỔNG GIÁ TRỊ", { bold: true, size: bodyHeadingHalfPoints, after: 0 })], columnWidths[0] + columnWidths[1], {
-                fill: pale,
-                columnSpan: 2,
-                borders: {
-                  end: { style: BorderStyle.NONE, size: 0, color: pale },
-                  right: { style: BorderStyle.NONE, size: 0, color: pale },
-                },
-              }),
-              cell([paragraph(`${money(total)} VNĐ`, { bold: true, size: 28, alignment: AlignmentType.RIGHT, after: 0 })], columnWidths[2], {
-                fill: pale,
-                borders: {
-                  start: { style: BorderStyle.NONE, size: 0, color: pale },
-                  left: { style: BorderStyle.NONE, size: 0, color: pale },
-                },
-              }),
+            new TableRow({ cantSplit: true, children: [
+              cell([
+                new Paragraph({
+                  keepLines: true,
+                  tabStops: [{ type: TabStopType.RIGHT, position: contentWidth - 240 }],
+                  spacing: { after: 40, line: 300 },
+                  children: [
+                    text("TỔNG GIÁ TRỊ", { bold: true, size: bodyHeadingHalfPoints }),
+                    new TextRun({ children: [new Tab()] }),
+                    text(`${money(total)} VNĐ`, { bold: true, size: 28 }),
+                  ],
+                }),
+                paragraph(`(Bằng chữ: ${numberToVietnameseMoney(total)}.)`, {
+                  italics: true,
+                  size: bodyHalfPoints,
+                  after: 0,
+                  line: 300,
+                  keepLines: true,
+                }),
+              ], contentWidth, { fill: pale, columnSpan: 3 }),
             ] }),
           ],
         }),
-        paragraph(`(Bằng chữ: ${numberToVietnameseMoney(total)}.)`, { italics: true, size: bodyHalfPoints, after: 180, before: 60 }),
+        new Paragraph({ spacing: { after: 180 } }),
         paragraph("ĐIỀU KHOẢN THƯƠNG MẠI", {
           bold: true,
           italics: true,
